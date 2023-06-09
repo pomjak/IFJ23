@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/andrew/Andrew/School/3BIT/IFJ/project",
+      "program": "/Users/andrew/Andrew/School/3BIT/IFJ/project/build/Debug/outDebug"
+    }
+  ]
+}
