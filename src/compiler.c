@@ -19,6 +19,7 @@ int main(int argc, char ** argv)
 {
     (void)argc;
     (void)argv;
+    printf("Compiler was compiled!\n");
     
     return 0;
 }

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void hello_stack()
+void hello_stack(void)
 {
     printf("if you see this, you haven't implemented stack...\n");
 }
