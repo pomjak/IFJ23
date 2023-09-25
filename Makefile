@@ -56,4 +56,4 @@ $(OBJ):
 	mkdir -p $(OBJ)
 
 clean:
-	rm -r $(PROG) $(OBJ)
+	rm -r src/$(PROG) $(PROG) $(OBJ) *.dSYM
