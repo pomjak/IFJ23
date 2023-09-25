@@ -1,25 +1,26 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
+/**
+ * @brief defines scanner states
+ */
 typedef enum scanner_state {
     START,
     ERROR
 } scanner_state_t;
 
 /**
- * @brief defines type of token
- * 
+ * @brief defines type of tokenxw
  */
-typedef enum token_type
+typedef enum token_data_t
 {
     INT,
     FLOAT,
     STRING
-} token_type_t;
+} token_data_t;
 
 /**
- * @brief value of token
- * 
+ * @brief value of tokenxw
  */
 typedef union token_value
 {
@@ -28,14 +29,15 @@ typedef union token_value
     char * string; //dynamic string here
 }token_value_t;
 
-
 /**
  * @brief token type 
  */
 typedef struct token
 {
-    token_type_t type;
+    token_data_t type;
     token_value_t value;
 }token_t;
+
+int getToken(token_t * token);
 
 #endif
