@@ -12,4 +12,10 @@
 #define ERR_SEMANTIC_ERR 9
 #define ERR_INTERNAL 99
 
+/**
+ * @brief Prints error and message to stderr
+ * 
+ */
+void print_error(int error_code, const char * msg, ...);
+
 #endif

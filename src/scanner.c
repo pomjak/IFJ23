@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "scanner.h"
+#include "error.h"
 
 
 /**
@@ -16,13 +17,16 @@
 #ifdef SCANNER_TEST
 int main(int argc, char ** argv)
 {
-    if(argc <= 1 || argc > 2) return 10;
+    (void) argc;
+    (void) argv;
+    print_error(ERR_INTERNAL, "This is a debugging test");
+    // if(argc <= 1 || argc > 2) return 10;
 
-    token_t token;
-    while ( get_token(&token) != EOF)
-    {
-        print_token_type(token);
-    }
+    // token_t token;
+    // while ( get_token(&token) != EOF)
+    // {
+    //     print_token_type(token);
+    // }
     
 
     return EXIT_SUCCESS;

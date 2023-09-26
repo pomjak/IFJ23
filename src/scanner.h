@@ -38,6 +38,6 @@ typedef struct token
     token_value_t value;
 }token_t;
 
-int getToken(token_t * token);
+int get_token(token_t * token);
 
 #endif
