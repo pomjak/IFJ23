@@ -6,6 +6,13 @@
 #include "scanner.h"
 
 
+/**
+ * TODO:
+ * 1) restructure project according to assignment
+ * 2) create FSM
+ * 3) implement core states ( operators, keywords, strings)
+ */
+
 #ifdef SCANNER_TEST
 int main(int argc, char ** argv)
 {
