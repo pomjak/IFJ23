@@ -3,7 +3,7 @@ CC := gcc
 CFLAGS :=-Wall -Wextra -Werror -pedantic
 
 # program settings
-PROG := compiler
+PROG := ifj23
 
 # sub programs
 SCANNER := scanner
