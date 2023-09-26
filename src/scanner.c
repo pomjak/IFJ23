@@ -4,49 +4,39 @@
 #include <string.h>
 #include <ctype.h>
 #include "scanner.h"
+#include "error.h"
 
-FILE * source_file;
 
-bool set_source_file(char * file);
-void print_token_type(token_t token);
-int get_token(token_t * token);
-
-// process_number(char * num);
-// process_keyword();
-// process_string();
+/**
+ * TODO:
+ * 1) restructure project according to assignment
+ * 2) create FSM
+ * 3) implement core states ( operators, keywords, strings)
+ */
 
 #ifdef SCANNER_TEST
 int main(int argc, char ** argv)
 {
-    if(argc <= 1 || argc > 2) return 10;
-    if(set_source_file(argv[1]) == ) return EXIT_FAILURE;
+    (void) argc;
+    (void) argv;
+    print_error(ERR_INTERNAL, "This is a debugging test");
+    // if(argc <= 1 || argc > 2) return 10;
 
-    token_t token;
-    while ( get_token(&token) != EOF)
-    {
-        print_token_type(token);
-    }
+    // token_t token;
+    // while ( get_token(&token) != EOF)
+    // {
+    //     print_token_type(token);
+    // }
     
 
     return EXIT_SUCCESS;
 }
 #endif
 
-/**
- * @brief Set the source file 
- * 
- * @param file name of file
- * @return true if success 
- */
-bool set_source_file(char * file)
-{
-    source_file = fopen(file,"r");
-    if(source_file == NULL)
-    {
-        return false;
-    }
-    return true;
-}
+/************************
+ * State functions      *
+************************/
+
 
 /**
  * @brief Get the token object
@@ -54,12 +44,13 @@ bool set_source_file(char * file)
  * @param token 
  * @return int return code
  */
-int get_token(token_t * token)
+int getToken(token_t * token)
 {
     (void)token;
+
     scanner_state_t state = START;
     char c;
-    while((c = fgetc(source_file)))
+    while((c = fgetc(stdin)))
     {
         switch (state)
         {
@@ -73,11 +64,15 @@ int get_token(token_t * token)
     return EXIT_SUCCESS;
 }
 
+
+/************************
+ * Debuggig functions   *
+************************/
+
 /**
  * @brief prints token type
- * 
  */
-void print_token_type(token_t token)
+void prinTokenType(token_t token)
 {
     char type[20];
     switch (token.type)
