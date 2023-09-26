@@ -21,7 +21,7 @@ void dstring_clear(dstring_t *dstring) {
 bool dstring_init(dstring_t *dstring) {
 
     if(!(dstring->str = (char *)malloc(sizeof(char)*DSTR_ALLOC_SIZE))) {
-        print_error(INTERNAL_ERROR, "dyn_string: dstring_init: Dynamic string allocation failed.\n");
+        print_error(ERR_INTERNAL, "dyn_string: dstring_init: Dynamic string allocation failed.\n");
         return false;
     }
     dstring->alloc_size = DSTR_ALLOC_SIZE;
@@ -46,7 +46,7 @@ bool dstring_append(dstring_t *dstring, char c) {
         dstring->str = (char *) realloc(dstring->str, (dstring->length+DSTR_ALLOC_SIZE)*sizeof(char));
 
         if(!(dstring->str)) {
-            print_error(INTERNAL_ERROR, "dyn_string: dstring_append: realloc failed.\n");
+            print_error(ERR_INTERNAL, "dyn_string: dstring_append: realloc failed.\n");
             return false;
         }
         dstring->alloc_size = dstring->length + DSTR_ALLOC_SIZE;
@@ -72,7 +72,7 @@ bool dstring_add_const_str(dstring_t *dstring, const char *str) {
         dstring->str = (char *) realloc(dstring->str, new_size);
 
         if(!(dstring->str)) {
-            print_error(INTERNAL_ERROR, "dyn_string: dstring_add_const_str: realloc failed\n");
+            print_error(ERR_INTERNAL, "dyn_string: dstring_add_const_str: realloc failed\n");
             return false;
         }
         dstring->alloc_size = new_size;
@@ -95,7 +95,7 @@ bool dstring_copy(dstring_t *src, dstring_t *dst) {
     if(new_lenght >= dst->alloc_size) {
         dst->str = (char *) realloc(dst->str, new_lenght + 1);
         if(!(dst->str)) {
-            print_error(INTERNAL_ERROR, "dyn_string: dstring_copy: realloc failed.\n"); //compiler err miesto internal, internal tam je preto aby som to vedel spusit, pravdepodobne editnuty error modul
+            print_error(ERR_INTERNAL, "dyn_string: dstring_copy: realloc failed.\n"); //compiler err miesto internal, internal tam je preto aby som to vedel spusit, pravdepodobne editnuty error modul
             return false;
         }
         dst->alloc_size = new_lenght + 1;
