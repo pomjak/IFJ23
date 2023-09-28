@@ -6,13 +6,17 @@
 #include "scanner.h"
 #include "error.h"
 
+/*************************************
+ * State functions declarations      *
+**************************************/
+scanner_state_t start_get_state(int c);
 
-/**
- * TODO:
- * 1) restructure project according to assignment
- * 2) create FSM
- * 3) implement core states ( operators, keywords, strings)
- */
+
+/*************************************
+ * Debug functions declarations      *
+**************************************/
+void print_token_type(token_t token);
+
 
 #ifdef SCANNER_TEST
 int main(int argc, char ** argv)
@@ -20,49 +24,61 @@ int main(int argc, char ** argv)
     (void) argc;
     (void) argv;
     print_error(ERR_INTERNAL, "This is a debugging test");
-    // if(argc <= 1 || argc > 2) return 10;
-
-    // token_t token;
-    // while ( get_token(&token) != EOF)
-    // {
-    //     print_token_type(token);
-    // }
-    
-
     return EXIT_SUCCESS;
 }
 #endif
+
+/**
+ * @brief Get the token object
+ *
+ * @param token
+ * @return int return code
+ */
+int get_token(token_t * token)
+{
+    token->type = SCANNER_TOKEN_UNDEFINED;
+
+    scanner_state_t state = SCANNER_STATE_START;
+    char c =  fgetc(stdin);
+    while(c != EOF)
+    {
+        switch (state)
+        {
+        case SCANNER_STATE_START:
+            state = start_get_state(c);
+            break;
+        
+        case SCANNER_STATE_EOF:
+            token->type = SCANNER_TOKEN_EOF;
+            return EXIT_SUCCESS;
+
+        case SCANNER_STATE_NUMBER:
+        //
+            token->type = SCANNER_TOKEN_DOUBLE;
+            return EXIT_SUCCESS;
+            
+        default:
+            return ERR_LEXIKAL;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
 
 /************************
  * State functions      *
 ************************/
 
-
-/**
- * @brief Get the token object
- * 
- * @param token 
- * @return int return code
- */
-int getToken(token_t * token)
+scanner_state_t start_get_state(int c)
 {
-    (void)token;
 
-    scanner_state_t state = START;
-    char c;
-    while((c = fgetc(stdin)))
-    {
-        switch (state)
-        {
-        case START:
-            break;
-        
-        default:
-            break;
-        }
-    }
-    return EXIT_SUCCESS;
+    if(isdigit(c)) return SCANNER_STATE_NUMBER;
+    else if(c == EOF) return SCANNER_STATE_EOF;
+    
+    return SCANNER_STATE_ERROR;
 }
+
 
 
 /************************
@@ -72,21 +88,21 @@ int getToken(token_t * token)
 /**
  * @brief prints token type
  */
-void prinTokenType(token_t token)
+void print_token_type(token_t token)
 {
     char type[20];
     switch (token.type)
     {
-    case INT:
+    case SCANNER_TOKEN_INT:
         strcpy(type,"INT");
         break;
-    case FLOAT:
+    case SCANNER_TOKEN_DOUBLE:
         strcpy(type,"FLOAT");
         break;
-    case STRING:
+    case SCANNER_TOKEN_STRING:
         strcpy(type,"STRING");
         break;
-    
+
     default:
         printf("Unknown token type.\n");
         return;
