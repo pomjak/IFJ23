@@ -58,7 +58,7 @@ int get_token(token_t * token)
             return EXIT_SUCCESS;
             
         default:
-            return ERR_LEXIKAL;
+            return ERR_LEXICAL;
         }
     }
 
@@ -102,7 +102,6 @@ void print_token_type(token_t token)
     case SCANNER_TOKEN_STRING:
         strcpy(type,"STRING");
         break;
-
     default:
         printf("Unknown token type.\n");
         return;

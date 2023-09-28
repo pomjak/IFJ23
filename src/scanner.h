@@ -10,6 +10,7 @@ typedef enum scanner_state {
     SCANNER_STATE_START,
     SCANNER_STATE_ERROR,
     SCANNER_STATE_EOF,
+    SCANNER_STATE_EOL,
 
     // data type states
     SCANNER_STATE_NUMBER
@@ -23,7 +24,9 @@ typedef enum token_data_t
     SCANNER_TOKEN_UNDEFINED,
     SCANNER_TOKEN_INT,
     SCANNER_TOKEN_DOUBLE,
+    SCANNER_TOKEN_DOUBLE_EXP,
     SCANNER_TOKEN_STRING,
+    SCANNER_TOKEN_EMPTY_STRING,
     SCANNER_TOKEN_EOF
 } token_data_t;
 
