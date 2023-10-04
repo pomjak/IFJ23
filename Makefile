@@ -14,6 +14,9 @@ SRC_FILES := $(wildcard *.c)
 $(PROG): $(SRC_FILES)
 	$(CC) $(CFLAGS) $^ -o $@
 
+$(PROG)-debug: $(SRC_FILES)
+	$(CC) $(CFLAGS) -D DEBUG $^ -o $(PROG)-debug
+
 submission:
 	rm -rf       build
 	mkdir        build
@@ -23,6 +26,9 @@ submission:
 
 build: submission
 	cd build && $(MAKE)
+
+debug: submission
+	cd build && $(MAKE) $(PROG)-debug
 
 test: submission
 	rm -rf ./test_build/
