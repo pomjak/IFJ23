@@ -1,3 +1,10 @@
+/**
+ * @file lexical_analyzer.h
+ * @brief Lexical analyzer header
+ * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
+ * @date 06.10.2023
+ **/
+
 #ifndef SCANNER_H
 #define SCANNER_H
 
@@ -9,7 +16,9 @@
 typedef enum {
     TOKEN_UNDEFINED,
     TOKEN_EOL,
+    TOKEN_EOF,
     TOKEN_UND_SCR,
+    TOKEN_COMMA,
     TOKEN_LT,
     TOKEN_LEQ,
     TOKEN_GT,
@@ -31,10 +40,22 @@ typedef enum {
     TOKEN_DIV,
 
     TOKEN_IDENTIFIER,
+    TOKEN_DT_DOUBLE,
+    TOKEN_DT_INT,
+    TOKEN_DT_STRING,
+    TOKEN_ELSE,
+    TOKEN_FUNC,
+    TOKEN_IF,
+    TOKEN_LET,
+    TOKEN_NIL,
+    TOKEN_RETURN,
+    TOKEN_VAR,
+    TOKEN_WHILE,
 
     TOKEN_INT,
     TOKEN_DBL,
-    TOKEN_EXP
+
+    TOKEN_STRING
 } token_type_T;
 
 /**
@@ -42,9 +63,10 @@ typedef enum {
  */
 typedef union
 {
-    float     float_val;
-    int       int_val;
-    dstring_t string_val;
+    double     double_val;
+    int        int_val;
+    dstring_t  string_val;
+    bool       is_nilable;
 } token_value_T;
 
 /**
@@ -59,5 +81,6 @@ typedef struct
 typedef void state_T;
 
 int get_token(token_T *token);
+void print_token(token_T token);
 
 #endif
