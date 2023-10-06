@@ -1,10 +1,9 @@
 /**
  * @file dyn_string.c
  * @brief Dynamic string operations
- * 
  * @author Simon Cagala <xcagal00>
-
- * @date 20-10-2022
+ * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
+ * @date 06.10.2023
  **/
 #include "dyn_string.h"
 #include "error.h"
@@ -124,4 +123,9 @@ int dstring_cmp(dstring_t *s1, dstring_t *s2) {
 
 char *dstring_to_str(dstring_t *dstring) {
     return dstring->str;
+}
+
+void dstring_retract(dstring_t *dstring, int count) {
+    dstring->length -= count;
+    dstring->str[dstring->length] = '\0';
 }
