@@ -1,6 +1,6 @@
 # compiler settings
 CC := gcc
-CFLAGS :=-Wall -Wextra -Werror -pedantic
+CFLAGS :=-Wall -Wextra -Werror -pedantic -lm
 
 # program settings
 PROG := ifj23
@@ -15,7 +15,7 @@ $(PROG): $(SRC_FILES)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(PROG)-debug: $(SRC_FILES)
-	$(CC) $(CFLAGS) -D DEBUG $^ -o $(PROG)-debug
+	$(CC) $(CFLAGS) -g -D DEBUG $^ -o $(PROG)-debug
 
 submission:
 	rm -rf       build
