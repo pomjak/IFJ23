@@ -28,3 +28,20 @@ git commit -m "name of commit"
 
 git push
 ```
+
+## Testing and building
+
+build without debug information
+```bash
+make build
+```
+
+build with debug information
+```bash
+make debug
+```
+
+run automatic tests
+```bash
+make test
+```
