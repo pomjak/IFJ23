@@ -2,8 +2,8 @@
  * @file dyn_string.h
  * @brief Dynamic String header
  * @author Simon Cagala <xcagal00>
-
- * @date 20-10-2022
+ * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
+ * @date 06.10.2023
  **/
 
 #ifndef DYN_STRING_H
@@ -118,6 +118,14 @@ int dstring_cmp(dstring_t *s1, dstring_t *s2);
  **/
 char *dstring_to_str(dstring_t *dstring);
 
+/**
+ * @brief Deletes last n chars.
+ * 
+ * @param dstring dynstring pointer
+ * @param count count of deleted chars
+ * @return void
+ **/
+void dstring_retract(dstring_t *dstring, int count);
 
 
 #endif

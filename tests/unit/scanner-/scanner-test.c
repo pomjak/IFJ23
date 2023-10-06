@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-#include "../../../src/scanner.h"
-#include "../../../src/error.h"
+#include "scanner.h"
+#include "error.h"
 #include "/Library/Frameworks/Unity/src/unity.h"
 
 /**
