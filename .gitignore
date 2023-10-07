@@ -61,5 +61,5 @@ dkms.conf
 ifj23.code-workspace
 
 build
-test_artefacts
+test_artifacts
 test_build

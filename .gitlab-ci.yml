@@ -1,0 +1,14 @@
+image: gcc
+
+build-and-test:
+  stage: build
+  # install the necessary build tools when needed
+  before_script:
+    - apt update && apt -y install make zip unzip valgrind bash && make clean
+  script:
+    - make --silent test
+  artifacts:
+    paths:
+      - build/
+      - test_artifacts/
+      - test_build/
