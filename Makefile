@@ -8,6 +8,8 @@ PROG := ifj23
 #aliases and object files
 SRC_FILES := $(wildcard *.c)
 
+level := 0
+
 # rules
 .PHONY: clean build submission
 
@@ -15,7 +17,7 @@ $(PROG): $(SRC_FILES)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(PROG)-debug: $(SRC_FILES)
-	$(CC) $(CFLAGS) -g -D DEBUG $^ -o $(PROG)-debug
+	$(CC) $(CFLAGS) -g -D DEBUG -D DEBUGL=$(level) $^ -o $(PROG)-debug
 
 submission:
 	rm -rf       build
@@ -28,7 +30,8 @@ build: submission
 	cd build && $(MAKE)
 
 debug: submission
-	cd build && $(MAKE) $(PROG)-debug
+	@echo "Building with debug level " $(level)
+	cd build && $(MAKE) $(PROG)-debug level=$(level)
 
 test: submission
 	rm -rf ./test_build/

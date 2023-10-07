@@ -38,10 +38,21 @@ make build
 
 build with debug information
 ```bash
-make debug
+make debug #errors
+make debug level=1 #errors and warnings
+make debug level=2 #errors, warnings and debug
 ```
 
 run automatic tests
 ```bash
-make test
+make --silent test
+```
+
+## Debug functions
+```c
+DEBUG_PRINT() //takes parameters as printf()
+
+WARNING_PRINT() //takes parameters as printf()
+
+ERROR_PRINT() //takes parameters as printf()
 ```
