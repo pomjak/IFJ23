@@ -56,6 +56,7 @@ state_T nil_check(char);
 state_T ass(char);
 state_T eq(char);
 state_T col(char);
+state_T semicol(char);
 state_T r_bkt(char);
 state_T l_bkt(char);
 state_T r_par(char);
@@ -193,6 +194,7 @@ const token_type_T tokens[] = {
     TOKEN_ASS,
     TOKEN_EQ,
     TOKEN_COL,
+    TOKEN_SEMICOL,
     TOKEN_R_BKT,
     TOKEN_L_BKT,
     TOKEN_R_PAR,
@@ -237,6 +239,7 @@ const char* tokens_names[] = {
     "<ASS>",
     "<EQ>",
     "<COL>",
+    "<SEMICOL>",
     "<R_BKT>",
     "<L_BKT>",
     "<R_PAR>",
@@ -266,7 +269,7 @@ const char* tokens_names[] = {
     "<STRING "
 };
 
-const int tokens_count = 38;
+const int tokens_count = 39;
 
 void print_token(token_T token) {
 
@@ -367,6 +370,7 @@ state_T start(char readed) {
     if (readed == '?')          NEXT_STATE(qm);
     if (readed == '=')          NEXT_STATE(ass);
     if (readed == ':')          NEXT_STATE(col);
+    if (readed == ';')          NEXT_STATE(semicol);
     if (readed == '}')          NEXT_STATE(r_bkt);
     if (readed == '{')          NEXT_STATE(l_bkt);
     if (readed == ')')          NEXT_STATE(r_par);
@@ -548,6 +552,16 @@ state_T col(char readed) {
     NEXT_STATE(NULL);   
 }
 
+state_T semicol(char readed) {
+    DEBUG_PRINT("Readed char is %c", readed);
+    
+    is_final          = true;
+    actual_token.type = TOKEN_SEMICOL;
+    
+    UNREAD(readed);
+    NEXT_STATE(NULL);   
+}
+
 state_T r_bkt(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
     
@@ -706,7 +720,7 @@ state_T identifier(char readed) {
     dstring_retract(&readed_string, 1);
     actual_token.value.string_val = readed_string;
 
-    DEBUG_PRINT("REaded %s", readed_string.str);
+    DEBUG_PRINT("Readed string is %s", readed_string.str);
 
     for (int i = 0; i < keywords_count; i++) {
         if (dstring_cmp_const_str(&readed_string, keywords[i]) == 0) {
@@ -843,9 +857,12 @@ state_T empty_string(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
     if (readed == '"')  NEXT_STATE(eol_start_q);
+
+    DEBUG_PRINT("Readed string is %s", readed_string.str);
     
     is_final          = true;
     actual_token.type = TOKEN_STRING;
+    actual_token.value.string_val = readed_string;
     
     UNREAD(readed);
     NEXT_STATE(NULL);   
@@ -874,6 +891,21 @@ state_T m_string_inner(char readed) {
 
 state_T m_string_escape(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
+
+    if (readed == 'n') {
+        dstring_append(&readed_string, '\n');
+        NEXT_STATE(m_string_inner);
+    }
+
+    if (readed == 'r') {
+        dstring_append(&readed_string, '\r');
+        NEXT_STATE(m_string_inner);
+    }
+
+    if (readed == 't') {
+        dstring_append(&readed_string, '\t');
+        NEXT_STATE(m_string_inner);
+    }
 
     dstring_append(&readed_string, readed);
 
@@ -981,6 +1013,21 @@ state_T string_inner(char readed) {
 
 state_T string_escape(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
+
+    if (readed == 'n') {
+        dstring_append(&readed_string, '\n');
+        NEXT_STATE(string_inner);
+    }
+
+    if (readed == 'r') {
+        dstring_append(&readed_string, '\r');
+        NEXT_STATE(string_inner);
+    }
+
+    if (readed == 't') {
+        dstring_append(&readed_string, '\t');
+        NEXT_STATE(string_inner);
+    }
 
     dstring_append(&readed_string, readed);
 

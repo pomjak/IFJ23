@@ -29,6 +29,7 @@ typedef enum {
     TOKEN_ASS,
     TOKEN_EQ,
     TOKEN_COL,
+    TOKEN_SEMICOL,
     TOKEN_R_BKT,
     TOKEN_L_BKT,
     TOKEN_R_PAR,
