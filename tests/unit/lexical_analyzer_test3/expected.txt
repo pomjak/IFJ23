@@ -1,0 +1,19 @@
+
+<VAR><IDENTIFIER  value='str1'><ASS><STRING  value='Toto je nejaky text v programu jazyka IFJ23'>
+<LET><IDENTIFIER  value='str2'><ASS><IDENTIFIER  value='str1'><ADD><STRING  value=', ktery jeste trochu obohatime'>
+<IDENTIFIER  value='write'><L_PAR><IDENTIFIER  value='str1'><COMMA><STRING  value='
+'><COMMA><IDENTIFIER  value='str2'><COMMA><STRING  value='
+'><R_PAR>
+<LET><IDENTIFIER  value='i'><ASS><IDENTIFIER  value='length'><L_PAR><IDENTIFIER  value='str1'><R_PAR>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Pozice retezce "text" v str2: '><COMMA><IDENTIFIER  value='i'><COMMA><STRING  value='
+'><R_PAR>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Zadejte serazenou posloupnost vsech malych pismen a-h, '><R_PAR>
+<LET><IDENTIFIER  value='newInput'><ASS><IDENTIFIER  value='readString'><L_PAR><R_PAR>
+<IF><LET><IDENTIFIER  value='newInput'><L_BKT>
+<IDENTIFIER  value='str1'><ASS><IDENTIFIER  value='newInput'>
+<WHILE><L_PAR><IDENTIFIER  value='str1'><NEQ><STRING  value='abcdefgh'><R_PAR><L_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Spatne zadana posloupnost, zkuste znovu:
+'><R_PAR><SEMICOL>
+<IDENTIFIER  value='str1'><ASS><IDENTIFIER  value='readString'><L_PAR><R_PAR><NIL_CHECK><STRING  value=''>
+<R_BKT>
+<R_BKT><EOF>

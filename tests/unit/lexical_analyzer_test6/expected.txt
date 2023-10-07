@@ -1,0 +1,20 @@
+<IDENTIFIER  value='_ahoj'>
+<IDENTIFIER  value='_AHoj'>
+<IDENTIFIER  value='_123'>
+<IDENTIFIER  value='Test'>
+<IDENTIFIER  value='TEst'>
+<IDENTIFIER  value='te_12'>
+<ELSE>
+<FUNC>
+<IF>
+<LET>
+<NIL>
+<RETURN>
+<VAR>
+<WHILE>
+<DT_DOUBLE>
+<DT_DOUBLE>
+<DT_INT>
+<DT_INT>
+<DT_STRING>
+<DT_STRING><EOF>
