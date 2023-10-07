@@ -1,31 +1,19 @@
-// Program 2: Vypocet faktorialu (rekurzivne)
-// Hlavni telo programu
-write("Zadejte cislo pro vypocet faktorialu: ")
-let inp : Int? = readInt()
-// pomocna funkce pro dekrementaci celeho cisla o zadane cislo
-func decrement(of n: Int, by m: Int) -> Int {
-return n - m
-}
-// Definice funkce pro vypocet hodnoty faktorialu
-func factorial(_ n : Int) -> Int {
-var result : Int?
-if (n < 2) {
-result = 1
+// Program 1: Vypocet faktorialu (iterativne)
+/* Hlavni telo programu */
+write("Zadejte cislo pro vypocet faktorialu\n")
+let a : Int? = readInt()
+if let a {
+if (a < 0) {
+write("Faktorial nelze spocitat\n")
 } else {
-let decremented_n = decrement(of: n, by: 1)
-let temp_result = factorial(decremented_n)
-result = n * temp_result
+var a = Int2Double(a)
+var vysl : Double = 1
+while (a > 0) {
+vysl = vysl * a
+a = a - 1
 }
-return result!
-}
-// pokracovani hlavniho tela programu
-if let inp {
-if (inp < 0) { // Pokracovani hlavniho tela programu
-write("Faktorial nelze spocitat!")
-} else {
-let vysl = factorial(inp)
-write("Vysledek je: ", vysl)
+write("Vysledek je: ", vysl, "\n")
 }
 } else {
-write("Chyba pri nacitani celeho cisla!")
+write("Chyba pri nacitani celeho cisla!\n")
 }

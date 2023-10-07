@@ -1,0 +1,10 @@
+//Test of number literal
+1
+155
+10e-5
+4E+5
+1e6
+2E11
+12.5
+1.15
+1.1e6

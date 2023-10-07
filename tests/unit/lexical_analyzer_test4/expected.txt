@@ -1,0 +1,17 @@
+<FUNC><IDENTIFIER  value='bar'><L_PAR><IDENTIFIER  value='with'><IDENTIFIER  value='param'><COL><DT_STRING><R_PAR><RET_VAL><DT_STRING><L_BKT>
+<LET><IDENTIFIER  value='r'><COL><DT_STRING><ASS><IDENTIFIER  value='foo'><L_PAR><IDENTIFIER  value='param'><R_PAR>
+<RETURN><IDENTIFIER  value='r'>
+<R_BKT>
+<FUNC><IDENTIFIER  value='foo'><L_PAR><UND_SCR><IDENTIFIER  value='par'><COL><DT_STRING><R_PAR><RET_VAL><DT_STRING><L_BKT>
+<LET><IDENTIFIER  value='ret'><ASS><IDENTIFIER  value='bar'><L_PAR><IDENTIFIER  value='with'><COL><IDENTIFIER  value='par'><R_PAR>
+<RETURN><IDENTIFIER  value='ret'>
+<R_BKT>
+<IDENTIFIER  value='bar'><L_PAR><IDENTIFIER  value='with'><COL><STRING  value='ahoj'><R_PAR>
+<FUNC><IDENTIFIER  value='concat'><L_PAR><UND_SCR><IDENTIFIER  value='x'><COL><DT_STRING><COMMA><IDENTIFIER  value='with'><IDENTIFIER  value='y'><COL><DT_STRING><R_PAR><RET_VAL><DT_STRING><L_BKT>
+<LET><IDENTIFIER  value='x'><ASS><IDENTIFIER  value='x'><ADD><IDENTIFIER  value='y'>
+<RETURN><IDENTIFIER  value='x'><ADD><STRING  value=' '><ADD><IDENTIFIER  value='y'>
+<R_BKT>
+<LET><IDENTIFIER  value='a'><ASS><STRING  value='ahoj '>
+<VAR><IDENTIFIER  value='ct'><COL><DT_STRING>
+<IDENTIFIER  value='ct'><ASS><IDENTIFIER  value='concat'><L_PAR><IDENTIFIER  value='a'><COMMA><IDENTIFIER  value='with'><COL><STRING  value='svete'><R_PAR>
+<IDENTIFIER  value='write'><L_PAR><IDENTIFIER  value='ct'><COMMA><IDENTIFIER  value='a'><R_PAR><EOF>

@@ -12,3 +12,6 @@ build-and-test:
       - build/
       - test_artifacts/
       - test_build/
+  only:
+    - main
+    - work
