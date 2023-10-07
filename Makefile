@@ -8,6 +8,8 @@ PROG := ifj23
 #aliases and object files
 SRC_FILES := $(wildcard *.c)
 
+level := 0
+
 # rules
 .PHONY: clean build submission
 
@@ -15,7 +17,7 @@ $(PROG): $(SRC_FILES)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(PROG)-debug: $(SRC_FILES)
-	$(CC) $(CFLAGS) -g -D DEBUG $^ -o $(PROG)-debug
+	$(CC) $(CFLAGS) -g -D DEBUG -D DEBUGL=$(level) $^ -o $(PROG)-debug
 
 submission:
 	rm -rf       build
@@ -28,14 +30,15 @@ build: submission
 	cd build && $(MAKE)
 
 debug: submission
-	cd build && $(MAKE) $(PROG)-debug
+	@echo "Building with debug level " $(level)
+	cd build && $(MAKE) $(PROG)-debug level=$(level)
 
 test: submission
 	rm -rf ./test_build/
-	rm -rf ./test_artefacts/
+	rm -rf ./test_artifacts/
 
-	@echo "[info] creating dir for tests artefacts"
-	mkdir ./test_artefacts/
+	@echo "[info] creating dir for tests artifacts"
+	mkdir ./test_artifacts/
 	@echo "[info] starting unit tests"
 	
 	# for all dirs in ./tests/unit
@@ -45,13 +48,13 @@ test: submission
 			cp -r ./build/* ./test_build/                             && \
 			rm ./test_build/compiler.c                                && \
 			cp -rf $$f/* ./test_build/                                && \
-			cd ./test_build && $(MAKE) run && $(MAKE) artefacts       && \
+			cd ./test_build && $(MAKE) run && $(MAKE) artifacts       && \
 			cd ../                                                    && \
-			rm -rf ./test_build/; \
+			rm -rf ./test_build/ || exit 1;\
 		fi \
 	done
 
 clean:
 	rm -rf build
-	rm -rf test_artefacts
+	rm -rf test_artifacts
 	rm -rf test_build
