@@ -22,3 +22,4 @@
 <R_BKT>
 <R_BKT><ELSE><L_BKT>
 <IDENTIFIER  value='write'><L_PAR><STRING  value='Chyba pri nacitani celeho cisla!'><R_PAR>
+<R_BKT><EOF>
