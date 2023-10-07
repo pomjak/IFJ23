@@ -47,7 +47,7 @@ test: submission
 			cp -rf $$f/* ./test_build/                                && \
 			cd ./test_build && $(MAKE) run && $(MAKE) artifacts       && \
 			cd ../                                                    && \
-			rm -rf ./test_build/; \
+			rm -rf ./test_build/ || exit 1;\
 		fi \
 	done
 
