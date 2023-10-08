@@ -1025,11 +1025,14 @@ state_T m_string_hexa(char readed) {
 state_T eol_end_q(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
+    if (readed == '\\')  NEXT_STATE(m_string_escape);
+
     if (!dstring_append(&readed_string, readed)) {
             malloc_error = true;
             return;
         }
 
+    if (readed == '\n')  NEXT_STATE(eol_end_q);
     if (readed != '"')  NEXT_STATE(m_string_inner);
     if (readed == '"')  NEXT_STATE(m_string_end1);
 
