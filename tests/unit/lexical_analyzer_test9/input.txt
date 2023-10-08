@@ -1,0 +1,21 @@
+//Test of string literal
+""
+"aho\j 123_\"!\u{2a}"
+"""
+aho\j \u{2a}123_\"!
+\u{2a}
+"""
+
+"""
+""
+"""
+
+"\u{9}"
+"dlouhecislo123456789\u{0000000D}carriage_return"
+"lomenoR\rlomenoR""\n""lomenoT\t"
+
+"""
+eol
+
+
+"""
