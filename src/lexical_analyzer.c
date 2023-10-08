@@ -251,9 +251,9 @@ const char* tokens_names[] = {
     "<DIV>",
 
     "<IDENTIFIER ",
-    "<DT_DOUBLE>",
-    "<DT_INT>",
-    "<DT_STRING>",
+    "<DT_DOUBLE ",
+    "<DT_INT ",
+    "<DT_STRING ",
     "<ELSE>",
     "<FUNC>",
     "<IF>",
@@ -283,6 +283,8 @@ void print_token(token_T token) {
                 printf("%s value='%lf'>", tokens_names[i], token.value.double_val);
             } else if (token.type == TOKEN_IDENTIFIER) {
                 printf("%s value='%s'>", tokens_names[i], token.value.string_val.str);
+            } else if (token.type == TOKEN_DT_DOUBLE || token.type == TOKEN_DT_INT || token.type == TOKEN_DT_STRING) {
+                printf("%s nilable='%d'>", tokens_names[i], token.value.is_nilable);
             } else {
                 printf("%s", tokens_names[i]);
             }
@@ -731,6 +733,7 @@ state_T identifier(char readed) {
     for (int i = 0; i < data_types_count; i++) {
         if (dstring_cmp_const_str(&readed_string, data_types[i]) == 0) {
             actual_token.type = data_types_tokens[i];
+            actual_token.value.is_nilable = false;
             NEXT_STATE(data_type);
         }
     }

@@ -1,10 +1,10 @@
 <IDENTIFIER  value='write'><L_PAR><STRING  value='Zadejte cislo pro vypocet faktorialu: '><R_PAR>
-<LET><IDENTIFIER  value='inp'><COL><DT_INT><ASS><IDENTIFIER  value='readInt'><L_PAR><R_PAR>
-<FUNC><IDENTIFIER  value='decrement'><L_PAR><IDENTIFIER  value='of'><IDENTIFIER  value='n'><COL><DT_INT><COMMA><IDENTIFIER  value='by'><IDENTIFIER  value='m'><COL><DT_INT><R_PAR><RET_VAL><DT_INT><L_BKT>
+<LET><IDENTIFIER  value='inp'><COL><DT_INT  nilable='1'><ASS><IDENTIFIER  value='readInt'><L_PAR><R_PAR>
+<FUNC><IDENTIFIER  value='decrement'><L_PAR><IDENTIFIER  value='of'><IDENTIFIER  value='n'><COL><DT_INT  nilable='0'><COMMA><IDENTIFIER  value='by'><IDENTIFIER  value='m'><COL><DT_INT  nilable='0'><R_PAR><RET_VAL><DT_INT  nilable='0'><L_BKT>
 <RETURN><IDENTIFIER  value='n'><SUB><IDENTIFIER  value='m'>
 <R_BKT>
-<FUNC><IDENTIFIER  value='factorial'><L_PAR><UND_SCR><IDENTIFIER  value='n'><COL><DT_INT><R_PAR><RET_VAL><DT_INT><L_BKT>
-<VAR><IDENTIFIER  value='result'><COL><DT_INT>
+<FUNC><IDENTIFIER  value='factorial'><L_PAR><UND_SCR><IDENTIFIER  value='n'><COL><DT_INT  nilable='0'><R_PAR><RET_VAL><DT_INT  nilable='0'><L_BKT>
+<VAR><IDENTIFIER  value='result'><COL><DT_INT  nilable='1'>
 <IF><L_PAR><IDENTIFIER  value='n'><LT><INT  value='2'><R_PAR><L_BKT>
 <IDENTIFIER  value='result'><ASS><INT  value='1'>
 <R_BKT><ELSE><L_BKT>
