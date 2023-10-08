@@ -689,6 +689,7 @@ state_T s_div(char readed) {
 state_T line_c(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
     
+    if (readed == EOF) eof(readed);
     if (readed != '\n') NEXT_STATE(line_c);
 
     NEXT_STATE(start);   
