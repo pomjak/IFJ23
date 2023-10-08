@@ -698,10 +698,9 @@ state_T line_c(char readed) {
 state_T block_c(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
     
-    if (readed != '*')  NEXT_STATE(block_c);
     if (readed == '*')   NEXT_STATE(block_c_end_q);
     if (readed == '/')   NEXT_STATE(block_c_start_q);
-
+    if (readed != '*')  NEXT_STATE(block_c);
 
     NEXT_STATE(NULL);   
 }
@@ -711,6 +710,7 @@ state_T block_c_end_q(char readed) {
     
     if (readed == '/') {
         open_comments--;
+        DEBUG_PRINT("Open comments %d", open_comments);
 
         if (is_last())  NEXT_STATE(start);
     }
@@ -722,6 +722,7 @@ state_T block_c_start_q(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
     
     if (readed == '*')  open_comments++;
+    DEBUG_PRINT("Open comments %d", open_comments);
 
     NEXT_STATE(block_c);  
 }
