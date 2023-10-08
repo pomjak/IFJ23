@@ -1,8 +1,9 @@
 /**
+ * @name IFJ23
  * @file lexical_analyzer.h
  * @brief Lexical analyzer header
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
- * @date 06.10.2023
+ * @date 08.10.2023
  **/
 
 #include <stdio.h>
@@ -32,6 +33,8 @@ unsigned actual_collumn = 0;
 
 int open_comments = 0;
 int hexa_string = 0;
+
+bool malloc_error = false;
 
 dstring_t readed_string;
 
@@ -305,8 +308,12 @@ int get_token(token_T *token)
 
     is_final       = false;
     actual_state   = start;
-    dstring_init(&readed_string);
-    dstring_init(&tmp_string);
+    if(!dstring_init(&readed_string)) {
+        return ERR_INTERNAL;
+    }
+    if(!dstring_init(&tmp_string)) {
+        return ERR_INTERNAL;
+    }
 
     char readed;
     
@@ -326,6 +333,7 @@ int get_token(token_T *token)
 
         actual_state(readed);
 
+        if (malloc_error == true) return ERR_INTERNAL;
         if (actual_state == NULL) break;
     } while(readed != EOF);
 
@@ -342,13 +350,13 @@ int get_token(token_T *token)
     if (!is_final) {
         ERROR_PRINT("Lexical analyzer did not end in final state. On line %d and collumn %d.", actual_line, actual_collumn);
 
-        return 1;
+        return ERR_LEXICAL;
     }
 
     token->type  = actual_token.type;
     token->value = actual_token.value;
 
-    return 0;
+    return ERR_NO_ERR;
 }
 
 state_T start(char readed) {
@@ -356,13 +364,19 @@ state_T start(char readed) {
 
     if (is_whitespace(readed))  NEXT_STATE(start);
     if (is_number(readed)) {
-        dstring_append(&readed_string, readed);
+        if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(s_int);
     }
     if (readed == '\n')         NEXT_STATE(eol);
     if (readed == EOF)          eof(readed);
     if (readed == '_') {
-        dstring_append(&readed_string, readed);
+        if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(und_scr);
     }
     if (readed == ',')          NEXT_STATE(comma);
@@ -382,7 +396,10 @@ state_T start(char readed) {
     if (readed == '*')          NEXT_STATE(mul);
     if (readed == '/')          NEXT_STATE(s_div);
     if (is_alfa(readed)) {
-        dstring_append(&readed_string, readed);
+        if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(identifier);
     }
     if (readed == '"')          NEXT_STATE(string_start);
@@ -417,7 +434,10 @@ state_T eof(char readed) {
 state_T und_scr(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (is_alfa_num(readed))  NEXT_STATE(identifier);
     
@@ -712,7 +732,10 @@ state_T block_c_start_q(char readed) {
 state_T identifier(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
     
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (is_alfa_num(readed) || readed == '_')  NEXT_STATE(identifier);
 
@@ -759,7 +782,10 @@ state_T data_type(char readed) {
 state_T s_int(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (is_number(readed))                  NEXT_STATE(s_int);
     if (readed == '.')                      NEXT_STATE(dbl_s);
@@ -776,7 +802,10 @@ state_T s_int(char readed) {
 state_T dbl_s(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (is_number(readed))      NEXT_STATE(dbl);
 
@@ -786,7 +815,10 @@ state_T dbl_s(char readed) {
 state_T dbl(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (is_number(readed))                   NEXT_STATE(dbl);
     if (readed == 'e' || readed == 'E')      NEXT_STATE(exp_s);
@@ -802,7 +834,10 @@ state_T dbl(char readed) {
 state_T exp_s(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed == '+' || readed == '-')      NEXT_STATE(exp_sign);
     if (is_number(readed))                   NEXT_STATE(s_exp);
@@ -813,7 +848,10 @@ state_T exp_s(char readed) {
 state_T exp_sign(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (is_number(readed))  NEXT_STATE(s_exp);
 
@@ -823,7 +861,10 @@ state_T exp_sign(char readed) {
 state_T s_exp(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (is_number(readed))  NEXT_STATE(s_exp);
     
@@ -849,7 +890,10 @@ state_T string_start(char readed) {
     if (readed == '"')                                 NEXT_STATE(empty_string);
     if (readed == '\\')                                NEXT_STATE(string_escape);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed != '\\' && is_in_string_sigma(readed))  NEXT_STATE(string_inner);
 
@@ -884,7 +928,10 @@ state_T m_string_inner(char readed) {
 
     if (readed == '\\')                     NEXT_STATE(m_string_escape);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
     
     if (readed == '\n')                     NEXT_STATE(eol_end_q);
     if (readed != '\\' && readed != '\n')   NEXT_STATE(m_string_inner);
@@ -896,21 +943,33 @@ state_T m_string_escape(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
     if (readed == 'n') {
-        dstring_append(&readed_string, '\n');
+        if (!dstring_append(&readed_string, '\n')) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(m_string_inner);
     }
 
     if (readed == 'r') {
-        dstring_append(&readed_string, '\r');
+        if (!dstring_append(&readed_string, '\r')) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(m_string_inner);
     }
 
     if (readed == 't') {
-        dstring_append(&readed_string, '\t');
+        if (!dstring_append(&readed_string, '\t')) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(m_string_inner);
     }
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed != 'u')  NEXT_STATE(m_string_inner);
     if (readed == 'u')  NEXT_STATE(m_string_hexa_q);
@@ -926,7 +985,10 @@ state_T m_string_hexa_q(char readed) {
         NEXT_STATE(m_string_hexa);
     }
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed != '{')  NEXT_STATE(m_string_inner);
 
@@ -938,12 +1000,18 @@ state_T m_string_hexa(char readed) {
 
     if (readed == '}' && hexa_string > 0) {
         dstring_retract(&readed_string, 1);
-        dstring_append(&readed_string, hexa_to_dec(&tmp_string));
+        if (!dstring_append(&readed_string, hexa_to_dec(&tmp_string))) {
+            malloc_error = true;
+            return;
+        }
         dstring_clear(&tmp_string);
         NEXT_STATE(m_string_inner);
     }
     if (is_hexa(readed)) {
-        dstring_append(&tmp_string, readed);
+        if (!dstring_append(&tmp_string, readed)) {
+            malloc_error = true;
+            return;
+        }
         hexa_string++;
         if (hexa_string > 8) NEXT_STATE(NULL);
         NEXT_STATE(m_string_hexa);
@@ -955,7 +1023,10 @@ state_T m_string_hexa(char readed) {
 state_T eol_end_q(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed != '"')  NEXT_STATE(m_string_inner);
     if (readed == '"')  NEXT_STATE(m_string_end1);
@@ -966,7 +1037,10 @@ state_T eol_end_q(char readed) {
 state_T m_string_end1(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed == '\n') NEXT_STATE(eol_end_q);
     if (readed != '"')  NEXT_STATE(m_string_inner);
@@ -978,7 +1052,10 @@ state_T m_string_end1(char readed) {
 state_T m_string_end2(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed == '\n') NEXT_STATE(eol_end_q);
     if (readed != '"')  NEXT_STATE(m_string_inner);
@@ -1007,7 +1084,10 @@ state_T string_inner(char readed) {
     if (readed == '\\')                                NEXT_STATE(string_escape);
     if (readed == '"')                                 NEXT_STATE(string_end);
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed != '\\' && is_in_string_sigma(readed))  NEXT_STATE(string_inner);
 
@@ -1018,21 +1098,33 @@ state_T string_escape(char readed) {
     DEBUG_PRINT("Readed char is %c", readed);
 
     if (readed == 'n') {
-        dstring_append(&readed_string, '\n');
+        if (!dstring_append(&readed_string, '\n')) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(string_inner);
     }
 
     if (readed == 'r') {
-        dstring_append(&readed_string, '\r');
+        if (!dstring_append(&readed_string, '\r')) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(string_inner);
     }
 
     if (readed == 't') {
-        dstring_append(&readed_string, '\t');
+        if (!dstring_append(&readed_string, '\t')) {
+            malloc_error = true;
+            return;
+        }
         NEXT_STATE(string_inner);
     }
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
 
     if (readed == 'u')                                                   NEXT_STATE(string_hexa_q);
     if ((readed != 'u' && is_in_string_sigma(readed)) || readed == '"')  NEXT_STATE(string_inner);
@@ -1048,7 +1140,10 @@ state_T string_hexa_q(char readed) {
         NEXT_STATE(string_hexa);
     }
 
-    dstring_append(&readed_string, readed);
+    if (!dstring_append(&readed_string, readed)) {
+            malloc_error = true;
+            return;
+        }
     
     if (readed != '{' && is_in_string_sigma(readed))  NEXT_STATE(string_inner);
 
@@ -1060,12 +1155,18 @@ state_T string_hexa(char readed) {
 
     if (readed == '}' && hexa_string > 0) {
         dstring_retract(&readed_string, 1);
-        dstring_append(&readed_string, hexa_to_dec(&tmp_string));
+        if (!dstring_append(&readed_string, hexa_to_dec(&tmp_string))) {
+            malloc_error = true;
+            return;
+        }
         dstring_clear(&tmp_string);
         NEXT_STATE(string_inner);
     }
     if (is_hexa(readed)) {
-        dstring_append(&tmp_string, readed);
+        if (!dstring_append(&tmp_string, readed)) {
+            malloc_error = true;
+            return;
+        }
         hexa_string++;
         if (hexa_string > 8) NEXT_STATE(NULL);
         NEXT_STATE(string_hexa);
