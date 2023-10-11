@@ -3,7 +3,7 @@
  * @file main.c
  * @brief main to run lexical analyzer
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
- * @date 07.10.2023
+ * @date 08.10.2023
  **/
 
 #include <stdio.h>

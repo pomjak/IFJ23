@@ -1,4 +1,5 @@
 /**
+ * @name IFJ23
  * @file dyn_string.c
  * @brief Dynamic string operations
  * @author Simon Cagala <xcagal00>

@@ -1,6 +1,7 @@
 /**
- * @file lexical_analyzer.h
- * @brief Lexical analyzer header
+ * @name IFJ23
+ * @file debug.h
+ * @brief Definitions of debug functions
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
  * @date 07.10.2023
  **/

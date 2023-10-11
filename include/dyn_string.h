@@ -1,4 +1,5 @@
 /**
+ * @name IFJ23
  * @file dyn_string.h
  * @brief Dynamic String header
  * @author Simon Cagala <xcagal00>

@@ -1,4 +1,5 @@
 /**
+ * @name IFJ23
  * @file main.c
  * @brief main to run lexical analyzer
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
