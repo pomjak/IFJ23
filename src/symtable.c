@@ -34,6 +34,19 @@ unsigned long hash2(char *id)
     return (hash % SYMTAB_SIZE);
 }
 
+unsigned long get_hash(dstring_t *id, symtab_t *symtab)
+{
+    char *wanted = dstring_to_str(id);
+
+    unsigned long index = hash(wanted);
+    unsigned long step = hash2(wanted);
+
+    while ((*symtab)[index] != NULL)          // gets hash of 1st null slot
+        index = (index + step) % SYMTAB_SIZE; // if occupied, double hash
+
+    return index;
+}
+
 symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
 {
     char *wanted = dstring_to_str(id);
@@ -43,16 +56,36 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
 
     if (symtab == NULL)
         return NULL;
-    
+
     while ((*symtab)[index] != NULL)
     {
-        if(!dstring_cmp(&((*symtab)[index])->name, id))
+        if (!dstring_cmp(&((*symtab)[index])->name, id))
             if ((*symtab)[index]->active) // if name matches and item is active, success
                 return ((*symtab)[index]);
-            else // if item is inactive, it was deleted, not
+            else // if item is inactive, it was deleted, not found
                 return NULL;
         else
-            index += step;
+            index = (index + step) % SYMTAB_SIZE;
     }
     return NULL;
+}
+
+uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+
+    if (!item)
+    {
+        symtab_item_t *new = malloc(sizeof(symtab_item_t));
+
+        if (!new)
+            return ERR_INTERNAL;
+
+        new = data;
+        (*symtab)[get_hash(id, symtab)] = new;
+    }
+    else
+        item = data;
+
+    return 0;
 }

@@ -49,7 +49,7 @@ typedef struct param
  */
 typedef struct symtab_item
 {
-    bool active;           // active - 0 -> item was deleted (but kept in htab)
+    bool active;           // active - 0 -> item was deleted (but kept in htab for path )
     dstring_t name;        // id
     enum Type type;        // func,int,dbl,str,const
     bool is_mutable;       // true for var, false for let
@@ -87,10 +87,29 @@ unsigned long hash(char *id);
 unsigned long hash2(char *id);
 
 /**
- * @brief search in chosen symtable based on id
+ * @brief get the hash of free slot or occupied slot with matching id using double hashing
+ * 
+ * @param id 
+ * @param symtab 
+ * @return unsigned long 
+ */
+unsigned long get_hash(dstring_t *id, symtab_t *symtab);
+
+/**
+ * @brief search in specified symtable based on id
  *
  * @param symtab the specified table to search
  * @param id the ID to search for
  * @return symtab_item_t* returns pointer to data structure if found, else NULL
  */
 symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
+
+/**
+ * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it 
+ * 
+ * @param symtab the specified table for the data to be inserted into
+ * @param id id to be hashed
+ * @param data ptr to data, which will be inserted or updated
+ * @return uint8_t 
+ */
+uint8_t symtable_insert(symtab_t *symtab,dstring_t *id, symtab_item_t *data);

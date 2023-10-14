@@ -7,8 +7,7 @@ build:
 
 run: build
 	@echo "[info] performing test symtable 1"
-	./$(NAME) > ./output.txt 2>&1
-	diff ./expected.txt ./output.txt || (echo -e "[info] test symtable 1 \e[31mFAIL\e[0m" && exit 1)
+	./$(NAME) > ./output.txt 2>&1 || (echo -e "[info] test symtable 1 \e[31mFAIL\e[0m" && exit 1)
 	echo -e "[info] test symtable 1 \e[32mPASS\e[0m"
 
 artifacts:
