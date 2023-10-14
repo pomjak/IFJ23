@@ -72,20 +72,33 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
 
 uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
 {
-    symtab_item_t *item = symtable_search(symtab, id);
-
-    if (!item)
+    symtab_item_t *item = symtable_search(symtab, id); // try to search in symtab
+    if (!item)                                         // if not in symtab alloc new slot for data
     {
         symtab_item_t *new = malloc(sizeof(symtab_item_t));
 
         if (!new)
             return ERR_INTERNAL;
 
-        new = data;
+        *new = *data;
         (*symtab)[get_hash(id, symtab)] = new;
     }
-    else
+    else // if already in symtab,update
         item = data;
 
     return 0;
+}
+
+void symtable_dispose(symtab_t *symtab)
+{
+    for(int i = 0; i < SYMTAB_SIZE; ++i)
+    {
+        if((*symtab)[i] != NULL)
+        {
+            free((*symtab)[i]);
+            (*symtab)[i] = NULL;
+        }
+        
+    }
+
 }

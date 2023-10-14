@@ -24,6 +24,10 @@ int main()
     
     assert(symtable_search(NULL,&temp) == NULL);
     assert(symtable_search(&global_sym_table,&temp) == NULL);
+
+    dstring_free(&temp);
+
+    symtable_dispose(&global_sym_table);
     
     return 0;
 }

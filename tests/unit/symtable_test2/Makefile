@@ -7,9 +7,11 @@ build:
 
 run: build
 	@echo "[info] performing test symtable 2"
-	./$(NAME) > ./output.txt 2>&1 || (echo -e "[info] test symtable 2 \e[31mFAIL\e[0m" && exit 1)
+	./$(NAME) > ./output.txt 2>&1 || (echo -e "[info] test symtable 2 \e[31mFAIL\e[0m" ; cat ./output.txt && exit 1)
+	valgrind --leak-check=full --verbose -s ./$(NAME) > ./valgrind_output.txt 2>&1
 	echo -e "[info] test symtable 2 \e[32mPASS\e[0m"
 
 artifacts:
 	@echo "[info] creating artifacts for symtable 2"
 	cp output.txt ../test_artifacts/units_test_symtable2.txt
+	cp valgrind_output.txt ../test_artifacts/units_test_symtable_valgrind2.txt

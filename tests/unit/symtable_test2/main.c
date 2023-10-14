@@ -24,6 +24,7 @@ int main()
 
     data.active = true;
     data.is_mutable = false;
+    dstring_init(&data.name);
     dstring_copy(&temp, &data.name);
     data.type = double_;
 
@@ -39,6 +40,11 @@ int main()
     assert(getter->is_mutable==false);
     assert(dstring_cmp(&getter->name,&temp) == 0);
     assert(data.type == double_);
+    
+    dstring_free(&temp);
+    dstring_free(&data.name);
+
+    symtable_dispose(&global_sym_table);
 
     return 0;
 }

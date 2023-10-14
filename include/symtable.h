@@ -113,3 +113,10 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
  * @return uint8_t 
  */
 uint8_t symtable_insert(symtab_t *symtab,dstring_t *id, symtab_item_t *data);
+
+/**
+ * @brief dispose all allocated items in symtable
+ * 
+ * @param symtab to dispose
+ */
+void symtable_dispose(symtab_t *symtab);
