@@ -10,18 +10,20 @@
  */
 
 #include "symtable.h"
+#include <assert.h>
 
 int main()
 {   
     symtab_t global_sym_table;
-    dstring_t *temp = NULL;
+    dstring_t temp;
 
-    dstring_init(temp);
-    dstring_add_const_str(temp,"x");
+    dstring_init(&temp);
+    dstring_add_const_str(&temp,"x");
 
     symtable_init(&global_sym_table);
-    if(symtable_search(&global_sym_table,temp) != NULL)
-        return 1;
-        
+    
+    assert(symtable_search(NULL,&temp) == NULL);
+    assert(symtable_search(&global_sym_table,&temp) == NULL);
+    
     return 0;
 }
