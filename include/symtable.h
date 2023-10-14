@@ -11,10 +11,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "dyn_string.h"
 #include "error.h"
 
-#define SYMTAB_SIZE 1021 //max size of htab items is prime number for better distribution 
+#define SYMTAB_SIZE 1021 // max size of htab items is prime number for better distribution
 
 /**
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil) or constant?
@@ -35,12 +36,12 @@ enum Type
  * @brief struct for storing paramaters passed to functions
  *
  */
-typedef struct param     
+typedef struct param
 {
     dstring_t name;
     dstring_t label;
     enum Type type;
-}param_t;
+} param_t;
 
 /**
  * @brief struct of one record in symtable
@@ -48,42 +49,48 @@ typedef struct param
  */
 typedef struct symtab_item
 {
-    dstring_t name;         //id
-    enum Type type;         //func,int,dbl,str,const
-    bool is_mutable;        //true for var, false for let
-    dstring_t value;        //value
-    param_t *parametrs;     //pointer to param_t struct
-    enum Type return_type;  //anything but func
-    void *local_symtable;   //? maybe will be implemented in stack ?
-}symtab_item_t;
+    bool active;           // active - 0 -> item was deleted (but kept in htab)
+    dstring_t name;        // id
+    enum Type type;        // func,int,dbl,str,const
+    bool is_mutable;       // true for var, false for let
+    dstring_t value;       // value
+    param_t *parametrs;    // pointer to param_t struct
+    enum Type return_type; // anything but func
+    void *local_symtable;  //? maybe will be implemented in stack ?
+} symtab_item_t;
 
 typedef symtab_item_t *symtab_t[SYMTAB_SIZE];
 
-
 /**
  * @brief Init of sym_table
- * 
+ *
  * @param symtab pointer to desired symtable
  */
 void symtable_init(symtab_t *symtab);
 
 /**
  * @brief hash function implemented as DJB2 algo
- * 
+ *
  * @cite from ial presentation 6th 21/22
  * @param id identifier to be hashed
  * @return u_int32_t hashed key
  */
 unsigned long hash(char *id);
 
-
 /**
  * @brief hash2 for double hashing when collision occurs implemented as BKDR
- * 
+ *
  * @cite from ial presentation 6th 21/22
  * @param id identifier to be hashed
  * @return u_int32_t new hashed key
  */
 unsigned long hash2(char *id);
 
-
+/**
+ * @brief search in chosen symtable based on id
+ *
+ * @param symtab the specified table to search
+ * @param id the ID to search for
+ * @return symtab_item_t* returns pointer to data structure if found, else NULL
+ */
+symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);

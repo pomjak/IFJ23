@@ -33,3 +33,26 @@ unsigned long hash2(char *id)
 
     return (hash % SYMTAB_SIZE);
 }
+
+symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
+{
+    char *wanted = dstring_to_str(id);
+
+    unsigned long index = hash(wanted);
+    unsigned long step = hash2(wanted);
+
+    if (symtab == NULL)
+        return NULL;
+    
+    while ((*symtab)[index] != NULL)
+    {
+        if(!dstring_cmp(&((*symtab)[index])->name, id))
+            if ((*symtab)[index]->active) // if name matches and item is active, success
+                return ((*symtab)[index]);
+            else // if item is inactive, it was deleted, not
+                return NULL;
+        else
+            index += step;
+    }
+    return NULL;
+}
