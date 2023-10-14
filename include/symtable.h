@@ -70,9 +70,20 @@ void symtable_init(symtab_t *symtab);
 /**
  * @brief hash function implemented as DJB2 algo
  * 
+ * @cite from ial presentation 6th 21/22
  * @param id identifier to be hashed
  * @return u_int32_t hashed key
  */
 unsigned long hash(char *id);
+
+
+/**
+ * @brief hash2 for double hashing when collision occurs implemented as BKDR
+ * 
+ * @cite from ial presentation 6th 21/22
+ * @param id identifier to be hashed
+ * @return u_int32_t new hashed key
+ */
+unsigned long hash2(char *id);
 
 

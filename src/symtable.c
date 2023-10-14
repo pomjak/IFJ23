@@ -21,3 +21,15 @@ unsigned long hash(char *id)
 
     return (hash % SYMTAB_SIZE);
 }
+
+unsigned long hash2(char *id)
+{
+    unsigned int seed = 131;
+    unsigned int hash;
+    unsigned int i;
+
+    for (i = 0, hash = 0; *id; id++, i++)
+        hash = (hash * seed) + (*id);
+
+    return (hash % SYMTAB_SIZE);
+}
