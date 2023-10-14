@@ -1,7 +1,7 @@
 /**
  * @file symtable.h
  * @author Pomsar Jakub xpomsa00
- * @brief implementation of symtable(version hashtable with open addressing)
+ * @brief Implementation of symtable (version hashtable with open addressing)
  * @version 0.1
  * @date 2023-10-13
  *
@@ -48,25 +48,24 @@ typedef struct param
  */
 typedef struct symtab_item
 {
-    dstring name;
+    dstring_t name;
     Type type;
     bool is_mutable;
     dstring_t value;
     param_t *parametrs;
     Type return_type;
-    symtab_item_t *local_symtable;
+    symtab_item_t *local_symtable; //? maybe will be implemented in stack ?
 }symtab_item_t;
 
-typedef symtab_item_t *symtab[SYMTAB_SIZE];
+typedef symtab_item_t *symtab_t[SYMTAB_SIZE];
 
 
 /**
- * @brief Init of symbol_table
+ * @brief Init of sym_table
  * 
  * @param symtab pointer to desired symtable
- * @return u_int8_t  ad.error code
  */
-u_int8_t symtable_init(symtab_item_t *symtab);
+void symtable_init(symtab_t *symtab);
 
 /**
  * @brief hash function implemented as DJB2 algo
@@ -74,4 +73,4 @@ u_int8_t symtable_init(symtab_item_t *symtab);
  * @param id identifier to be hashed
  * @return u_int32_t hashed key
  */
-u_int32_t hash(dstring id);
+unsigned long hash(dstring_t *id);
