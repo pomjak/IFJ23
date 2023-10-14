@@ -54,9 +54,24 @@ typedef struct symtab_item
     dstring_t value;
     param_t *parametrs;
     Type return_type;
-    //TODO pointer to local table for function
+    symtab_item_t *local_symtable;
 }symtab_item_t;
 
 typedef symtab_item_t *symtab[SYMTAB_SIZE];
 
-u_int8_t symtable_init(symtab*);
+
+/**
+ * @brief Init of symbol_table
+ * 
+ * @param symtab pointer to desired symtable
+ * @return u_int8_t  ad.error code
+ */
+u_int8_t symtable_init(symtab_item_t *symtab);
+
+/**
+ * @brief hash function implemented as DJB2 algo
+ * 
+ * @param id identifier to be hashed
+ * @return u_int32_t hashed key
+ */
+u_int32_t hash(dstring id);
