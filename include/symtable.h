@@ -39,7 +39,7 @@ typedef struct param
 {
     dstring_t name;
     dstring_t label;
-    Type type;
+    enum Type type;
 }param_t;
 
 /**
@@ -48,13 +48,13 @@ typedef struct param
  */
 typedef struct symtab_item
 {
-    dstring_t name;
-    Type type;
-    bool is_mutable;
-    dstring_t value;
-    param_t *parametrs;
-    Type return_type;
-    symtab_item_t *local_symtable; //? maybe will be implemented in stack ?
+    dstring_t name;         //id
+    enum Type type;         //func,int,dbl,str,const
+    bool is_mutable;        //true for var, false for let
+    dstring_t value;        //value
+    param_t *parametrs;     //pointer to param_t struct
+    enum Type return_type;  //anything but func
+    void *local_symtable;   //? maybe will be implemented in stack ?
 }symtab_item_t;
 
 typedef symtab_item_t *symtab_t[SYMTAB_SIZE];
@@ -73,4 +73,6 @@ void symtable_init(symtab_t *symtab);
  * @param id identifier to be hashed
  * @return u_int32_t hashed key
  */
-unsigned long hash(dstring_t *id);
+unsigned long hash(char *id);
+
+

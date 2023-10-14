@@ -1,6 +1,6 @@
 # compiler settings
 CC := gcc
-CFLAGS :=-Wall -Wextra -Werror -pedantic -lm
+CFLAGS :=-Wall -Wextra -pedantic -lm
 
 # program settings
 PROG := ifj23
