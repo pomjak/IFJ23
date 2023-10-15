@@ -120,7 +120,7 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id)
         return NULL;
 }
 
-uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Type type)
+uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
@@ -128,24 +128,36 @@ uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Ty
     if (value != NULL)
         if (!dstring_copy(value, &item->value))
             return ERR_INTERNAL;
-    if (type != undefined)
-        item->type = type;
     return 0;
 }
 
-uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined, bool declared)
+uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
         return 1;
-
-    item->is_mutable = is_mutable;
-    item->defined = defined;
-    item->declared = declared;
+    item->type = type;
     return 0;
 }
 
-uint8_t set_return_type(symtab_item_t *symtab, dstring_t *id, Type return_type)
+uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool is_func_defined, bool is_var_declared, bool is_constant)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return 1;
+    if (is_mutable != NULL)
+        item->is_mutable = is_mutable;
+    if (is_func_defined != NULL)
+        item->is_func_defined = is_func_defined;
+    if (is_var_declared != NULL)
+        item->is_var_declared = is_var_declared;
+    if (is_constant != NULL)
+        item->is_const = is_constant;
+
+    return 0;
+}
+
+uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
@@ -153,7 +165,7 @@ uint8_t set_return_type(symtab_item_t *symtab, dstring_t *id, Type return_type)
     if (item->type != function)
         return 1;
 
-    item->return_type =return_type;
+    item->return_type = return_type;
 
     return 0;
 }

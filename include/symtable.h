@@ -28,8 +28,7 @@ typedef enum
     integer,
     double_,
     string,
-    nil,
-    constant
+    nil
 } Type;
 
 //? FIXME maybe useless ?
@@ -55,8 +54,9 @@ typedef struct symtab_item
     dstring_t name;       // id
     Type type;            // func,int,dbl,str,const
     bool is_mutable;      // true for var, false for let
-    bool defined;         // true if func was already defined, else false
-    bool declared;        // true if item was already declared, else false
+    bool is_func_defined; // true if func was already defined, else false
+    bool is_var_declared; // true if item was already declared, else false
+    bool is_const;        // true if expression is constant "hello_world", "3", "2.7e10"
     dstring_t value;      // value
     param_t *parametrs;   // pointer to param_t struct
     Type return_type;     // anything but func
@@ -150,17 +150,23 @@ void symtable_dispose(symtab_t *symtab);
 symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id);
 
 /**
- * @brief Set the value and type of item directly in symtable
- * @attention
- * if desired to set only one of item attributes [value/type],
- * the other should be set to its default value [value: NULL / type: undefined]
+ * @brief Set the value of item directly in symtable
  * @param symtab        ptr to symtable
  * @param id            id of modified item
  * @param value         value to be set
- * @param type          type to be set
- * @return uint8_t      return 0 if success, 1 if not found,
+ * @return uint8_t      return 0 if success, 1 if not found
  */
-uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Type type);
+uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value);
+
+/**
+ * @brief Set the type of item directly in symtable
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of modified item
+ * @param type          type to be set
+ * @return uint8_t      return 0 if success, 1 if not found
+ */
+uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type);
 
 /**
  * @brief Set the flags of item directly in symtable
@@ -172,7 +178,7 @@ uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Ty
  * @param declared      declared flag 1-set / 0-unset
  * @return unit8_t      uint8_t return 0 if success, 1 if not found,
  */
-uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined, bool declared);
+uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool is_func_defined, bool is_var_declared, bool is_constant);
 
 /**
  * @brief Set the return type of item if type is function
@@ -181,7 +187,7 @@ uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined
  * @param id        id of modified item
  * @return uint8_t  0 if success, 1 if item is not function, 2 if item not found
  */
-uint8_t set_return_type(symtab_item_t *symtab, dstring_t *id, Type return_type);
+uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type);
 
 /**
  * @brief Get the type of item from symtab
