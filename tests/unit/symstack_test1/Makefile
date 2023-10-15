@@ -5,7 +5,7 @@ make:
 	$(CC) *.c -I../../../include ../../../src/symstack.c -o $(NAME)
 
 clean:
-	rm -rf $(NAME)
+	rm -rf $(NAME) *.dSYM
 
 run: make
 	./$(NAME)
