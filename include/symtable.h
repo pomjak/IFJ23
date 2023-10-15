@@ -84,9 +84,9 @@ unsigned long hash(char *id);
 /**
  * @brief hash2 for double hashing when collision occurs implemented as BKDR
  *
- * @cite from ial presentation 6th 21/22
- * @param id identifier to be hashed
- * @return u_int32_t new hashed key
+ * @cite                from ial presentation 6th 21/22
+ * @param id            identifier to be hashed
+ * @return u_int32_t    new hashed key
  */
 unsigned long hash2(char *id);
 
@@ -102,18 +102,18 @@ unsigned long get_hash(dstring_t *id, symtab_t *symtab);
 /**
  * @brief search in specified symtable based on id
  *
- * @param symtab the specified table to search
- * @param id the ID to search for
- * @return symtab_item_t* returns pointer to data structure if found, else NULL
+ * @param symtab            the specified table to search
+ * @param id                the ID to search for
+ * @return symtab_item_t*   returns pointer to data structure if found, else NULL
  */
 symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
 
 /**
  * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it
  *
- * @param symtab the specified table for the data to be inserted into
- * @param id id to be hashed
- * @param data ptr to data, which will be inserted or updated
+ * @param symtab    the specified table for the data to be inserted into
+ * @param id        id to be hashed
+ * @param data      ptr to data, which will be inserted or updated
  * @return uint8_t
  */
 uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data);
@@ -127,9 +127,9 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data);
  * it is effectively deactivated or considered inactive.
  * As a result, searches or operations involving this item will not yield expected results,
  * essentially making it appear as though the item has been deleted.
- * @param symtab targeted symtab
- * @param target target to be deleted(set inactive)
- * @return uint8_t 0 for successful deactivating, 1 otherwise
+ * @param symtab    targeted symtab
+ * @param target    target to be deleted(set inactive)
+ * @return uint8_t  0 for successful deactivating, 1 otherwise
  */
 uint8_t symtable_delete(symtab_t *symtab, dstring_t *target);
 
@@ -143,10 +143,33 @@ void symtable_dispose(symtab_t *symtab);
 /**
  * @brief Get the local symtable for specifed function from global symtable
  *
- * @param global_symtab ptr to global symtable
- * @param func_id function id for which local symtable is returned
- * @return symtab_t* ptr to local symtable if success, else if func_id is not stored or not an function -> NULL
+ * @param global_symtab     ptr to global symtable
+ * @param func_id           function id for which local symtable is returned
+ * @return symtab_t*        ptr to local symtable if success, else if func_id is not stored or not an function -> NULL
  */
 symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id);
 
-void
+/**
+ * @brief Set the value and type of item directly in symtable
+ * @attention
+ * if desired to set only one of item attributes [value/type],
+ * the other should be set to its default value [value: NULL / type: undefined]
+ * @param symtab        ptr to symtable
+ * @param id            id of modified item
+ * @param value         value to be set
+ * @param type          type to be set
+ * @return uint8_t      return 0 if success, 1 if not found,
+ */
+uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, enum Type type);
+
+/**
+ * @brief Set the flags of item directly in symtable
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of modified item
+ * @param is_mutable    flag 1-set / 0-unset
+ * @param defined       flag 1-set / 0-unset
+ * @param declared      flag 1-set / 0-unset
+ * @return unit8_t      uint8_t return 0 if success, 1 if not found,
+ */
+uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined, bool declared);

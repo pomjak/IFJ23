@@ -80,8 +80,8 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
         if (!new)
             return ERR_INTERNAL;
 
-        *new = *data;                                   //copy data
-        (*symtab)[get_hash(id, symtab)] = new;          //handover poiter to new allocated item
+        *new = *data;                          // copy data
+        (*symtab)[get_hash(id, symtab)] = new; // handover poiter to new allocated item
     }
     else // if already in symtab, update
         *item = *data;
@@ -103,7 +103,7 @@ void symtable_dispose(symtab_t *symtab)
 {
     for (int i = 0; i < SYMTAB_SIZE; ++i)
     {
-        if ((*symtab)[i] != NULL)//free only allocated pointer, not null pointers
+        if ((*symtab)[i] != NULL) // free only allocated pointer, not null pointers
         {
             free((*symtab)[i]);
             (*symtab)[i] = NULL;
@@ -114,8 +114,34 @@ void symtable_dispose(symtab_t *symtab)
 symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id)
 {
     symtab_item_t *item = symtable_search(global_symtab, func_id);
-    if (item && item->type == function) //if found item is not null and is function, return ptr to local symtable
+    if (item && item->type == function) // if found item is not null and is function, return ptr to local symtable
         return item->local_symtable;
-    else                                //else null
+    else // else null
         return NULL;
 }
+
+uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, enum Type type)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return 1;
+    if(value!=NULL)
+        if(!dstring_copy(value, &item->value))
+            return ERR_INTERNAL;
+    if(type!=undefined)
+        item->type = type;
+    return 0;
+}
+
+uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined, bool declared)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return 1;
+        
+    item->is_mutable = is_mutable;
+    item->defined = defined;
+    item->declared = declared;
+    return 0;
+}
+
