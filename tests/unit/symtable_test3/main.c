@@ -27,6 +27,7 @@ int main()
     data.is_mutable = false;
     dstring_init(&data.name);
     dstring_copy(&temp, &data.name);
+    dstring_init(&data.value);
     dstring_add_const_str(&data.value, "3.92e-9");
     data.type = double_;
 
@@ -74,6 +75,7 @@ int main()
     dstring_free(&temp);
     dstring_free(&temp1);
     dstring_free(&data.name);
+    dstring_free(&data.value);
 
     symtable_dispose(&global_sym_table);
     symtable_dispose(&local_sym_table);

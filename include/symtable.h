@@ -56,7 +56,7 @@ typedef struct symtab_item
     dstring_t value;       // value
     param_t *parametrs;    // pointer to param_t struct
     enum Type return_type; // anything but func
-    void *local_symtable;  //? maybe will be implemented in stack ?
+    void *local_symtable;  
 } symtab_item_t;
 
 typedef symtab_item_t *symtab_t[SYMTAB_SIZE];
