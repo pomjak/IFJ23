@@ -58,3 +58,4 @@ clean:
 	rm -rf build
 	rm -rf test_artifacts
 	rm -rf test_build
+	rm -f  vgcore.*
