@@ -169,20 +169,47 @@ Type get_type(symtab_t *symtab, dstring_t *id)
     return item->type;
 }
 
-uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool is_func_defined, bool is_var_declared, bool is_constant)
+uint8_t set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
         return 1;
-    if (is_mutable != NULL)
-        item->is_mutable = is_mutable;
-    if (is_func_defined != NULL)
-        item->is_func_defined = is_func_defined;
-    if (is_var_declared != NULL)
-        item->is_var_declared = is_var_declared;
-    if (is_constant != NULL)
-        item->is_const = is_constant;
+    if (item->type == function)
+        return 2;
+    item->is_mutable = is_mutable;
+    return 0;
+}
 
+uint8_t set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return 1;
+    if (item->type != function)
+        return 2;
+    item->is_func_defined = is_func_defined;
+    return 0;
+}
+
+uint8_t set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return 1;
+    if (item->type == function)
+        return 2;
+    item->is_var_declared = is_var_declared;
+    return 0;
+}
+
+uint8_t set_constant(symtab_t *symtab, dstring_t *id, bool is_constant)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return 1;
+    if (item->type == function)
+        return 2;
+    item->is_const = is_constant;
     return 0;
 }
 
@@ -207,6 +234,8 @@ Type get_return_type(symtab_t *symtab, dstring_t *id, bool *not_function)
 
     if (item->type != function)
         *not_function = true;
+    else
+        *not_function = false;
 
     return item->return_type;
 }

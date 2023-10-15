@@ -197,16 +197,84 @@ uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type);
 Type get_type(symtab_t *symtab, dstring_t *id);
 
 /**
- * @brief Set the flags of item directly in symtable
- *
- * @param symtab        ptr to symtable
- * @param id            id of modified item
- * @param is_mutable    is_mutable flag 1-set / 0-unset
- * @param defined       defined flag 1-set / 0-unset
- * @param declared      declared flag 1-set / 0-unset
- * @return unit8_t      uint8_t return 0 if success, 1 if not found,
+ * @brief Set the mutability object
+ * 
+ * @param symtab 
+ * @param id 
+ * @param is_mutable 
+ * @return uint8_t 
  */
-uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool is_func_defined, bool is_var_declared, bool is_constant);
+uint8_t set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable);
+
+/**
+ * @brief Set the func definition object
+ * 
+ * @param symtab 
+ * @param id 
+ * @param is_func_defined 
+ * @return uint8_t 
+ */
+uint8_t set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined);
+
+/**
+ * @brief Set the var declaration object
+ * 
+ * @param symtab 
+ * @param id 
+ * @param is_var_declared 
+ * @return uint8_t 
+ */
+uint8_t set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared);
+
+/**
+ * @brief Set the constant of variable item
+ *
+ * @param symtab
+ * @param id
+ * @param is_constant
+ * @return uint8_t
+ */
+uint8_t set_constant(symtab_t *symtab, dstring_t *id, bool is_constant);
+
+/**
+ * @brief Get the mutability object
+ * 
+ * @param symtab 
+ * @param id 
+ * @param is_mutable 
+ * @return bool
+ */
+bool get_mutability(symtab_t *symtab, dstring_t *id, bool *not_var);
+
+/**
+ * @brief Get the func definition object
+ * 
+ * @param symtab 
+ * @param id 
+ * @param is_func_defined 
+ * @return bool
+ */
+bool get_func_definition(symtab_t *symtab, dstring_t *id, bool *not_function);
+
+/**
+ * @brief Get the var declaration object
+ * 
+ * @param symtab 
+ * @param id 
+ * @param is_var_declared 
+ * @return bool
+ */
+bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *not_var);
+
+/**
+ * @brief Get the constant object
+ * 
+ * @param symtab 
+ * @param id 
+ * @param is_constant 
+ * @return bool
+ */
+bool get_constant(symtab_t *symtab, dstring_t *id, bool *is_function);
 
 /**
  * @brief Set the return type of item if type is function
