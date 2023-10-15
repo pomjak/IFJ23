@@ -63,7 +63,7 @@ int main()
 
     symtab_item_t *getter1;
     getter1 = symtable_search(&global_sym_table, &temp1);
-
+    
     assert(getter1 != NULL);
     assert(getter1->active == true);
     assert(getter1->is_mutable == false);

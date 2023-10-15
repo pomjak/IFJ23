@@ -80,8 +80,8 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
         if (!new)
             return ERR_INTERNAL;
 
-        *new = *data;
-        (*symtab)[get_hash(id, symtab)] = new;
+        *new = *data;                                   //copy data
+        (*symtab)[get_hash(id, symtab)] = new;          //handover poiter to new allocated item
     }
     else // if already in symtab, update
         *item = *data;
@@ -103,10 +103,19 @@ void symtable_dispose(symtab_t *symtab)
 {
     for (int i = 0; i < SYMTAB_SIZE; ++i)
     {
-        if ((*symtab)[i] != NULL)
+        if ((*symtab)[i] != NULL)//free only allocated pointer, not null pointers
         {
             free((*symtab)[i]);
             (*symtab)[i] = NULL;
         }
     }
+}
+
+symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id)
+{
+    symtab_item_t *item = symtable_search(global_symtab, func_id);
+    if (item && item->type == function) //if found item is not null and is function, return ptr to local symtable
+        return item->local_symtable;
+    else                                //else null
+        return NULL;
 }

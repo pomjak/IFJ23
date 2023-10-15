@@ -41,6 +41,7 @@ typedef struct param
     dstring_t name;
     dstring_t label;
     enum Type type;
+    struct param* next;
 } param_t;
 
 /**
@@ -49,7 +50,7 @@ typedef struct param
  */
 typedef struct symtab_item
 {
-    bool active;           // active - 0 -> item was deleted (but kept in htab for path )
+    bool active;           // active - 0 -> item was deleted (but kept in htab for path-finding[implicit synonyms])
     dstring_t name;        // id
     enum Type type;        // func,int,dbl,str,const
     bool is_mutable;       // true for var, false for let
@@ -135,3 +136,12 @@ uint8_t symtable_delete(symtab_t *symtab, dstring_t *target);
  * @param symtab to dispose
  */
 void symtable_dispose(symtab_t *symtab);
+
+/**
+ * @brief Get the local symtable for specifed function from global symtable
+ * 
+ * @param global_symtab ptr to global symtable
+ * @param func_id function id for which local symtable is returned
+ * @return symtab_t* ptr to local symtable if success, else if func_id is not stored or not an function -> NULL
+ */
+symtab_t *get_local_symtable(symtab_t* global_symtab,dstring_t *func_id);
