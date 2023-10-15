@@ -21,7 +21,7 @@
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil) or constant?
  *
  */
-typedef enum 
+typedef enum
 {
     undefined,
     function,
@@ -30,7 +30,7 @@ typedef enum
     string,
     nil,
     constant
-}Type;
+} Type;
 
 //? FIXME maybe useless ?
 /**
@@ -51,16 +51,16 @@ typedef struct param
  */
 typedef struct symtab_item
 {
-    bool active;           // active - 0 -> item was deleted (but kept in htab for path-finding[implicit synonyms])
-    dstring_t name;        // id
-    Type type;             // func,int,dbl,str,const
-    bool is_mutable;       // true for var, false for let
-    bool defined;          // true if func was already defined, else false
-    bool declared;         // true if item was already declared, else false
-    dstring_t value;       // value
-    param_t *parametrs;    // pointer to param_t struct
-    Type return_type;      // anything but func
-    void *local_symtable;  //points to local symtable if item is function
+    bool active;          // active - 0 -> item was deleted (but kept in htab for path-finding[implicit synonyms])
+    dstring_t name;       // id
+    Type type;            // func,int,dbl,str,const
+    bool is_mutable;      // true for var, false for let
+    bool defined;         // true if func was already defined, else false
+    bool declared;        // true if item was already declared, else false
+    dstring_t value;      // value
+    param_t *parametrs;   // pointer to param_t struct
+    Type return_type;     // anything but func
+    void *local_symtable; // points to local symtable if item is function
 } symtab_item_t;
 
 typedef symtab_item_t *symtab_t[SYMTAB_SIZE]; // ?FIXME maybe dynamic resizing is needed?
@@ -175,12 +175,20 @@ uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Ty
 uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined, bool declared);
 
 /**
+ * @brief Set the return type of item if type is function
+ *
+ * @param symtab    ptr to symtable
+ * @param id        id of modified item
+ * @return uint8_t  0 if success, 1 if item is not function, 2 if item not found
+ */
+uint8_t set_return_type(symtab_item_t *symtab, dstring_t *id, Type return_type);
+
+/**
  * @brief Get the type of item from symtab
- * 
+ *
  * @param symtab        ptr to symtable
  * @param id            id of item
  * @attention           return of type ***undefined*** -> not found or id is not defined yet
  * @return Type         when succes, else undefined (or item is simply yet not defined)
  */
 Type get_type(symtab_t *symtab, dstring_t *id);
-

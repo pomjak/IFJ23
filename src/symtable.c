@@ -125,10 +125,10 @@ uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Ty
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
         return 1;
-    if(value!=NULL)
-        if(!dstring_copy(value, &item->value))
+    if (value != NULL)
+        if (!dstring_copy(value, &item->value))
             return ERR_INTERNAL;
-    if(type!=undefined)
+    if (type != undefined)
         item->type = type;
     return 0;
 }
@@ -142,6 +142,19 @@ uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined
     item->is_mutable = is_mutable;
     item->defined = defined;
     item->declared = declared;
+    return 0;
+}
+
+uint8_t set_return_type(symtab_item_t *symtab, dstring_t *id, Type return_type)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return 2;
+    if (item->type != function)
+        return 1;
+
+    item->return_type =return_type;
+
     return 0;
 }
 
