@@ -56,7 +56,7 @@ typedef struct symtab_item
     dstring_t value;       // value
     param_t *parametrs;    // pointer to param_t struct
     enum Type return_type; // anything but func
-    void *local_symtable;  
+    void *local_symtable;
 } symtab_item_t;
 
 typedef symtab_item_t *symtab_t[SYMTAB_SIZE];
@@ -88,10 +88,10 @@ unsigned long hash2(char *id);
 
 /**
  * @brief get the hash of free slot or occupied slot with matching id using double hashing
- * 
- * @param id 
- * @param symtab 
- * @return unsigned long 
+ *
+ * @param id
+ * @param symtab
+ * @return unsigned long
  */
 unsigned long get_hash(dstring_t *id, symtab_t *symtab);
 
@@ -105,18 +105,33 @@ unsigned long get_hash(dstring_t *id, symtab_t *symtab);
 symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
 
 /**
- * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it 
- * 
+ * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it
+ *
  * @param symtab the specified table for the data to be inserted into
  * @param id id to be hashed
  * @param data ptr to data, which will be inserted or updated
- * @return uint8_t 
+ * @return uint8_t
  */
-uint8_t symtable_insert(symtab_t *symtab,dstring_t *id, symtab_item_t *data);
+uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data);
+
+/**
+ * @brief delete (set active to false) in specified symtable based on id
+ * @details 
+ * The symtable delete operation does not perform a true deletion in the traditional sense. 
+ * Rather than removing or freeing the item from the symtable, it marks the item's 'activity' attribute as false. 
+ * This means that while the item technically still exists in the symtable, 
+ * it is effectively deactivated or considered inactive. 
+ * As a result, searches or operations involving this item will not yield expected results, 
+ * essentially making it appear as though the item has been deleted.
+ * @param symtab targeted symtab
+ * @param target target to be deleted(set inactive)
+ * @return uint8_t 0 for successful deactivating, 1 otherwise
+ */
+uint8_t symtable_delete(symtab_t *symtab, dstring_t *target);
 
 /**
  * @brief dispose all allocated items in symtable
- * 
+ *
  * @param symtab to dispose
  */
 void symtable_dispose(symtab_t *symtab);

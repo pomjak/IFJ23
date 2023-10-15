@@ -83,22 +83,30 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
         *new = *data;
         (*symtab)[get_hash(id, symtab)] = new;
     }
-    else // if already in symtab,update
+    else // if already in symtab, update
         *item = *data;
 
     return 0;
 }
 
+uint8_t symtable_delete(symtab_t *symtab, dstring_t *target)
+{
+    symtab_item_t *item = symtable_search(symtab, target);
+    if (!item)
+        return 1;
+
+    item->active = false;
+    return 0;
+}
+
 void symtable_dispose(symtab_t *symtab)
 {
-    for(int i = 0; i < SYMTAB_SIZE; ++i)
+    for (int i = 0; i < SYMTAB_SIZE; ++i)
     {
-        if((*symtab)[i] != NULL)
+        if ((*symtab)[i] != NULL)
         {
             free((*symtab)[i]);
             (*symtab)[i] = NULL;
         }
-        
     }
-
 }
