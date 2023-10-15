@@ -21,7 +21,7 @@
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil) or constant?
  *
  */
-enum Type
+typedef enum 
 {
     undefined,
     function,
@@ -30,7 +30,7 @@ enum Type
     string,
     nil,
     constant
-};
+}Type;
 
 //? FIXME maybe useless ?
 /**
@@ -41,7 +41,7 @@ typedef struct param
 {
     dstring_t name;
     dstring_t label;
-    enum Type type;
+    Type type;
     struct param *next;
 } param_t;
 
@@ -53,17 +53,17 @@ typedef struct symtab_item
 {
     bool active;           // active - 0 -> item was deleted (but kept in htab for path-finding[implicit synonyms])
     dstring_t name;        // id
-    enum Type type;        // func,int,dbl,str,const
+    Type type;             // func,int,dbl,str,const
     bool is_mutable;       // true for var, false for let
     bool defined;          // true if func was already defined, else false
     bool declared;         // true if item was already declared, else false
     dstring_t value;       // value
     param_t *parametrs;    // pointer to param_t struct
-    enum Type return_type; // anything but func
-    void *local_symtable;
+    Type return_type;      // anything but func
+    void *local_symtable;  //points to local symtable if item is function
 } symtab_item_t;
 
-typedef symtab_item_t *symtab_t[SYMTAB_SIZE];
+typedef symtab_item_t *symtab_t[SYMTAB_SIZE]; // ?FIXME maybe dynamic resizing is needed?
 
 /**
  * @brief Init of sym_table
@@ -160,16 +160,26 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id);
  * @param type          type to be set
  * @return uint8_t      return 0 if success, 1 if not found,
  */
-uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, enum Type type);
+uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Type type);
 
 /**
  * @brief Set the flags of item directly in symtable
  *
  * @param symtab        ptr to symtable
  * @param id            id of modified item
- * @param is_mutable    flag 1-set / 0-unset
- * @param defined       flag 1-set / 0-unset
- * @param declared      flag 1-set / 0-unset
+ * @param is_mutable    is_mutable flag 1-set / 0-unset
+ * @param defined       defined flag 1-set / 0-unset
+ * @param declared      declared flag 1-set / 0-unset
  * @return unit8_t      uint8_t return 0 if success, 1 if not found,
  */
 uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined, bool declared);
+
+/**
+ * @brief Get the type of item from symtab
+ * 
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @attention           return of type ***undefined*** -> not found or id is not defined yet
+ * @return Type         when succes, else undefined (or item is simply yet not defined)
+ */
+Type get_type(symtab_t *symtab, dstring_t *id);

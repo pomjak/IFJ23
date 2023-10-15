@@ -138,10 +138,17 @@ uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
         return 1;
-        
+
     item->is_mutable = is_mutable;
     item->defined = defined;
     item->declared = declared;
     return 0;
 }
 
+Type get_type(symtab_t *symtab, dstring_t *id)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return undefined;
+    return item->type;
+}
