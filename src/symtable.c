@@ -135,9 +135,21 @@ uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value)
     if (!item)
         return 1;
     if (value != NULL)
+    {
+        if (dstring_init(&item->value))
+            return ERR_INTERNAL;
         if (!dstring_copy(value, &item->value))
             return ERR_INTERNAL;
+    }
     return 0;
+}
+
+dstring_t *get_value(symtab_t *symtab, dstring_t *id)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return NULL;
+    return (&item->value);
 }
 
 uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type)
@@ -147,6 +159,14 @@ uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type)
         return 1;
     item->type = type;
     return 0;
+}
+
+Type get_type(symtab_t *symtab, dstring_t *id)
+{
+    symtab_item_t *item = symtable_search(symtab, id);
+    if (!item)
+        return undefined;
+    return item->type;
 }
 
 uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool is_func_defined, bool is_var_declared, bool is_constant)
@@ -179,10 +199,14 @@ uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type)
     return 0;
 }
 
-Type get_type(symtab_t *symtab, dstring_t *id)
+Type get_return_type(symtab_t *symtab, dstring_t *id, bool *not_function)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
-        return undefined;
-    return item->type;
+        return NULL;
+
+    if (item->type != function)
+        *not_function = true;
+
+    return item->return_type;
 }

@@ -141,13 +141,13 @@ void symtable_dispose(symtab_t *symtab);
 
 /**
  * @brief Set the local symtable for specidfied id function
- * 
+ *
  * @param global_symtab     ptr to global symtable
  * @param func_id           id of function
  * @param local_symtab      ptr to local table
  * @return uint8_t          0 if success, 1 if not found, 2 if not item is not function
  */
-uint8_t set_local_symtable(symtab_t* global_symtab, dstring_t *func_id, symtab_t *local_symtab);
+uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab);
 
 /**
  * @brief Get the local symtable for specifed function from global symtable
@@ -168,11 +168,11 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id);
 uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value);
 
 /**
- * @brief Get the value object
- * 
- * @param symtab 
- * @param id 
- * @return dstring_t* 
+ * @brief Get the value of item
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of modified item
+ * @return dstring_t*   return found value as dstring pointer, else return NULL
  */
 dstring_t *get_value(symtab_t *symtab, dstring_t *id);
 
@@ -216,3 +216,13 @@ uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool is_func
  * @return uint8_t  0 if success, 1 if item is not function, 2 if item not found
  */
 uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type);
+
+/**
+ * @brief Get the return type of function
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of function
+ * @param not_function  backcheck flag set it to false
+ * @return Type         if success,sets bool ***not_found*** if item is not function, null if item not found
+ */
+Type get_return_type(symtab_t *symtab, dstring_t *id, bool *not_function);
