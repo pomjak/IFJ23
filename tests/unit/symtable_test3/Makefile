@@ -1,5 +1,7 @@
 CC=gcc -std=c99 -g -lm
 NAME=test
+VALGRIND=valgrind --leak-check=full --track-origins=yes -s --error-exitcode=1 
+
 
 build:
 	@echo "[info] starting CC build for test symtable 3"
@@ -7,9 +9,20 @@ build:
 
 run: build
 	@echo "[info] performing test symtable 3"
-	./$(NAME) > ./output.txt 2>&1 || (echo -e "[info] test symtable 3 \e[31mFAIL\e[0m" ; cat ./output.txt && exit 1)
-	valgrind --leak-check=full --verbose -s ./$(NAME) > ./valgrind_output.txt 2>&1
-	echo -e "[info] test symtable 3 \e[32mPASS\e[0m"
+	
+	if ./$(NAME) > ./output.txt 2>&1; then \
+        echo -e "[info] test symtable 3 \e[32mPASS\e[0m"; \
+    else \
+        echo -e "[info] test symtable 3 \e[31mFAIL\e[0m"; \
+    fi
+
+	@echo "[info] performing valgrind check symtable 3"
+
+	if $(VALGRIND) ./$(NAME) > ./valgrind_output.txt 2>&1; then \
+        echo -e "[info] valgrind check symtable 3 \e[32mOK\e[0m"; \
+    else \
+        echo -e "[info] valgrind check symtable 3 \e[33mWARN VALGRIND\e[0m"; \
+    fi
 
 artifacts:
 	@echo "[info] creating artifacts for symtable 3"

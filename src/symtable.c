@@ -84,7 +84,7 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
         (*symtab)[get_hash(id, symtab)] = new;
     }
     else // if already in symtab,update
-        item = data;
+        *item = *data;
 
     return 0;
 }
