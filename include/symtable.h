@@ -112,11 +112,10 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
  * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it
  *
  * @param symtab    the specified table for the data to be inserted into
- * @param id        id to be hashed
- * @param data      ptr to data, which will be inserted or updated
+ * @param id        id to be hashed and stored
  * @return uint8_t
  */
-uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data);
+uint8_t symtable_insert(symtab_t *symtab, dstring_t *id);
 
 /**
  * @brief delete (set active to false) in specified symtable based on id
@@ -141,6 +140,16 @@ uint8_t symtable_delete(symtab_t *symtab, dstring_t *target);
 void symtable_dispose(symtab_t *symtab);
 
 /**
+ * @brief Set the local symtable for specidfied id function
+ * 
+ * @param global_symtab     ptr to global symtable
+ * @param func_id           id of function
+ * @param local_symtab      ptr to local table
+ * @return uint8_t          0 if success, 1 if not found, 2 if not item is not function
+ */
+uint8_t set_local_symtable(symtab_t* global_symtab, dstring_t *func_id, symtab_t *local_symtab);
+
+/**
  * @brief Get the local symtable for specifed function from global symtable
  *
  * @param global_symtab     ptr to global symtable
@@ -159,6 +168,15 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id);
 uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value);
 
 /**
+ * @brief Get the value object
+ * 
+ * @param symtab 
+ * @param id 
+ * @return dstring_t* 
+ */
+dstring_t *get_value(symtab_t *symtab, dstring_t *id);
+
+/**
  * @brief Set the type of item directly in symtable
  *
  * @param symtab        ptr to symtable
@@ -167,6 +185,16 @@ uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value);
  * @return uint8_t      return 0 if success, 1 if not found
  */
 uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type);
+
+/**
+ * @brief Get the type of item from symtab
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @attention           return of type ***undefined*** -> not found or id is not defined yet
+ * @return Type         when succes, else undefined (or item is simply yet not defined)
+ */
+Type get_type(symtab_t *symtab, dstring_t *id);
 
 /**
  * @brief Set the flags of item directly in symtable
@@ -188,13 +216,3 @@ uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool is_func
  * @return uint8_t  0 if success, 1 if item is not function, 2 if item not found
  */
 uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type);
-
-/**
- * @brief Get the type of item from symtab
- *
- * @param symtab        ptr to symtable
- * @param id            id of item
- * @attention           return of type ***undefined*** -> not found or id is not defined yet
- * @return Type         when succes, else undefined (or item is simply yet not defined)
- */
-Type get_type(symtab_t *symtab, dstring_t *id);

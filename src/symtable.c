@@ -70,7 +70,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
     return NULL;
 }
 
-uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
+uint8_t symtable_insert(symtab_t *symtab, dstring_t *id)
 {
     symtab_item_t *item = symtable_search(symtab, id); // try to search in symtab
     if (!item)                                         // if not in symtab alloc new slot for data
@@ -80,11 +80,9 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data)
         if (!new)
             return ERR_INTERNAL;
 
-        *new = *data;                          // copy data
+        dstring_copy(id, &new->name);          // copy id
         (*symtab)[get_hash(id, symtab)] = new; // handover poiter to new allocated item
     }
-    else // if already in symtab, update
-        *item = *data;
 
     return 0;
 }
@@ -109,6 +107,17 @@ void symtable_dispose(symtab_t *symtab)
             (*symtab)[i] = NULL;
         }
     }
+}
+
+uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab)
+{
+    symtab_item_t *item = symtable_search(global_symtab, func_id);
+    if (!item)
+        return 1;
+    if (item->type != function)
+        return 2;
+    item->local_symtable = local_symtab;
+    return 0;
 }
 
 symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id)
