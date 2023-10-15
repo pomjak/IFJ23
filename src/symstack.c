@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include "symstack.h"
 
-void symstack_init_stack(symstack_t *stack)
+void init_symstack(symstack_t *stack)
 {
     stack->top = NULL;
     stack->size = 0;
@@ -35,7 +35,7 @@ bool symstack_push(symstack_t *stack, data_t data)
 data_t symstack_pop(symstack_t *stack)
 {
     data_t old_node_data;
-    if (!isEmpty(stack))
+    if (!symstack_isEmpty(stack))
     {
         node_t *old_node = stack->top;
         old_node_data = old_node->data;
@@ -62,7 +62,11 @@ bool symstack_isEmpty(const symstack_t *stack)
 // dispose
 bool symstack_dispose(symstack_t *stack)
 {
-    return false;
+    while (!symstack_isEmpty(stack))
+    {
+        symstack_pop(stack);
+    }
+    return symstack_isEmpty(stack);
 }
 
 void print_line(unsigned int width)

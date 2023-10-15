@@ -21,7 +21,7 @@ typedef struct SYMSTACK
 
 // stack functions
 // init
-void init_stack(symstack_t *stack);
+void init_symstack(symstack_t *stack);
 
 // push
 bool symstack_push(symstack_t *stack, data_t data);
