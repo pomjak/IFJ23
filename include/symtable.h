@@ -23,6 +23,7 @@
  */
 enum Type
 {
+    undefined,
     function,
     integer,
     double_,
@@ -41,7 +42,7 @@ typedef struct param
     dstring_t name;
     dstring_t label;
     enum Type type;
-    struct param* next;
+    struct param *next;
 } param_t;
 
 /**
@@ -54,6 +55,8 @@ typedef struct symtab_item
     dstring_t name;        // id
     enum Type type;        // func,int,dbl,str,const
     bool is_mutable;       // true for var, false for let
+    bool defined;          // true if func was already defined, else false
+    bool declared;         // true if item was already declared, else false
     dstring_t value;       // value
     param_t *parametrs;    // pointer to param_t struct
     enum Type return_type; // anything but func
@@ -117,12 +120,12 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id, symtab_item_t *data);
 
 /**
  * @brief delete (set active to false) in specified symtable based on id
- * @details 
- * The symtable delete operation does not perform a true deletion in the traditional sense. 
- * Rather than removing or freeing the item from the symtable, it marks the item's 'activity' attribute as false. 
- * This means that while the item technically still exists in the symtable, 
- * it is effectively deactivated or considered inactive. 
- * As a result, searches or operations involving this item will not yield expected results, 
+ * @details
+ * The symtable delete operation does not perform a true deletion in the traditional sense.
+ * Rather than removing or freeing the item from the symtable, it marks the item's 'activity' attribute as false.
+ * This means that while the item technically still exists in the symtable,
+ * it is effectively deactivated or considered inactive.
+ * As a result, searches or operations involving this item will not yield expected results,
  * essentially making it appear as though the item has been deleted.
  * @param symtab targeted symtab
  * @param target target to be deleted(set inactive)
@@ -139,9 +142,11 @@ void symtable_dispose(symtab_t *symtab);
 
 /**
  * @brief Get the local symtable for specifed function from global symtable
- * 
+ *
  * @param global_symtab ptr to global symtable
  * @param func_id function id for which local symtable is returned
  * @return symtab_t* ptr to local symtable if success, else if func_id is not stored or not an function -> NULL
  */
-symtab_t *get_local_symtable(symtab_t* global_symtab,dstring_t *func_id);
+symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id);
+
+void
