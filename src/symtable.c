@@ -120,7 +120,7 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id)
         return NULL;
 }
 
-uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, enum Type type)
+uint8_t set_value_and_type(symtab_t *symtab, dstring_t *id, dstring_t *value, Type type)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)

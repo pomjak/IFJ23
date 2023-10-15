@@ -183,3 +183,4 @@ uint8_t set_flags(symtab_t *symtab, dstring_t *id, bool is_mutable, bool defined
  * @return Type         when succes, else undefined (or item is simply yet not defined)
  */
 Type get_type(symtab_t *symtab, dstring_t *id);
+
