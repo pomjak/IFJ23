@@ -145,7 +145,7 @@ void symtable_dispose(symtab_t *symtab);
  * @param global_symtab     ptr to global symtable
  * @param func_id           id of function
  * @param local_symtab      ptr to local table
- * @return uint8_t          0 if success, 1 if not found, 2 if not item is not function
+ * @return uint8_t          0 if success, 1 if not found, 2 if item is not function
  */
 uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab);
 
@@ -191,97 +191,98 @@ uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type);
  *
  * @param symtab        ptr to symtable
  * @param id            id of item
- * @attention           return of type ***undefined*** -> not found or id is not defined yet
- * @return Type         when succes, else undefined (or item is simply yet not defined)
+ * @param err           backcheck err flag
+ * @return Type         when succes, if not found, err is set to true and return undefined
  */
-Type get_type(symtab_t *symtab, dstring_t *id);
+Type get_type(symtab_t *symtab, dstring_t *id, bool* err);
 
 /**
- * @brief Set the mutability object
+ * @brief Set the mutability of item
  * 
- * @param symtab 
- * @param id 
- * @param is_mutable 
- * @return uint8_t 
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @param is_mutable    desired value to be set for mutability
+ * @return uint8_t      0 if succcess, 1 if not found, 2 if item is function
  */
 uint8_t set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable);
 
 /**
- * @brief Set the func definition object
- * 
- * @param symtab 
- * @param id 
- * @param is_func_defined 
- * @return uint8_t 
+ * @brief Get the mutability of item
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @param err           backcheck flag 
+ * @return bool         if success, else false and err set to 1 
+ */
+bool get_mutability(symtab_t *symtab, dstring_t *id, bool *err);
+
+/**
+ * @brief Set the func definition of item
+ *
+ * @param symtab            ptr to symtable
+ * @param id                id of item
+ * @param is_func_defined   desired value to be set for definition of function
+ * @return uint8_t          0 if success, 1 if not found, 2 if item is not function
  */
 uint8_t set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined);
 
 /**
+ * @brief Get the func definition object
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @param err           backcheck flag
+ * @return bool         is_func_defined if success, false and err set to true if not found 
+ */
+bool get_func_definition(symtab_t *symtab, dstring_t *id, bool *err);
+
+/**
  * @brief Set the var declaration object
- * 
- * @param symtab 
- * @param id 
- * @param is_var_declared 
- * @return uint8_t 
+ *
+ * @param symtab            ptr to symtable
+ * @param id                id of item
+ * @param is_var_declared   desired value to be set for decalration of item
+ * @return uint8_t          0 if success, 1 if not found, 2 if item is function
  */
 uint8_t set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared);
 
 /**
+ * @brief Get the var declaration object
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @param err           backcheck flag
+ * @return bool         var_declaration if success, false and err set to true if not found 
+ */
+bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err);
+
+/**
  * @brief Set the constant of variable item
  *
- * @param symtab
- * @param id
- * @param is_constant
- * @return uint8_t
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @param is_constant   desired value to be set for is_constant
+ * @return uint8_t      0 if success, 1 if not found, 2 if item is function
  */
 uint8_t set_constant(symtab_t *symtab, dstring_t *id, bool is_constant);
 
 /**
- * @brief Get the mutability object
- * 
- * @param symtab 
- * @param id 
- * @param is_mutable 
- * @return bool
- */
-bool get_mutability(symtab_t *symtab, dstring_t *id, bool *not_var);
-
-/**
- * @brief Get the func definition object
- * 
- * @param symtab 
- * @param id 
- * @param is_func_defined 
- * @return bool
- */
-bool get_func_definition(symtab_t *symtab, dstring_t *id, bool *not_function);
-
-/**
- * @brief Get the var declaration object
- * 
- * @param symtab 
- * @param id 
- * @param is_var_declared 
- * @return bool
- */
-bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *not_var);
-
-/**
  * @brief Get the constant object
- * 
- * @param symtab 
- * @param id 
- * @param is_constant 
- * @return bool
+ *
+ * @param symtab        ptr to symtable
+ * @param id            id of item
+ * @param err           backcheck flag
+ * @return bool         is_const of item if success, false and err set to true if not found 
  */
-bool get_constant(symtab_t *symtab, dstring_t *id, bool *is_function);
+bool get_constant(symtab_t *symtab, dstring_t *id, bool *err);
 
 /**
  * @brief Set the return type of item if type is function
  *
- * @param symtab    ptr to symtable
- * @param id        id of modified item
- * @return uint8_t  0 if success, 1 if item is not function, 2 if item not found
+ * @param symtab        ptr to symtable
+ * @param id            id of modified item
+ * @param return_type   desired value to be set for return_type
+ * @return uint8_t      0 if success, 1 if not found, 2 if item is not function
  */
 uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type);
 
@@ -290,7 +291,7 @@ uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type);
  *
  * @param symtab        ptr to symtable
  * @param id            id of function
- * @param not_function  backcheck flag set it to false
- * @return Type         if success,sets bool ***not_found*** if item is not function, null if item not found
+ * @param err           backcheck flag 
+ * @return Type         return_type if success,undefined and err set to true if not found 
  */
-Type get_return_type(symtab_t *symtab, dstring_t *id, bool *not_function);
+Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err);
