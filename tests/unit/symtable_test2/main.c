@@ -1,6 +1,6 @@
 /**
  * @file main.c (for testing purposes)
- * @author Pomsar Jakub xpomsa00
+ * @author Pomsar Jakub xpomsa00 
  * @brief   main for unit test 2 every setter & getter for 1 item
  * @version 0.1
  * @date 2023-10-14
@@ -74,7 +74,7 @@ int main()
     assert(get_constant(&global_sym_table, &item1, &err) == false);
 
     assert(err == true);
-    
+
 
     symtab_t local_symtable;
 
