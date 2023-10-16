@@ -450,3 +450,30 @@ uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of
     dstring_copy(label,&node->label);
     return 0;
 }
+
+dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err)
+{
+    symtab_item_t *item = symtable_search(symtab, func_id);
+    if (!item)
+    {
+        *err = 1;
+        return undefined;
+    }
+    if (item->type != function)
+    {
+        *err = 2;
+        return undefined;
+    }
+    if (!item->parametrs)
+    {
+        *err = 3;
+        return undefined;
+    }
+    param_t *node = search_param(item->parametrs, name_of_param);
+    if (!node)
+    {
+        *err = 3;
+        return undefined;
+    }
+    return &node->label;
+}
