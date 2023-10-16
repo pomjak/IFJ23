@@ -15,7 +15,7 @@
 #include "dyn_string.h"
 #include "error.h"
 
-#define SYMTAB_SIZE 1021// max size of htab items is prime number for better distribution
+#define SYMTAB_SIZE 1021 // max size of htab items is prime number for better distribution
 
 /**
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil) or constant?
@@ -304,3 +304,24 @@ uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type);
  * @return Type         return_type if success,undefined and err set to true if not found
  */
 Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err);
+
+/**
+ * @brief initialization of param node
+ * 
+ * @param name_of_param     name of param 
+ * @param err               backcheck flag
+ * @return param_t*         intialized param if success, null and err flag is raised
+ */
+param_t *param_init(dstring_t *name_of_param, bool *err);
+
+param_t *search_param(param_t *first, dstring_t *id);
+
+void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param);
+
+uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type);
+
+Type get_param_type(symtab_t *symtab,dstring_t *func_id, dstring_t *name_of_param, Type type);
+
+uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label);
+
+dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label);

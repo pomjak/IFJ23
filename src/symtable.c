@@ -14,13 +14,12 @@ void symtable_init(symtab_t *symtab)
  */
 unsigned long hash(char *id)
 {
-    uint32_t hash = 0; 
+    uint32_t hash = 0;
     const unsigned char *p;
-    
+
     for (p = (const unsigned char *)id; *p != '\0'; p++)
         hash = 65599 * hash + *p;
     return (hash % SYMTAB_SIZE);
-    
 }
 
 unsigned long hash2(char *id)
@@ -336,4 +335,19 @@ Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err)
         *err = false;
         return item->return_type;
     }
+}
+
+param_t *param_init(dstring_t *name_of_param, bool *err)
+{
+    param_t *node = malloc(sizeof(param_t));
+    if (!node)
+    {
+        *err = true;
+        return NULL;
+    }
+    dstring_init(&node->name);
+    dstring_init(&node->label);
+    node->type = undefined;
+    node->next = NULL;
+    return node;
 }

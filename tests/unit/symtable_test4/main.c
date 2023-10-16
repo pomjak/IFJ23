@@ -26,7 +26,7 @@ int main()
 
     char buffer[50];
 
-    for(int i=0;fgets(buffer, sizeof(buffer), input) != NULL;i++)
+    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
     {
         if (strchr(buffer, '\n') != NULL)
             *(strchr(buffer, '\n')) = '\0';
@@ -37,20 +37,18 @@ int main()
 
         assert(symtable_insert(&global_sym_table, &item) == 0);
 
-        assert(set_type(&global_sym_table, &item, i%6 )==0);
+        assert(set_type(&global_sym_table, &item, i % 6) == 0);
     }
-
 
     rewind(input);
     bool err;
 
-
-    for(int i=0;fgets(buffer, sizeof(buffer), input) != NULL;i++)
+    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
     {
         if (strchr(buffer, '\n') != NULL)
             *(strchr(buffer, '\n')) = '\0';
 
-        err=true;
+        err = true;
 
         dstring_clear(&item);
 
@@ -58,9 +56,43 @@ int main()
 
         assert(symtable_search(&global_sym_table, &item) != NULL);
 
-        assert(get_type(&global_sym_table, &item, &err) == i%6);
+        assert(get_type(&global_sym_table, &item, &err) == i % 6);
 
         assert(err == false);
+    }
+
+    rewind(input);
+
+    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
+    {
+        if (strchr(buffer, '\n') != NULL)
+            *(strchr(buffer, '\n')) = '\0';
+
+        dstring_clear(&item);
+
+        dstring_add_const_str(&item, buffer);
+
+        if (i % 2)
+            assert(symtable_delete(&global_sym_table, &item) == 0);
+
+    }
+
+    rewind(input);
+
+    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
+    {
+        if (strchr(buffer, '\n') != NULL)
+            *(strchr(buffer, '\n')) = '\0';
+
+        dstring_clear(&item);
+
+        dstring_add_const_str(&item, buffer);
+
+        if (i % 2)
+            assert(symtable_search(&global_sym_table, &item) == NULL);
+        else 
+            assert(symtable_search(&global_sym_table, &item) != NULL);
+
     }
 
     dstring_free(&item);
