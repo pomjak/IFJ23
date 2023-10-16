@@ -323,7 +323,17 @@ param_t *param_init(dstring_t *name_of_param, bool *err);
  */
 param_t *search_param(param_t *first, dstring_t *id);
 
-void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param);
+/**
+ * @brief add param to the end of linked list of params 
+ * 
+ * @param symtab            ptr to symtable 
+ * @param func_id           id of function with params
+ * @param name_of_param     name of param of function id
+ * @param err               backcheck flag
+ * @return uint8_t          0 if success, 1 if function not found, 2 if item is not function
+ */
+uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool *err);
+
 
 uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type);
 

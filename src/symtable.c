@@ -367,6 +367,26 @@ param_t *search_param(param_t *first, dstring_t *id)
             return node;
         node = node->next;
     } while (node);
-    
+
     return NULL;
+}
+
+uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool *err)
+{
+    symtab_item_t *item = symtable_search(symtab, func_id);
+    if (!item)
+        return 1;
+    if(item->type != function)
+        return 2;
+    if(!item->parametrs)
+        item->parametrs=param_init(name_of_param, err);
+    else
+    {
+        param_t *runner = item->parametrs;
+        while(runner->next)
+            runner = runner->next;
+        
+        runner->next = param_init(name_of_param, err);
+        (runner->next)->next = NULL;
+    }
 }
