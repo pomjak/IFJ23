@@ -363,7 +363,7 @@ param_t *search_param(param_t *first, dstring_t *id)
 
     do
     {
-        if (dstring_cmp(&node->name,id))
+        if (dstring_cmp(&node->name, id))
             return node;
         node = node->next;
     } while (node);
@@ -376,16 +376,16 @@ uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
         return 1;
-    if(item->type != function)
+    if (item->type != function)
         return 2;
-    if(!item->parametrs)
-        item->parametrs=param_init(name_of_param, err);
+    if (!item->parametrs)
+        item->parametrs = param_init(name_of_param, err);
     else
     {
         param_t *runner = item->parametrs;
-        while(runner->next)
+        while (runner->next)
             runner = runner->next;
-        
+
         runner->next = param_init(name_of_param, err);
         (runner->next)->next = NULL;
     }
@@ -396,13 +396,45 @@ uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
         return 1;
-    if(item->type != function)
+    if (item->type != function)
         return 2;
-    if(!item->parametrs)
+    if (!item->parametrs)
         return 3;
-    param_t *node = search_param(item->parametrs,name_of_param);
-    if(!node)
+    param_t *node = search_param(item->parametrs, name_of_param);
+    if (!node)
         return 3;
     node->type = type;
     return 0;
+}
+
+Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type, uint8_t *err)
+{
+    symtab_item_t *item = symtable_search(symtab, func_id);
+    if (!item)
+    {
+        *err = 1;
+        return undefined;
+    }
+
+    if (item->type != function)
+    {
+        *err = 2;
+        return undefined;
+    }
+
+    if (!item->parametrs)
+    {
+        *err = 3;
+        return undefined;
+    }
+
+    param_t *node = search_param(item->parametrs, name_of_param);
+
+    if (!node)
+    {
+        *err = 3;
+        return undefined;
+    }
+
+    return node->type;
 }

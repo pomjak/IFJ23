@@ -345,8 +345,18 @@ uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param
  */
 uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type);
 
-Type get_param_type(symtab_t *symtab,dstring_t *func_id, dstring_t *name_of_param, Type type);
+/**
+ * @brief Get the param type
+ * 
+ * @param symtab            ptr to symtable
+ * @param func_id           id of function with params
+ * @param name_of_param     name of param
+ * @param type              type of param to be set
+ * @param err               raised to 1 if item not found, 2 if item is not function, 3 if param is not found 
+ * @return Type             if success, else undefined and err flag is raised [1,2,3] as mentioned earlier
+ */
+Type get_param_type(symtab_t *symtab,dstring_t *func_id, dstring_t *name_of_param, Type type, uint8_t *err);
 
 uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label);
 
-dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label);
+dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label, uint8_t *err);
