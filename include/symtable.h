@@ -330,11 +330,19 @@ param_t *search_param(param_t *first, dstring_t *id);
  * @param func_id           id of function with params
  * @param name_of_param     name of param of function id
  * @param err               backcheck flag
- * @return uint8_t          0 if success, 1 if function not found, 2 if item is not function
+ * @return uint8_t          0 if success, 1 if function not found, 2 if item is not function, err flag is raised if internal error occurs
  */
 uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool *err);
 
-
+/**
+ * @brief Set the param type 
+ * 
+ * @param symtab            ptr to symtable
+ * @param func_id           id of function with params
+ * @param name_of_param     name of param
+ * @param type              type of param to be set
+ * @return uint8_t          0 if success, 1 if function not found, 2 if item is not an function, 3 if param not found
+ */
 uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type);
 
 Type get_param_type(symtab_t *symtab,dstring_t *func_id, dstring_t *name_of_param, Type type);

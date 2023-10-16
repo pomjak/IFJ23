@@ -390,3 +390,19 @@ uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param
         (runner->next)->next = NULL;
     }
 }
+
+uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type)
+{
+    symtab_item_t *item = symtable_search(symtab, func_id);
+    if (!item)
+        return 1;
+    if(item->type != function)
+        return 2;
+    if(!item->parametrs)
+        return 3;
+    param_t *node = search_param(item->parametrs,name_of_param);
+    if(!node)
+        return 3;
+    node->type = type;
+    return 0;
+}
