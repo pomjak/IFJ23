@@ -307,8 +307,8 @@ Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err);
 
 /**
  * @brief initialization of param node
- * 
- * @param name_of_param     name of param 
+ *
+ * @param name_of_param     name of param
  * @param err               backcheck flag
  * @return param_t*         intialized param if success, null and err flag is raised
  */
@@ -316,7 +316,7 @@ param_t *param_init(dstring_t *name_of_param, bool *err);
 
 /**
  * @brief searches the whoole linked list of params for id
- * 
+ *
  * @param first     ptr from symtable to fist param node
  * @param id        id to be searched for
  * @return param_t* when success, else NULL
@@ -324,9 +324,9 @@ param_t *param_init(dstring_t *name_of_param, bool *err);
 param_t *search_param(param_t *first, dstring_t *id);
 
 /**
- * @brief add param to the end of linked list of params 
- * 
- * @param symtab            ptr to symtable 
+ * @brief add param to the end of linked list of params
+ *
+ * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param of function id
  * @param err               backcheck flag
@@ -335,8 +335,8 @@ param_t *search_param(param_t *first, dstring_t *id);
 uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool *err);
 
 /**
- * @brief Set the param type 
- * 
+ * @brief Set the param type
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
@@ -347,19 +347,19 @@ uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_
 
 /**
  * @brief Get the param type
- * 
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
  * @param type              type of param to be set
- * @param err               raised to 1 if item not found, 2 if item is not function, 3 if param is not found 
+ * @param err               raised to 1 if item not found, 2 if item is not function, 3 if param is not found
  * @return Type             if success, else undefined and err flag is raised [1,2,3] as mentioned earlier
  */
-Type get_param_type(symtab_t *symtab,dstring_t *func_id, dstring_t *name_of_param, uint8_t *err);
+Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err);
 
 /**
  * @brief Set the param label
- * 
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
@@ -370,11 +370,11 @@ uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of
 
 /**
  * @brief Get the param label
- * 
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
- * @param err               raised to 1 if item not found, 2 if item is not function, 3 if param is not found 
+ * @param err               raised to 1 if item not found, 2 if item is not function, 3 if param is not found
  * @return dstring*         if success, else NULL and err flag is raised [1,2,3] as mentioned earlier
  */
-dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err);
+dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err);
