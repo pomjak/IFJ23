@@ -314,6 +314,13 @@ Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err);
  */
 param_t *param_init(dstring_t *name_of_param, bool *err);
 
+/**
+ * @brief searches the whoole linked list of params for id
+ * 
+ * @param first     ptr from symtable to fist param node
+ * @param id        id to be searched for
+ * @return param_t* when success, else NULL
+ */
 param_t *search_param(param_t *first, dstring_t *id);
 
 void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param);

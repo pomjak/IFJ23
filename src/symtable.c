@@ -345,9 +345,28 @@ param_t *param_init(dstring_t *name_of_param, bool *err)
         *err = true;
         return NULL;
     }
+
     dstring_init(&node->name);
     dstring_init(&node->label);
     node->type = undefined;
     node->next = NULL;
+
     return node;
+}
+
+param_t *search_param(param_t *first, dstring_t *id)
+{
+    if (!first)
+        return NULL;
+
+    param_t *node = first;
+
+    do
+    {
+        if (dstring_cmp(&node->name,id))
+            return node;
+        node = node->next;
+    } while (node);
+    
+    return NULL;
 }
