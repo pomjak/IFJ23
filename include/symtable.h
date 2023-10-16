@@ -52,7 +52,7 @@ typedef struct symtab_item
 {
     bool active;          // active - 0 -> item was deleted (but kept in htab for path-finding[implicit synonyms])
     dstring_t name;       // id
-    Type type;            // func,int,dbl,str,const
+    Type type;            // func,int,dbl,str,nil,undefined
     bool is_mutable;      // true for var, false for let
     bool is_func_defined; // true if func was already defined, else false
     bool is_var_declared; // true if item was already declared, else false

@@ -34,7 +34,7 @@ int main()
     assert(symtable_delete(&global_sym_table, &value1) == 1);
     //however delete on item with id "item1" returns 0
     assert(symtable_delete(&global_sym_table, &item1) == 0);
-    //and value of item with id "item1" shoudln't be accessible
+    //and value of item with id "item1" shouldn't be accessible
     assert(get_value(&global_sym_table, &item1) == NULL);
 
     dstring_free(&item1);
