@@ -1,3 +1,10 @@
+/**
+ * @file symstack.c
+ * @author Adrián Ponechal (xponec01@stud.fit.vutbr.cz)
+ * @brief Stack for symbols used in precedence analysis
+ * @date 2023-10-15
+ */
+
 #ifndef SYMSTACK_H
 #define SYMSTACK_H
 #include <stdbool.h>
@@ -5,7 +12,11 @@
 typedef struct DATA
 {
     int id; // data struct here
-    char c;
+    const char *c;
+    // token_T token;
+    // bool isTerminal;
+    // bool isHandleBegin;
+    // char symbol;
 } data_t;
 typedef struct NODE
 {
@@ -32,7 +43,7 @@ data_t symstack_pop(symstack_t *stack);
 // peek
 data_t symstack_peek(const symstack_t *stack);
 
-bool symstack_isEmpty(const symstack_t *stack);
+bool symstack_is_empty(const symstack_t *stack);
 
 // dispose
 bool symstack_dispose(symstack_t *stack);

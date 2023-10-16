@@ -757,3 +757,10 @@
 //     CLEAN_BEFORE_ERROR_EXIT(&prec_stack);
 //     return func_return;
 // }
+
+/**
+ * @brief Methods to write
+ * 1) shift()
+ * 2) reduce()
+ * 3) reduce_error()
+ */
