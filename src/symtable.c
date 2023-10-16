@@ -407,7 +407,7 @@ uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_
     return 0;
 }
 
-Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type, uint8_t *err)
+Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
@@ -415,26 +415,38 @@ Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_par
         *err = 1;
         return undefined;
     }
-
     if (item->type != function)
     {
         *err = 2;
         return undefined;
     }
-
     if (!item->parametrs)
     {
         *err = 3;
         return undefined;
     }
-
     param_t *node = search_param(item->parametrs, name_of_param);
-
     if (!node)
     {
         *err = 3;
         return undefined;
     }
-
     return node->type;
+}
+
+
+uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label)
+{
+    symtab_item_t *item = symtable_search(symtab, func_id);
+    if (!item)
+        return 1;
+    if (item->type != function)
+        return 2;
+    if (!item->parametrs)
+        return 3;
+    param_t *node = search_param(item->parametrs, name_of_param);
+    if (!node)
+        return 3;
+    dstring_copy(label,&node->label);
+    return 0;
 }

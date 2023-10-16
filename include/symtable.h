@@ -355,8 +355,26 @@ uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_
  * @param err               raised to 1 if item not found, 2 if item is not function, 3 if param is not found 
  * @return Type             if success, else undefined and err flag is raised [1,2,3] as mentioned earlier
  */
-Type get_param_type(symtab_t *symtab,dstring_t *func_id, dstring_t *name_of_param, Type type, uint8_t *err);
+Type get_param_type(symtab_t *symtab,dstring_t *func_id, dstring_t *name_of_param, uint8_t *err);
 
+/**
+ * @brief Set the param label
+ * 
+ * @param symtab            ptr to symtable
+ * @param func_id           id of function with params
+ * @param name_of_param     name of param
+ * @param label             label of param to be set
+ * @return uint8_t          0 if success, 1 if function not found, 2 if item is not an function, 3 if param not found
+ */
 uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label);
 
-dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label, uint8_t *err);
+/**
+ * @brief Get the param label
+ * 
+ * @param symtab            ptr to symtable
+ * @param func_id           id of function with params
+ * @param name_of_param     name of param
+ * @param err               raised to 1 if item not found, 2 if item is not function, 3 if param is not found 
+ * @return dstring*         if success, else NULL and err flag is raised [1,2,3] as mentioned earlier
+ */
+dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err);
