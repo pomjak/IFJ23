@@ -1,18 +1,15 @@
 symstack_push:
 +--------+
-| item3  |
+| peek   |
 +--------+
 | item2  |
 +--------+
 | itmem1 |
 +--------+
 
-symstack_pop:
-+--------+
-| item2  |
-+--------+
-| itmem1 |
-+--------+
+symstack_peek:
+Peek c: peek
+Peek id: 3
 
 symstack_dispose:
 Stack is empty.

@@ -1,7 +1,7 @@
 /**
  * @file symstack.c
  * @author Adrián Ponechal (xponec01@stud.fit.vutbr.cz)
- * @brief Testing ovrer all functionality - push, pop and dispose function
+ * @brief Testing peek function
  * @date 2023-10-16
  */
 
@@ -27,14 +27,15 @@ int main(void)
     data.id = 2;
     symstack_push(&stack, data);
 
-    data.c = "item3";
-    data.id = 2;
+    data.c = "peek";
+    data.id = 3;
     symstack_push(&stack, data);
     print_stack(&stack, DISPLAY_WIDTH);
 
-    printf("\nsymstack_pop:\n");
-    symstack_pop(&stack);
-    print_stack(&stack, DISPLAY_WIDTH);
+    data_t peek = symstack_peek(&stack);
+    printf("\nsymstack_peek:\n");
+    printf("Peek c: %s\n", peek.c);
+    printf("Peek id: %d\n", peek.id);
 
     printf("\nsymstack_dispose:\n");
     // remove node
@@ -48,5 +49,6 @@ int main(void)
         printf("Stack is empty.\n");
     }
     print_stack(&stack, DISPLAY_WIDTH);
+
     return EXIT_SUCCESS;
 }
