@@ -109,11 +109,19 @@ unsigned long get_hash(dstring_t *id, symtab_t *symtab);
 symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
 
 /**
+ * @brief init of one item in symtable
+ *
+ * @param id    id of item
+ * @param data  data to be initialized
+ */
+symtab_item_t *item_init(dstring_t *id, bool *err);
+
+/**
  * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it
  *
  * @param symtab    the specified table for the data to be inserted into
  * @param id        id to be hashed and stored
- * @return uint8_t
+ * @return uint8_t  0 if success, 1 if id is already in symtable, else err internal
  */
 uint8_t symtable_insert(symtab_t *symtab, dstring_t *id);
 
@@ -194,11 +202,11 @@ uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type);
  * @param err           backcheck err flag
  * @return Type         when succes, if not found, err is set to true and return undefined
  */
-Type get_type(symtab_t *symtab, dstring_t *id, bool* err);
+Type get_type(symtab_t *symtab, dstring_t *id, bool *err);
 
 /**
  * @brief Set the mutability of item
- * 
+ *
  * @param symtab        ptr to symtable
  * @param id            id of item
  * @param is_mutable    desired value to be set for mutability
@@ -211,8 +219,8 @@ uint8_t set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable);
  *
  * @param symtab        ptr to symtable
  * @param id            id of item
- * @param err           backcheck flag 
- * @return bool         if success, else false and err set to 1 
+ * @param err           backcheck flag
+ * @return bool         if success, else false and err set to 1
  */
 bool get_mutability(symtab_t *symtab, dstring_t *id, bool *err);
 
@@ -232,7 +240,7 @@ uint8_t set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_define
  * @param symtab        ptr to symtable
  * @param id            id of item
  * @param err           backcheck flag
- * @return bool         is_func_defined if success, false and err set to true if not found 
+ * @return bool         is_func_defined if success, false and err set to true if not found
  */
 bool get_func_definition(symtab_t *symtab, dstring_t *id, bool *err);
 
@@ -252,7 +260,7 @@ uint8_t set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declare
  * @param symtab        ptr to symtable
  * @param id            id of item
  * @param err           backcheck flag
- * @return bool         var_declaration if success, false and err set to true if not found 
+ * @return bool         var_declaration if success, false and err set to true if not found
  */
 bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err);
 
@@ -272,7 +280,7 @@ uint8_t set_constant(symtab_t *symtab, dstring_t *id, bool is_constant);
  * @param symtab        ptr to symtable
  * @param id            id of item
  * @param err           backcheck flag
- * @return bool         is_const of item if success, false and err set to true if not found 
+ * @return bool         is_const of item if success, false and err set to true if not found
  */
 bool get_constant(symtab_t *symtab, dstring_t *id, bool *err);
 
@@ -291,7 +299,7 @@ uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type);
  *
  * @param symtab        ptr to symtable
  * @param id            id of function
- * @param err           backcheck flag 
- * @return Type         return_type if success,undefined and err set to true if not found 
+ * @param err           backcheck flag
+ * @return Type         return_type if success,undefined and err set to true if not found
  */
 Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err);

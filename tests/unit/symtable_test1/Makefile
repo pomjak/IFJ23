@@ -3,6 +3,7 @@ NAME=test
 VALGRIND=valgrind --leak-check=full --track-origins=yes -s --error-exitcode=1 
 
 build:
+	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test symtable 1"
 	$(CC) *.c -o $(NAME)
 
@@ -23,7 +24,9 @@ run: build
         echo -e "[info] valgrind check symtable 1 \e[33mWARN VALGRIND\e[0m"; \
     fi
 
+
 artifacts:
 	@echo "[info] creating artifacts for symtable 1"
+	@echo "----------------------------------------"
 	cp output.txt ../test_artifacts/units_test_symtable1.txt	
 	cp valgrind_output.txt ../test_artifacts/units_test_symtable_valgrind1.txt

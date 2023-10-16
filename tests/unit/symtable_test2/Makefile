@@ -26,5 +26,6 @@ run: build
 
 artifacts:
 	@echo "[info] creating artifacts for symtable 2"
+	@echo "----------------------------------------"
 	cp output.txt ../test_artifacts/units_test_symtable2.txt	
 	cp valgrind_output.txt ../test_artifacts/units_test_symtable_valgrind2.txt

@@ -70,19 +70,43 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
     return NULL;
 }
 
+symtab_item_t *item_init(dstring_t *id, bool *err)
+{
+    symtab_item_t *new = malloc(sizeof(symtab_item_t));
+
+    if (!new)
+    {
+        *err = true;
+        return NULL;
+    }
+    new->active = true;
+    dstring_init(&new->name);
+    new->type = undefined;
+    new->is_mutable = false;
+    new->is_func_defined = false;
+    new->is_var_declared = false;
+    new->is_const = false;
+    dstring_init(&new->value);
+    new->parametrs = NULL;
+    new->return_type = undefined;
+    new->local_symtable = NULL;
+
+    dstring_copy(id, &new->name);
+    return new;
+}
+
 uint8_t symtable_insert(symtab_t *symtab, dstring_t *id)
 {
     symtab_item_t *item = symtable_search(symtab, id); // try to search in symtab
     if (!item)                                         // if not in symtab alloc new slot for data
     {
-        symtab_item_t *new = malloc(sizeof(symtab_item_t));
-
-        if (!new)
+        bool error = false;
+        (*symtab)[get_hash(id, symtab)] = item_init(id, &error); // handover poiter to new allocated item
+        if (error)
             return ERR_INTERNAL;
-
-        dstring_copy(id, &new->name);          // copy id
-        (*symtab)[get_hash(id, symtab)] = new; // handover poiter to new allocated item
     }
+    else
+        return 1;
 
     return 0;
 }
@@ -103,6 +127,8 @@ void symtable_dispose(symtab_t *symtab)
     {
         if ((*symtab)[i] != NULL) // free only allocated pointer, not null pointers
         {
+            dstring_free(&(*symtab)[i]->name);
+            dstring_free(&(*symtab)[i]->value);
             free((*symtab)[i]);
             (*symtab)[i] = NULL;
         }
@@ -164,7 +190,7 @@ uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type)
 Type get_type(symtab_t *symtab, dstring_t *id, bool *err)
 {
     symtab_item_t *item = symtable_search(symtab, id);
-    if (!item)
+    if (item == NULL)
     {
         *err = true;
         return undefined;

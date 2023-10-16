@@ -24,7 +24,9 @@ run: build
         echo -e "[info] valgrind check symtable 3 \e[33mWARN VALGRIND\e[0m"; \
     fi
 
+
 artifacts:
 	@echo "[info] creating artifacts for symtable 3"
+	@echo "----------------------------------------"
 	cp output.txt ../test_artifacts/units_test_symtable3.txt	
 	cp valgrind_output.txt ../test_artifacts/units_test_symtable_valgrind3.txt
