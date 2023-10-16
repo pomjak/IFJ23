@@ -14,22 +14,21 @@ void symtable_init(symtab_t *symtab)
  */
 unsigned long hash(char *id)
 {
-    unsigned long hash = 5381;
-    int c;
-    while ((c = *id++))
-        hash = ((hash << 5) + hash) + c;
-
+    uint32_t hash = 0; 
+    const unsigned char *p;
+    
+    for (p = (const unsigned char *)id; *p != '\0'; p++)
+        hash = 65599 * hash + *p;
     return (hash % SYMTAB_SIZE);
+    
 }
 
 unsigned long hash2(char *id)
 {
-    unsigned int seed = 131;
-    unsigned int hash;
-    unsigned int i;
-
-    for (i = 0, hash = 0; *id; id++, i++)
-        hash = (hash * seed) + (*id);
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *id++))
+        hash = ((hash << 5) + hash) + c;
 
     return (hash % SYMTAB_SIZE);
 }

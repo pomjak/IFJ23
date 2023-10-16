@@ -15,7 +15,7 @@
 #include "dyn_string.h"
 #include "error.h"
 
-#define SYMTAB_SIZE 1021 // max size of htab items is prime number for better distribution
+#define SYMTAB_SIZE 1021// max size of htab items is prime number for better distribution
 
 /**
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil) or constant?
@@ -73,16 +73,16 @@ typedef symtab_item_t *symtab_t[SYMTAB_SIZE]; // ?FIXME maybe dynamic resizing i
 void symtable_init(symtab_t *symtab);
 
 /**
- * @brief hash function implemented as DJB2 algo
+ * @brief hash function implemented as sdbm algo
  *
- * @cite from ial presentation 6th 21/22
+ * @cite http://www.cse.yorku.ca/~oz/hash.html
  * @param id identifier to be hashed
  * @return u_int32_t hashed key
  */
 unsigned long hash(char *id);
 
 /**
- * @brief hash2 for double hashing when collision occurs implemented as BKDR
+ * @brief hash2 for double hashing when collision occurs implemented as djb2
  *
  * @cite                from ial presentation 6th 21/22
  * @param id            identifier to be hashed
