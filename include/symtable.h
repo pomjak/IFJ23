@@ -112,7 +112,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
  * @brief init of one item in symtable
  *
  * @param id    id of item
- * @param data  data to be initialized
+ * @param err   backcheck flag
  */
 symtab_item_t *item_init(dstring_t *id, bool *err);
 
@@ -162,9 +162,10 @@ uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t
  *
  * @param global_symtab     ptr to global symtable
  * @param func_id           function id for which local symtable is returned
- * @return symtab_t*        ptr to local symtable if success, else if func_id is not stored or not an function -> NULL
+ * @param err               backcheck err flag
+ * @return symtab_t*        if success, null if id not found, null and err flag is raised if id is not function
  */
-symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id);
+symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *err);
 
 /**
  * @brief Set the value of item directly in symtable

@@ -146,13 +146,23 @@ uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t
     return 0;
 }
 
-symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id)
+symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *err)
 {
     symtab_item_t *item = symtable_search(global_symtab, func_id);
-    if (item && item->type == function) // if found item is not null and is function, return ptr to local symtable
+    if (!item)
+    {
+        *err = false;
+    }
+    else if (item->type != function)
+    {
+        *err = true;
+    }
+    else
+    {
+        *err = false;
         return item->local_symtable;
-    else // else null
-        return NULL;
+    }
+    return NULL;
 }
 
 uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value)
@@ -160,13 +170,8 @@ uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value)
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
         return 1;
-    if (value != NULL)
-    {
-        if (dstring_init(&item->value))
-            return ERR_INTERNAL;
-        if (!dstring_copy(value, &item->value))
-            return ERR_INTERNAL;
-    }
+    if (!dstring_copy(value, &item->value))
+        return ERR_INTERNAL;
     return 0;
 }
 
@@ -330,6 +335,6 @@ Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err)
     else
     {
         *err = false;
-        return item->type;
+        return item->return_type;
     }
 }

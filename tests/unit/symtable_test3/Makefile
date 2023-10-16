@@ -1,6 +1,6 @@
 CC=gcc -std=c99 -g -lm
 NAME=test
-VALGRIND=valgrind --leak-check=full --track-origins=yes -s --error-exitcode=1 
+VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s --error-exitcode=1 
 
 
 build:
