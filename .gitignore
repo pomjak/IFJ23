@@ -63,3 +63,5 @@ ifj23.code-workspace
 build
 test_artifacts
 test_build
+
+vgcore.*
