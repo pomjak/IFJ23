@@ -9,6 +9,11 @@
 #include <stdlib.h>
 #include "symstack.h"
 
+/**
+ * TODO:
+ * new test for get tokens too
+ *
+ */
 #define DISPLAY_WIDTH 1
 
 int main(void)
@@ -16,28 +21,22 @@ int main(void)
     symstack_t stack;
     init_symstack(&stack);
 
-    // push node
-    printf("symstack_push:\n");
-    data_t data;
-    data.c = "itmem1";
-    data.id = 1;
-    symstack_push(&stack, data);
+    token_T token;
+    get_token(&token);
+    while (token.type != TOKEN_EOF)
+    {
+        symstack_data_t data;
+        data.token = token;
+        data.isHandleBegin = false;
+        data.isTerminal = true;
+        strcpy(data.symbol, convert_token_type_to_string(token));
+        get_token(&token);
 
-    data.c = "item2";
-    data.id = 2;
-    symstack_push(&stack, data);
-
-    data.c = "item3";
-    data.id = 2;
-    symstack_push(&stack, data);
-    print_stack(&stack, DISPLAY_WIDTH);
-
-    printf("\nsymstack_pop:\n");
-    symstack_pop(&stack);
+        symstack_push(&stack, data);
+    }
     print_stack(&stack, DISPLAY_WIDTH);
 
     printf("\nsymstack_dispose:\n");
-    // remove node
     symstack_dispose(&stack);
     if (!symstack_is_empty(&stack))
     {

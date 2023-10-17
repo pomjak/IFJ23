@@ -12,14 +12,26 @@
 
 #define MIN_WIDTH 10
 
+/**
+ * @brief initialize stack
+ *
+ * @param stack - stack to be initilized
+ */
 void init_symstack(symstack_t *stack)
 {
     stack->top = NULL;
     stack->size = 0;
 }
 
-// push
-bool symstack_push(symstack_t *stack, data_t data)
+/**
+ * @brief pushes concrete data on top of the stack
+ *
+ * @param stack - used stack
+ * @param data - data to push
+ * @return true - symbol pushed on stack
+ * @return false - failed tu push symbol on stack
+ */
+bool symstack_push(symstack_t *stack, symstack_data_t data)
 {
     node_t *new_node = (node_t *)malloc(sizeof(node_t));
     if (new_node == NULL)
@@ -34,10 +46,15 @@ bool symstack_push(symstack_t *stack, data_t data)
     return true;
 }
 
-// pop
-data_t symstack_pop(symstack_t *stack)
+/**
+ * @brief removes node from stack and return it's data
+ *
+ * @param stack
+ * @return symstack_data_t - poped data from given stack
+ */
+symstack_data_t symstack_pop(symstack_t *stack)
 {
-    data_t old_node_data;
+    symstack_data_t old_node_data;
     if (!symstack_is_empty(stack))
     {
         node_t *old_node = stack->top;
@@ -51,18 +68,36 @@ data_t symstack_pop(symstack_t *stack)
     return old_node_data;
 }
 
-// peek
-data_t symstack_peek(const symstack_t *stack)
+/**
+ * @brief returns data from top of the stack, but does not remove the node
+ *
+ * @param stack
+ * @return symstack_data_t - returned data
+ */
+symstack_data_t symstack_peek(const symstack_t *stack)
 {
     return stack->top->data;
 }
 
+/**
+ * @brief checks if the given stack is empty
+ *
+ * @param stack
+ * @return true - if stack is empty
+ * @return false - stack is not empty
+ */
 bool symstack_is_empty(const symstack_t *stack)
 {
     return stack->size == 0 && stack->top == NULL;
 }
 
-// dispose
+/**
+ * @brief delete all nodes from stack
+ *
+ * @param stack
+ * @return true - deleted all data
+ * @return false - not deleted all data
+ */
 bool symstack_dispose(symstack_t *stack)
 {
     while (!symstack_is_empty(stack))
@@ -72,6 +107,68 @@ bool symstack_dispose(symstack_t *stack)
     return symstack_is_empty(stack);
 }
 
+const char *convert_token_type_to_string(token_T token)
+{
+    switch (token.type)
+    {
+        /* arithmetic tokens */
+    case TOKEN_ADD:
+        return "+";
+    case TOKEN_SUB:
+        return "-";
+    case TOKEN_MUL:
+        return "*";
+    case TOKEN_DIV:
+        return "/";
+
+    /* relational tokens */
+    case TOKEN_ASS:
+        return "=";
+    case TOKEN_EQ:
+        return "==";
+    case TOKEN_NEQ:
+        return "!=";
+    case TOKEN_GT:
+        return ">";
+    case TOKEN_LT:
+        return "<";
+    case TOKEN_GEQ:
+        return ">=";
+    case TOKEN_LEQ:
+        return "<=";
+
+    /* unary operators */
+    case TOKEN_NOT_NIL:
+        return "!";
+
+    /* other operators */
+    case TOKEN_NIL_CHECK:
+        return "??";
+
+    /* brackets and parentheses */
+    case TOKEN_L_PAR:
+        return "(";
+    case TOKEN_R_PAR:
+        return ")";
+
+    /* others */
+    case TOKEN_IDENTIFIER:
+        return "ID";
+
+    /* data types */
+    case TOKEN_INT:
+        return "INT";
+    case TOKEN_DBL:
+        return "DBL";
+    case TOKEN_STRING:
+        return "STR";
+
+    default:
+        return "$";
+    }
+}
+
+/* debugging */
 void print_line(unsigned int width)
 {
     printf("+");
@@ -87,7 +184,7 @@ void print_node(node_t *node, unsigned int width)
     print_line(width);
     printf("|");
 
-    int item_length = strlen(node->data.c);
+    int item_length = strlen(node->data.symbol);
     int indent = 2;
     for (int i = 1; i < indent; i++)
     {
@@ -96,12 +193,12 @@ void print_node(node_t *node, unsigned int width)
 
     if (item_length > (width - indent - 2))
     {
-        printf("%.5s", node->data.c);
+        printf("%.5s", node->data.symbol);
         item_length = 5;
     }
     else
     {
-        printf("%s", node->data.c);
+        printf("%s", node->data.symbol);
     }
 
     for (int i = indent + item_length - 1; i < width - 2; i++)

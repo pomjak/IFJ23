@@ -8,19 +8,20 @@
 #ifndef SYMSTACK_H
 #define SYMSTACK_H
 #include <stdbool.h>
+#include <stdlib.h>
+#include "lexical_analyzer.h"
 
+#define MAX_TOKEN_SYMBOL_SIZE 4
 typedef struct DATA
 {
-    int id; // data struct here
-    const char *c;
-    // token_T token;
-    // bool isTerminal;
-    // bool isHandleBegin;
-    // char symbol;
-} data_t;
+    token_T token;
+    bool isTerminal;
+    bool isHandleBegin;
+    char symbol[MAX_TOKEN_SYMBOL_SIZE];
+} symstack_data_t;
 typedef struct NODE
 {
-    data_t data;
+    symstack_data_t data;
     struct NODE *previous;
 } node_t;
 
@@ -35,18 +36,21 @@ typedef struct SYMSTACK
 void init_symstack(symstack_t *stack);
 
 // push
-bool symstack_push(symstack_t *stack, data_t data);
+bool symstack_push(symstack_t *stack, symstack_data_t data);
 
 // pop
-data_t symstack_pop(symstack_t *stack);
+symstack_data_t symstack_pop(symstack_t *stack);
 
 // peek
-data_t symstack_peek(const symstack_t *stack);
+symstack_data_t symstack_peek(const symstack_t *stack);
 
 bool symstack_is_empty(const symstack_t *stack);
 
 // dispose
 bool symstack_dispose(symstack_t *stack);
+
+// convert token type to symbol
+const char *convert_token_type_to_string(token_T token);
 
 /* debugging functions */
 void print_line(unsigned int width);
