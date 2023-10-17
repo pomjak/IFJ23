@@ -15,4 +15,4 @@ build-and-test:
   only:
     - main
     - work
-    - symtable-dynamic
+    - merge_requests

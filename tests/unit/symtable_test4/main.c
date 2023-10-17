@@ -18,7 +18,7 @@ int main()
     dstring_t item, value1;
     FILE *input = fopen("input.txt", "r");
 
-    symtable_init(&global_sym_table);
+    symtable_init(&global_sym_table,2000);
 
     dstring_init(&item);
 
@@ -42,6 +42,7 @@ int main()
 
     rewind(input);
     bool err;
+
 
     for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
     {

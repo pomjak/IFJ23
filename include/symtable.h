@@ -63,23 +63,29 @@ typedef struct symtab_item
     void *local_symtable; // points to local symtable if item is function
 } symtab_item_t;
 
-typedef symtab_item_t *symtab_t[SYMTAB_SIZE]; // ?FIXME maybe dynamic resizing is needed?
+typedef struct symtab
+{
+    symtab_item_t **items;
+    size_t count;
+    size_t size;
+}symtab_t;
 
 /**
  * @brief Init of sym_table
  *
  * @param symtab pointer to desired symtable
  */
-void symtable_init(symtab_t *symtab);
+void symtable_init(symtab_t *symtab, size_t size);
 
 /**
  * @brief hash function implemented as sdbm algo
  *
- * @cite http://www.cse.yorku.ca/~oz/hash.html
- * @param id identifier to be hashed
- * @return u_int32_t hashed key
+ * @cite                http://www.cse.yorku.ca/~oz/hash.html
+ * @param id            identifier to be hashed
+ * @param size          size of symtable
+ * @return u_int32_t    hashed key
  */
-unsigned long hash(char *id);
+unsigned long hash(char *id, size_t size);
 
 /**
  * @brief hash2 for double hashing when collision occurs implemented as djb2
@@ -88,7 +94,7 @@ unsigned long hash(char *id);
  * @param id            identifier to be hashed
  * @return u_int32_t    new hashed key
  */
-unsigned long hash2(char *id);
+unsigned long hash2(char *id, size_t size);
 
 /**
  * @brief get the hash of free slot or occupied slot with matching id using double hashing

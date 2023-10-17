@@ -1,9 +1,15 @@
 #include "symtable.h"
 
-void symtable_init(symtab_t *symtab)
-{
-    for (int i = 0; i < SYMTAB_SIZE; i++)
-        (*symtab)[i] = NULL;
+void symtable_init(symtab_t *symtab, size_t size)
+{   
+
+    symtab->size = size;
+    symtab->count = 0;
+
+    symtab->items = malloc(sizeof(symtab_item_t) * symtab->size);
+
+    for (size_t i = 0; i < symtab->size; i++)
+        symtab->items[i] = NULL;
 }
 
 /**
@@ -12,35 +18,35 @@ void symtable_init(symtab_t *symtab)
  * @param id
  * @return unsigned long
  */
-unsigned long hash(char *id)
+unsigned long hash(char *id, size_t size)
 {
     uint32_t hash = 0;
     const unsigned char *p;
 
     for (p = (const unsigned char *)id; *p != '\0'; p++)
         hash = 65599 * hash + *p;
-    return (hash % SYMTAB_SIZE);
+    return (hash % size);
 }
 
-unsigned long hash2(char *id)
+unsigned long hash2(char *id, size_t size)
 {
     unsigned long hash = 5381;
     int c;
     while ((c = *id++))
         hash = ((hash << 5) + hash) + c;
 
-    return (hash % SYMTAB_SIZE);
+    return (hash % size);
 }
 
 unsigned long get_hash(dstring_t *id, symtab_t *symtab)
 {
     char *wanted = dstring_to_str(id);
 
-    unsigned long index = hash(wanted);
-    unsigned long step = hash2(wanted);
+    unsigned long index = hash(wanted,symtab->size);
+    unsigned long step = hash2(wanted,symtab->size);
 
-    while ((*symtab)[index] != NULL)          // gets hash of 1st null slot
-        index = (index + step) % SYMTAB_SIZE; // if occupied, double hash
+    while (symtab->items[index] != NULL)          // gets hash of 1st null slot
+        index = (index + step) % symtab->size;   // if occupied, double hash
 
     return index;
 }
@@ -49,21 +55,21 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
 {
     char *wanted = dstring_to_str(id);
 
-    unsigned long index = hash(wanted);
-    unsigned long step = hash2(wanted);
+    unsigned long index = hash(wanted,symtab->size);
+    unsigned long step = hash2(wanted,symtab->size);
 
     if (symtab == NULL)
         return NULL;
 
-    while ((*symtab)[index] != NULL)
+    while (symtab->items[index] != NULL)
     {
-        if (!dstring_cmp(&((*symtab)[index])->name, id))
-            if ((*symtab)[index]->active) // if name matches and item is active, success
-                return ((*symtab)[index]);
+        if (!dstring_cmp(&(symtab->items[index])->name, id))
+            if ((symtab->items[index])->active) // if name matches and item is active,g success
+                return (symtab->items[index]);
             else // if item is inactive, it was deleted, not found
                 return NULL;
         else
-            index = (index + step) % SYMTAB_SIZE;
+            index = (index + step) % symtab->size;
     }
     return NULL;
 }
@@ -99,9 +105,10 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id)
     if (!item)                                         // if not in symtab alloc new slot for data
     {
         bool error = false;
-        (*symtab)[get_hash(id, symtab)] = item_init(id, &error); // handover poiter to new allocated item
+        symtab->items[get_hash(id, symtab)] = item_init(id, &error); // handover poiter to new allocated item
         if (error)
             return ERR_INTERNAL;
+        symtab->count++;
     }
     else
         return 1;
@@ -133,19 +140,21 @@ void param_dispose(param_t *first)
 
 void symtable_dispose(symtab_t *symtab)
 {
-    for (int i = 0; i < SYMTAB_SIZE; ++i)
+    for (size_t i = 0; i < symtab->size; ++i)
     {
-        if ((*symtab)[i] != NULL) // free only allocated pointer, not null pointers
+        if (symtab->items[i] != NULL) // free only allocated pointer, not null pointers
         {
-            dstring_free(&(*symtab)[i]->name);
-            dstring_free(&(*symtab)[i]->value);
+            dstring_free(&symtab->items[i]->name);
+            dstring_free(&symtab->items[i]->value);
 
-            param_dispose((*symtab)[i]->parametrs);
+            param_dispose(symtab->items[i]->parametrs);
 
-            free((*symtab)[i]);
-            (*symtab)[i] = NULL;
+            free(symtab->items[i]);
+            symtab->items[i] = NULL;
         }
+        
     }
+    free(symtab->items);
 }
 
 uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab)
@@ -362,7 +371,7 @@ param_t *param_init(dstring_t *name_of_param, bool *err)
     }
 
     dstring_init(&node->name);
-    dstring_copy(name_of_param,&node->name);
+    dstring_copy(name_of_param, &node->name);
     dstring_init(&node->label);
     node->type = undefined;
     node->next = NULL;
