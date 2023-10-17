@@ -1,7 +1,7 @@
 /**
  * @file main.c (unit test 6)
  * @author Pomsar Jakub xpomsa00
- * @brief main for unit test 5 - operations with params with error handling
+ * @brief main for unit test 6 - adding params without inserted item in symtab
  * @version 0.1
  * @date 2023-10-17
  *

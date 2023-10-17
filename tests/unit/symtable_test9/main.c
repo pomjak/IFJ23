@@ -1,9 +1,9 @@
 /**
- * @file main.c (unit test 4)
+ * @file main.c (unit test 9)
  * @author Pomsar Jakub xpomsa00
- * @brief main for unit test 4 - operations with multiple items [1021]
+ * @brief main for unit test 9 - operations with multiple params [1021]
  * @version 0.1
- * @date 2023-10-16
+ * @date 2023-10-17
  *
  * @copyright Copyright (c) 2023
  *
