@@ -1,7 +1,7 @@
 /**
- * @file main.c (unit test 4 )
+ * @file main.c (unit test 4)
  * @author Pomsar Jakub xpomsa00
- * @brief main for unit test 4 - operations with multiple items [1021] 
+ * @brief main for unit test 4 - operations with multiple items [1021]
  * @version 0.1
  * @date 2023-10-16
  *
@@ -74,7 +74,6 @@ int main()
 
         if (i % 2)
             assert(symtable_delete(&global_sym_table, &item) == 0);
-
     }
 
     rewind(input);
@@ -90,9 +89,8 @@ int main()
 
         if (i % 2)
             assert(symtable_search(&global_sym_table, &item) == NULL);
-        else 
+        else
             assert(symtable_search(&global_sym_table, &item) != NULL);
-
     }
 
     dstring_free(&item);

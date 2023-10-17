@@ -141,6 +141,13 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id);
 uint8_t symtable_delete(symtab_t *symtab, dstring_t *target);
 
 /**
+ * @brief dispose all allocated params in linked list
+ * 
+ * @param first ptr to first param stored
+ */
+void param_dispose(param_t *first);
+
+/**
  * @brief dispose all allocated items in symtable
  *
  * @param symtab to dispose

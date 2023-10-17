@@ -118,6 +118,18 @@ uint8_t symtable_delete(symtab_t *symtab, dstring_t *target)
     item->active = false;
     return 0;
 }
+void param_dispose(param_t *first)
+{
+    while (first)
+    {
+        param_t *temp = first->next;
+        dstring_free(&first->name);
+        dstring_free(&first->label);
+        free(first);
+
+        first = temp;
+    }
+}
 
 void symtable_dispose(symtab_t *symtab)
 {
@@ -127,6 +139,9 @@ void symtable_dispose(symtab_t *symtab)
         {
             dstring_free(&(*symtab)[i]->name);
             dstring_free(&(*symtab)[i]->value);
+
+            param_dispose((*symtab)[i]->parametrs);
+
             free((*symtab)[i]);
             (*symtab)[i] = NULL;
         }
@@ -389,6 +404,7 @@ uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param
         runner->next = param_init(name_of_param, err);
         (runner->next)->next = NULL;
     }
+    return 0;
 }
 
 uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type)
@@ -434,7 +450,6 @@ Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_par
     return node->type;
 }
 
-
 uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
@@ -447,11 +462,11 @@ uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of
     param_t *node = search_param(item->parametrs, name_of_param);
     if (!node)
         return 3;
-    dstring_copy(label,&node->label);
+    dstring_copy(label, &node->label);
     return 0;
 }
 
-dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err)
+dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
@@ -475,5 +490,6 @@ dstring_t* get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name
         *err = 3;
         return undefined;
     }
+    *err = 0;
     return &node->label;
 }
