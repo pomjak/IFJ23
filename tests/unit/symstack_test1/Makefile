@@ -3,9 +3,11 @@ NAME=test
 TEST_NAME=symstack 1
 TEST_OUTPUT_FILE=units_test_symstack_1
 PRINT=echo -e
+LEAK_SEEKER=valgrind
 
 ifeq ($(shell UNAME),Darwin)
 	PRINT=printf
+	LEAK_SEEKER=leaks
 endif 
 
 build:
@@ -14,12 +16,10 @@ build:
 
 run: build
 	@echo "[info] performing test $(TEST_NAME)"
-	./$(NAME) > ./output.txt 2>&1
+	./$(NAME) < input.txt > ./output.txt 2>&1
 	diff ./expected.txt ./output.txt || ($(PRINT) "[info] test $(TEST_NAME) \e[31mFAIL\e[0m" && exit 1)
 	$(PRINT) "[info] test $(TEST_NAME) \e[32mPASS\e[0m"
 
 artifacts:
 	@echo "[info] creating artifacts for $(TEST_NAME)"
 	cp output.txt ../test_artifacts/$(TEST_OUTPUT_FILE).txt
-
-
