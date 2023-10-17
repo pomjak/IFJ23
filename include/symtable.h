@@ -68,7 +68,8 @@ typedef struct symtab
     symtab_item_t **items;
     size_t count;
     size_t size;
-}symtab_t;
+    size_t deactivated;
+} symtab_t;
 
 /**
  * @brief Init of sym_table
@@ -103,7 +104,7 @@ unsigned long hash2(char *id, size_t size);
  * @param symtab
  * @return unsigned long
  */
-unsigned long get_hash(dstring_t *id, symtab_t *symtab);
+unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size);
 
 /**
  * @brief search in specified symtable based on id
@@ -121,6 +122,21 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
  * @param err   backcheck flag
  */
 symtab_item_t *item_init(dstring_t *id, bool *err);
+
+/**
+ * @brief resizes symtable
+ *
+ * @param symtab ptr to symtable
+ */
+void resize(symtab_t *symtab);
+
+/**
+ * @brief calculates load of symtable, if needed symtable is resized
+ *
+ * @param size      size of symtable [max capacity]
+ * @param count     actual size of symtable [act N]
+ */
+void load(symtab_t *symtab);
 
 /**
  * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it
@@ -148,7 +164,7 @@ uint8_t symtable_delete(symtab_t *symtab, dstring_t *target);
 
 /**
  * @brief dispose all allocated params in linked list
- * 
+ *
  * @param first ptr to first param stored
  */
 void param_dispose(param_t *first);
