@@ -17,5 +17,5 @@
 +--------+
 
 symstack_dispose:
-Stack is empty.
 +--------+
+Stack is empty.
