@@ -29,23 +29,32 @@ int main()
 
     dstring_init(&label);
     dstring_add_const_str(&label, "with");
+
     
+    // insert new item
+    symtable_insert(&global_sym_table, &item);
 
-    // insert new param, but item not inserted
-    assert(add_param(&global_sym_table, &item, &param, &err) == 1);
+    assert(set_type(&global_sym_table, &item, integer) == 0);
 
-    assert(set_param_label(&global_sym_table, &item, &param, &label) == 1);
+    assert(get_type(&global_sym_table, &item, &err) == integer);
 
+    assert(err == false);
+    
+    // insert new param, however item is integer not function
+    assert(add_param(&global_sym_table, &item, &param, &err) == 2);
+    // try to set label for param, but param was not added and item is function
+    assert(set_param_label(&global_sym_table, &item, &param, &label) == 2);
+    // get label of param
     assert(get_param_label(&global_sym_table, &item, &param, &error) == NULL);
+    // err flag is raised to value of 3 [param not found]
+    assert(error == 2);
 
-    assert(error == 1);
-
-    assert(set_param_type(&global_sym_table, &item, &param, integer) == 1);
+    assert(set_param_type(&global_sym_table, &item, &param, integer) == 2);
 
     assert(get_param_type(&global_sym_table, &item, &param, &error) == undefined);
 
-    assert(error == 1);
-
+    assert(error == 2);
+    
     
     dstring_free(&item);
     dstring_free(&param);
