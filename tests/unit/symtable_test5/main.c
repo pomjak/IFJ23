@@ -1,7 +1,7 @@
 /**
  * @file main.c (unit test 5)
  * @author Pomsar Jakub xpomsa00
- * @brief main for unit test 5 - operations with params
+ * @brief main for unit test 5 - operations with params without err
  * @version 0.1
  * @date 2023-10-17
  *
@@ -30,7 +30,6 @@ int main()
 
     symtable_insert(&global_sym_table, &item);
 
-
     bool err;
 
     assert(set_type(&global_sym_table, &item, function) == 0);
@@ -40,12 +39,18 @@ int main()
     assert(err == false);
 
     uint8_t error = 255;
+    //insert new param
+    assert(add_param(&global_sym_table, &item, &param, &err) == 0);
+    //set label for param
+    assert(set_param_label(&global_sym_table, &item, &param, &label) == 0);
+    //get label of param
+    assert(dstring_cmp(get_param_label(&global_sym_table, &item, &param, &error), &label) == 0);
+    //without error
+    assert(error == 0);
 
-    assert(add_param(&global_sym_table, &item,&param,&err) == 0);
+    assert(set_param_type(&global_sym_table, &item, &param, integer) == 0);
 
-    assert(set_param_label(&global_sym_table, &item,&param,&label) == 0);
-
-    assert(dstring_cmp(get_param_label(&global_sym_table, &item,&param,&error),&label) == 0);
+    assert(get_param_type(&global_sym_table, &item, &param, &error) == integer);
 
     assert(error == 0);
 

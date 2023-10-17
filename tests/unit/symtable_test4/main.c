@@ -92,6 +92,8 @@ int main()
         else
             assert(symtable_search(&global_sym_table, &item) != NULL);
     }
+    
+    fclose(input);
 
     dstring_free(&item);
 
