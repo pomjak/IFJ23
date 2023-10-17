@@ -15,4 +15,3 @@ build-and-test:
   only:
     - main
     - work
-    - symtable
