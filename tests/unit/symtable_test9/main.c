@@ -15,23 +15,23 @@
 int main()
 {
     symtab_t global_sym_table;
-    dstring_t item, value1,param;
+    dstring_t item, param;
     FILE *input = fopen("input.txt", "r");
 
     symtable_init(&global_sym_table);
 
     dstring_init(&item);
-    
+
     dstring_init(&param);
 
-    dstring_add_const_str(&item,"func_with_lots_of_params");
+    dstring_add_const_str(&item, "func_with_lots_of_params");
 
     assert(symtable_insert(&global_sym_table, &item) == 0);
 
     assert(set_type(&global_sym_table, &item, function) == 0);
 
     bool err = true;
-    uint8_t error_int= 255;
+    uint8_t error_int = 255;
 
     assert(get_type(&global_sym_table, &item, &err) == function);
 
@@ -50,11 +50,10 @@ int main()
 
         assert(add_param(&global_sym_table, &item, &param, &err) == 0);
 
-        assert(set_param_type(&global_sym_table, &item, &param, i%6) == 0);
+        assert(set_param_type(&global_sym_table, &item, &param, i % 6) == 0);
     }
 
     rewind(input);
-    
 
     for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
     {
@@ -67,23 +66,21 @@ int main()
 
         dstring_add_const_str(&param, buffer);
 
-        param_t * get = (symtable_search(&global_sym_table,&item))->parametrs;
+        symtab_item_t *get = (symtable_search(&global_sym_table, &item));
 
-        assert(search_param(, &param) != NULL);
+        assert(search_param(get->parametrs, &param) != NULL);
 
         assert(get_param_type(&global_sym_table, &item, &param, &error_int) == i % 6);
 
         assert(error_int == 0);
     }
 
-    rewind(input);
-
 
     fclose(input);
 
     dstring_free(&item);
 
-    dstring_free(&value1);
+    dstring_free(&param);
 
     symtable_dispose(&global_sym_table);
 

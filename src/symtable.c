@@ -362,6 +362,7 @@ param_t *param_init(dstring_t *name_of_param, bool *err)
     }
 
     dstring_init(&node->name);
+    dstring_copy(name_of_param,&node->name);
     dstring_init(&node->label);
     node->type = undefined;
     node->next = NULL;
@@ -378,7 +379,7 @@ param_t *search_param(param_t *first, dstring_t *id)
 
     do
     {
-        if (dstring_cmp(&node->name, id))
+        if (!dstring_cmp(&node->name, id))
             return node;
         node = node->next;
     } while (node);
@@ -447,6 +448,7 @@ Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_par
         *err = 3;
         return undefined;
     }
+    *err = 0;
     return node->type;
 }
 
