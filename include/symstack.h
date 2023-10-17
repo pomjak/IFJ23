@@ -1,5 +1,5 @@
 /**
- * @file symstack.c
+ * @file symstack.h
  * @author Adrián Ponechal (xponec01@stud.fit.vutbr.cz)
  * @brief Stack for symbols used in precedence analysis
  * @date 2023-10-15
@@ -31,29 +31,92 @@ typedef struct SYMSTACK
     size_t size;
 } symstack_t;
 
-// stack functions
-// init
+/**
+ * @brief safely deletes token from memory
+ *
+ * @param token - token to be deleted
+ */
+void delete_token(token_T *token);
+
+/**
+ * @brief initialize stack
+ *
+ * @param stack - stack to be initilized
+ */
 void init_symstack(symstack_t *stack);
 
-// push
+/**
+ * @brief pushes concrete data on top of the stack
+ *
+ * @param stack - used stack
+ * @param data - data to push
+ * @return true - symbol pushed on stack
+ * @return false - failed tu push symbol on stack
+ */
 bool symstack_push(symstack_t *stack, symstack_data_t data);
 
-// pop
+/**
+ * @brief removes node from stack and return it's data
+ *
+ * @param stack
+ * @return symstack_data_t - poped data from given stack
+ */
 symstack_data_t symstack_pop(symstack_t *stack);
 
-// peek
+/**
+ * @brief returns data from top of the stack, but does not remove the node
+ *
+ * @param stack
+ * @return symstack_data_t - returned data
+ */
 symstack_data_t symstack_peek(const symstack_t *stack);
 
+/**
+ * @brief checks if the given stack is empty
+ *
+ * @param stack
+ * @return true - if stack is empty
+ * @return false - stack is not empty
+ */
 bool symstack_is_empty(const symstack_t *stack);
 
-// dispose
+/**
+ * @brief delete all nodes from stack
+ *
+ * @param stack
+ * @return true - deleted all data
+ * @return false - not deleted all data
+ */
 bool symstack_dispose(symstack_t *stack);
 
-// convert token type to symbol
+/**
+ * @brief get token and  based of the token type returns readable string
+ *
+ * @param token
+ * @return const char*
+ */
 const char *convert_token_type_to_string(token_T token);
 
-/* debugging functions */
+/**
+ * @brief prints stack line
+ *
+ * @param width
+ */
 void print_line(unsigned int width);
+
+/**
+ * @brief prints node of the stack
+ *
+ * @param node
+ * @param width
+ */
 void print_node(node_t *node, unsigned int width);
+
+/**
+ * @brief prints whole stack
+ *
+ * @param stack
+ * @param width
+ */
 void print_stack(const symstack_t *stack, unsigned int width);
 #endif

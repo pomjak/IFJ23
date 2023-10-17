@@ -7,7 +7,7 @@ LEAK_SEEKER=valgrind
 
 ifeq ($(shell UNAME),Darwin)
 	PRINT=printf
-	LEAK_SEEKER=leaks
+	LEAK_SEEKER=leaks --atExit -- 
 endif 
 
 build:
@@ -19,6 +19,7 @@ run: build
 	./$(NAME) < input.txt > ./output.txt 2>&1
 	diff ./expected.txt ./output.txt || ($(PRINT) "[info] test $(TEST_NAME) \e[31mFAIL\e[0m" && exit 1)
 	$(PRINT) "[info] test $(TEST_NAME) \e[32mPASS\e[0m"
+	$(LEAK_SEEKER) ./$(NAME) < input.txt 
 
 artifacts:
 	@echo "[info] creating artifacts for $(TEST_NAME)"
