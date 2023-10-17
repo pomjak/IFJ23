@@ -10,7 +10,7 @@ build:
 run: build
 	@echo "[info] performing test symtable 4"
 	
-	if ./$(NAME) < input.txt > ./output.txt 2>&1; then \
+	if ./$(NAME) > ./output.txt 2>&1; then \
         echo -e "[info] test symtable 4 \e[32mPASS\e[0m"; \
     else \
         echo -e "[info] test symtable 4 \e[31mFAIL\e[0m"; \
@@ -18,7 +18,7 @@ run: build
 
 	@echo "[info] performing valgrind check symtable 4"
 
-	if $(VALGRIND) ./$(NAME) < input.txt > ./valgrind_output.txt 2>&1; then \
+	if $(VALGRIND) ./$(NAME) > ./valgrind_output.txt 2>&1; then \
         echo -e "[info] valgrind check symtable 4 \e[32mOK\e[0m"; \
     else \
         echo -e "[info] valgrind check symtable 4 \e[33mWARN VALGRIND\e[0m"; \

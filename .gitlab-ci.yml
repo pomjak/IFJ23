@@ -15,4 +15,4 @@ build-and-test:
   only:
     - main
     - work
-    - symtable
+    - symtable-fix

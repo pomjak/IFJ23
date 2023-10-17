@@ -1,7 +1,7 @@
 /**
- * @file main.c (unit test 6)
+ * @file main.c (unit test 7)
  * @author Pomsar Jakub xpomsa00
- * @brief main for unit test 5 - operations with params with error handling
+ * @brief main for unit test 7 - adding params to item which is not function
  * @version 0.1
  * @date 2023-10-17
  *
