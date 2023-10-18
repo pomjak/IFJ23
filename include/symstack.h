@@ -39,6 +39,13 @@ typedef struct SYMSTACK
 void delete_token(token_T *token);
 
 /**
+ * @brief converts token to data
+ *
+ * @param token - tokeen to be ocnverted
+ */
+symstack_data_t convert_token_to_data(token_T token);
+
+/**
  * @brief initialize stack
  *
  * @param stack - stack to be initilized
