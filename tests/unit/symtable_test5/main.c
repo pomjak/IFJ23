@@ -17,7 +17,7 @@ int main()
     symtab_t global_sym_table;
     dstring_t item, param, label;
 
-    symtable_init(&global_sym_table,11);
+    symtable_init(&global_sym_table);
 
     dstring_init(&item);
     dstring_add_const_str(&item, "item1");

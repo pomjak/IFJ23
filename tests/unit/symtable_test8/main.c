@@ -19,7 +19,7 @@ int main()
     uint8_t error = 255;
     bool err;
 
-    symtable_init(&global_sym_table,11);
+    symtable_init(&global_sym_table);
 
     dstring_init(&item);
     dstring_add_const_str(&item, "item1");

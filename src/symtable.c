@@ -1,15 +1,14 @@
 #include "symtable.h"
 
-void symtable_init(symtab_t *symtab, size_t size)
+void symtable_init(symtab_t *symtab)
 {
-
-    symtab->size = size;
+    symtab->size = 11;
     symtab->count = 0;
     symtab->deactivated = 0;
 
-    symtab->items = malloc(sizeof(symtab_item_t) * (symtab->size + 1));
+    symtab->items = malloc(sizeof(symtab_item_t) * symtab->size);
 
-    for (size_t i = 0; i < symtab->size + 1; i++)
+    for (size_t i = 0; i < symtab->size; i++)
         symtab->items[i] = NULL;
 }
 
@@ -26,7 +25,7 @@ unsigned long hash(char *id, size_t size)
 
     for (p = (const unsigned char *)id; *p != '\0'; p++)
         hash = 65599 * hash + *p;
-    return (hash % (size+1));
+    return (hash % size);
 }
 
 unsigned long hash2(char *id, size_t size)
@@ -47,7 +46,7 @@ unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size)
     unsigned long step = hash2(wanted, size);
 
     for (int i = 0; items[index] != NULL; i++) // gets hash of 1st null slot
-        index = (index + i * step) % size;     // if occupied, double hash
+        index = (index + i * step) % size; // if occupied, double hash
 
     return index;
 }
@@ -71,8 +70,8 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
                 return NULL;
         else
         {
-            index +=step;
-            index = index % (symtab->size + 1);
+            index += step;
+            index = index % symtab->size;
         }
     }
     return NULL;
@@ -105,8 +104,16 @@ symtab_item_t *item_init(dstring_t *id, bool *err)
 
 void resize(symtab_t *symtab)
 {
-    size_t new_size = symtab->count * 2;
-    symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * (new_size + 1));
+    size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553};
+
+    int i;
+    for (i = 0; symtab->size > primes[i]; i++)
+    {
+    }
+    size_t new_size = primes[i];
+    printf("%d\n",new_size);
+
+    symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
 
     for (size_t i = 0; i < new_size + 1; i++)
         resized_items[i] = NULL;
@@ -122,7 +129,7 @@ void resize(symtab_t *symtab)
 
     // for (size_t i = 0; i < symtab->size; i++)
     //     free(symtab->items[i]);
-    // free(symtab->items);
+    free(symtab->items);
 
     symtab->items = resized_items;
     symtab->size = new_size;

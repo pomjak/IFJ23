@@ -18,7 +18,7 @@ int main()
     dstring_t item, value1;
     FILE *input = fopen("input.txt", "r");
 
-    symtable_init(&global_sym_table,10);
+    symtable_init(&global_sym_table);
 
     dstring_init(&item);
 

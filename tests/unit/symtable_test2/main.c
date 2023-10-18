@@ -22,7 +22,7 @@ int main()
     dstring_init(&value1);
     dstring_add_const_str(&item1, "value1");
 
-    symtable_init(&global_sym_table,11);
+    symtable_init(&global_sym_table);
 
     symtable_insert(&global_sym_table, &item1);
 
@@ -78,7 +78,7 @@ int main()
 
     symtab_t local_symtable;
 
-    symtable_init(&local_symtable,11);
+    symtable_init(&local_symtable);
 
     assert(set_local_symtable(&global_sym_table, &item1, &local_symtable) == 0);
     

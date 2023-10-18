@@ -76,7 +76,7 @@ typedef struct symtab
  *
  * @param symtab pointer to desired symtable
  */
-void symtable_init(symtab_t *symtab, size_t size);
+void symtable_init(symtab_t *symtab);
 
 /**
  * @brief hash function implemented as sdbm algo
