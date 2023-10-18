@@ -67,9 +67,9 @@ symstack_data_t symstack_pop(symstack_t *stack)
     return old_node_data;
 }
 
-symstack_data_t symstack_peek(const symstack_t *stack)
+node_t *symstack_peek(const symstack_t *stack)
 {
-    return stack->top->data;
+    return stack->top;
 }
 
 bool symstack_is_empty(const symstack_t *stack)

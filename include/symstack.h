@@ -74,9 +74,9 @@ symstack_data_t symstack_pop(symstack_t *stack);
  * @brief returns data from top of the stack, but does not remove the node
  *
  * @param stack
- * @return symstack_data_t - returned data
+ * @return symstack_data_t - returned pointer to top of the stack
  */
-symstack_data_t symstack_peek(const symstack_t *stack);
+node_t *symstack_peek(const symstack_t *stack);
 
 /**
  * @brief checks if the given stack is empty
