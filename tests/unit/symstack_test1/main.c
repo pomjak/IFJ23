@@ -25,11 +25,7 @@ int main(void)
     get_token(&token);
     while (token.type != TOKEN_EOF)
     {
-        symstack_data_t data;
-        data.token = token;
-        data.isHandleBegin = false;
-        data.isTerminal = true;
-        strcpy(data.symbol, convert_token_type_to_string(token));
+        symstack_data_t data = convert_token_to_data(token);
         get_token(&token);
         symstack_push(&stack, data);
     }

@@ -20,6 +20,16 @@ void delete_token(token_T *token)
     }
 }
 
+symstack_data_t convert_token_to_data(token_T token)
+{
+    symstack_data_t data;
+    data.token = token;
+    data.isHandleBegin = false;
+    data.isTerminal = true;
+    strcpy(data.symbol, convert_token_type_to_string(token));
+    return data;
+}
+
 void init_symstack(symstack_t *stack)
 {
     stack->top = NULL;
@@ -136,6 +146,7 @@ const char *convert_token_type_to_string(token_T token)
     default:
         return "$";
     }
+    return "";
 }
 
 /* debugging */

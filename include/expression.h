@@ -1,5 +1,6 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
+#include "error.h"
 
 // #include "parser.h"
 typedef enum SYMBOL_TYPE
@@ -38,22 +39,22 @@ typedef enum SYMBOL_TYPE
 typedef enum PREC_RULES
 {
     // arithmetic rules
-    E_PLUS_E,   // E -> E + E
-    E_MINUS_E,  // E -> E - E
-    E_CONCAT_E, // E -> E.E
-    E_MUL_E,    // E -> E * E
-    E_DIV_E,    // E -> E / E
+    E_PLUS_E,  // E -> E + E
+    E_MINUS_E, // E -> E - E
+    E_MUL_E,   // E -> E * E
+    E_DIV_E,   // E -> E / E
 
     // relational rules
     E_LT_E,  // E -> E < E
     E_LEQ_E, // E -> E <= E
     E_GT_E,  // E -> E > E
     E_GEQ_E, // E -> E >= E
-    E_EQ_E,  // E -> E === E
-    E_NEQ_E, // E -> E !== E
+    E_EQ_E,  // E -> E == E
+    E_NEQ_E, // E -> E != E
 
     PARL_E_PARR, // E -> (E)
     OPERAND,     // E -> id
+    FUNC_CALL,   // E -> id(params)
     NO_RULE
 } prec_rule_t;
 
@@ -70,5 +71,12 @@ typedef enum PREC_OPERATORS
 } prec_table_idx_op_t;
 
 // error_t precedence_analysis(PData_t *p_data);
+
+/**
+ * @brief returns error code
+ *
+ * @return int error code
+ */
+int expr();
 
 #endif
