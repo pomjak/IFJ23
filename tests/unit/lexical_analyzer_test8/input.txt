@@ -1,0 +1,9 @@
+//Test of comments
+//1_!?ahoj   */+-;string,({})><=>==2e4/"
+/*1_!?ahoj   *+-;string,({})><=>==2e4/"
+*/
+/*/*ahoj*/konec*/
+/**
+ * Ahoj
+ * @param test
+ */

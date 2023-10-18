@@ -1,6 +1,16 @@
+/**
+ * @name IFJ23
+ * @file error.h
+ * @brief Definitions of error codes
+ * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
+ * @author 
+ * @date 08.10.2023
+ **/
+
 #ifndef ERROR_H
 #define ERROR_H
 
+#define ERR_NO_ERR 0
 #define ERR_LEXICAL 1
 #define ERR_SYNTAX 2
 #define ERR_UNDEFINED_FUNCTION 3

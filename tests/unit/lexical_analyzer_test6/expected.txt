@@ -12,9 +12,9 @@
 <RETURN>
 <VAR>
 <WHILE>
-<DT_DOUBLE>
-<DT_DOUBLE>
-<DT_INT>
-<DT_INT>
-<DT_STRING>
-<DT_STRING><EOF>
+<DT_DOUBLE  nilable='1'>
+<DT_DOUBLE  nilable='0'>
+<DT_INT  nilable='1'>
+<DT_INT  nilable='0'>
+<DT_STRING  nilable='1'>
+<DT_STRING  nilable='0'><EOF>
