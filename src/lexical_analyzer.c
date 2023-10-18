@@ -339,6 +339,10 @@ int get_token(token_T *token)
 
     dstring_free(&tmp_string);
 
+    if (actual_token.type != TOKEN_STRING && actual_token.type != TOKEN_IDENTIFIER) {
+        dstring_free(&readed_string);
+    }
+
     if (open_comments > 0) {
         ERROR_PRINT("Block comment is not closed.");
     }
