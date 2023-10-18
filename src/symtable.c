@@ -101,12 +101,13 @@ symtab_item_t *item_init(dstring_t *id, bool *err)
 
 void resize(symtab_t *symtab)
 {
-    size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553};
+    const size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553, 12409, 25229};
 
     int i;
-    for (i = 0; symtab->size >= primes[i]; i++)
+    for (i = 0; symtab->size >= primes[i] && primes[i]; i++)
     {
     }
+    DEBUG_PRINT("resizing table to %d",primes[i])
     size_t new_size = primes[i];
 
     symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
@@ -123,13 +124,12 @@ void resize(symtab_t *symtab)
         }
     }
 
-    // for (size_t i = 0; i < symtab->size; i++)
-    //     free(symtab->items[i]);
     free(symtab->items);
 
     symtab->items = resized_items;
     symtab->size = new_size;
     symtab->count -= symtab->deactivated;
+    symtab->deactivated = 0;
 }
 
 void check_load(symtab_t *symtab)

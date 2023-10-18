@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include "dyn_string.h"
 #include "error.h"
+#include "debug.h"
 
 #define SYMTAB_SIZE 1021 // max size of htab items is prime number for better distribution
 
@@ -83,7 +84,6 @@ void symtable_init(symtab_t *symtab);
  *
  * @cite                http://www.cse.yorku.ca/~oz/hash.html
  * @param id            identifier to be hashed
- * @param size          size of symtable
  * @return u_int32_t    hashed key
  */
 unsigned long hash(char *id, size_t size);
@@ -98,11 +98,12 @@ unsigned long hash(char *id, size_t size);
 unsigned long hash2(char *id, size_t size);
 
 /**
- * @brief get the hash of free slot or occupied slot with matching id using double hashing
- *
- * @param id
- * @param symtab
- * @return unsigned long
+ * @brief get the hash of free slot using double hashing
+ * 
+ * @param id                id to be hashed
+ * @param items             ptr to items of htab 
+ * @param size              size of items
+ * @return unsigned long    hash after double hashing
  */
 unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size);
 
