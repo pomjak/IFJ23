@@ -35,7 +35,7 @@ unsigned long hash2(char *id, size_t size)
     while ((c = *id++))
         hash = ((hash << 5) + hash) + c;
 
-    return (hash % size) + 1;
+    return (hash % (size-1)) + 1;
 }
 
 unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size)
@@ -45,8 +45,8 @@ unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size)
     unsigned long index = hash(wanted, size);
     unsigned long step = hash2(wanted, size);
 
-    for (int i = 0; items[index] != NULL; i++) // gets hash of 1st null slot
-        index = (index + i * step) % size; // if occupied, double hash
+    for (int i = 0; items[index] != NULL; i++)   // gets hash of 1st null slot
+        index = (index + i * step) % size;       // if occupied, double hash
 
     return index;
 }
@@ -61,7 +61,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
     if (symtab == NULL)
         return NULL;
 
-    while (symtab->items[index] != NULL)
+    for (int i = 0; symtab->items[index] != NULL; i++)  
     {
         if (!dstring_cmp(&(symtab->items[index])->name, id))
             if ((symtab->items[index])->active) // if name matches and item is active,g success
@@ -69,10 +69,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
             else // if item is inactive, it was deleted, not found
                 return NULL;
         else
-        {
-            index += step;
-            index = index % symtab->size;
-        }
+            index = (index + i * step) % symtab->size;
     }
     return NULL;
 }
@@ -107,15 +104,14 @@ void resize(symtab_t *symtab)
     size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553};
 
     int i;
-    for (i = 0; symtab->size > primes[i]; i++)
+    for (i = 0; symtab->size >= primes[i]; i++)
     {
     }
     size_t new_size = primes[i];
-    printf("%d\n",new_size);
 
     symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
 
-    for (size_t i = 0; i < new_size + 1; i++)
+    for (size_t i = 0; i < new_size; i++)
         resized_items[i] = NULL;
 
     for (size_t i = 0; i < symtab->size; i++)
@@ -138,7 +134,7 @@ void resize(symtab_t *symtab)
 
 void check_load(symtab_t *symtab)
 {
-    if (0.7 < (float)((float)symtab->count / (float)symtab->size))
+    if (0.65 < (float)((float)symtab->count / (float)symtab->size))
         resize(symtab);
 }
 
