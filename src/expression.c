@@ -42,6 +42,14 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* !   */ {X, X, X, X, X, X, X, X, X, X},
         /* $   */ {S, S, S, S, S, S, S, X, R, S}};
 
+void set_error_code(int *error_code)
+{
+    if (*error_code == EXIT_SUCCESS)
+    {
+        *error_code = error_code;
+    }
+}
+
 void push_initial_sym(symstack_t *stack)
 {
     symstack_data_t data;
@@ -121,29 +129,63 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
     {
         return X;
     }
-    printf("[%d][%d]: ", convert_term_to_index(closest_terminal->data), convert_token_to_index(token));
+    printf("[%d][%d]: \n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token));
     prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
     return prec_op;
 }
 
+node_t *symbol_arr_init()
+{
+    node_t *new_arr = (node_t *)malloc(sizeof(struct NODE));
+    if (new_arr == NULL)
+    {
+        print_error(ERR_INTERNAL, "expression.c: symbol_arr_init: memory was not allocated.\n");
+    }
+    return new_arr;
+}
+
+bool symbol_arr_append(node_t node);
+
+void symbol_arr_free(node_t *sym_arr);
+
 /* methods of operation */
-void equal_shift()
+void equal_shift(symstack_t *stack, token_T *token)
 {
-    printf("equal_shift\n");
+    // printf("equal_shift\n");
+    symstack_data_t sym_data = convert_token_to_data(*token);
+    symstack_push(stack, sym_data);
 }
 
-void shift(symstack_t *stack)
+void shift(symstack_t *stack, token_T *token)
 {
-    printf("shift\n");
     node_t *peek = symstack_peek(stack);
+    peek->data.isHandleBegin = true;
+    symstack_data_t sym_data = convert_token_to_data(*token);
+    symstack_push(stack, sym_data);
 }
 
-void reduce()
+prec_rule_t get_rule(symstack_t *stack, int *error_code)
+{
+    // get symbol and choose rule based on it
+    node_t *arr = symbol_arr_init();
+    if (arr == NULL)
+    {
+        set_error_code(ERR_INTERNAL);
+        return RULE_NO_RULE;
+    }
+
+    // giant switch here
+}
+
+void reduce(symstack_t *stack, int *err_code)
 {
     printf("reduce\n");
+    node_t *closest_term = get_closest_terminal(stack);
+    prec_rule_t rule = get_rule(stack, err_code);
+    reduce_by_rule(&stack, rule);
 }
 
-void reduce_error()
+void reduce_error(symstack_t *stack)
 {
     printf("reduce_error\n");
 }
@@ -165,6 +207,8 @@ void reduce_error()
  */
 int expr()
 {
+    /* error handling */
+    int error_code = EXIT_SUCCESS;
 
     // init stack
     symstack_t stack;
@@ -177,43 +221,50 @@ int expr()
     token_T token;
     get_token(&token);
     symstack_data_t sym_data = convert_token_to_data(token);
-    symstack_push(&stack, sym_data);
 
+    print_stack(&stack, 1);
     // prepare sym_data to be pushed on stack
     int i = 0;
     do
     {
+        // check when end -> if token is $ thats the end of expr
+        if (convert_token_to_index(token) == INDEX_DOLLAR)
+        {
+            // do some actions in here, end etc
+            break;
+        }
         switch (get_prec_table_operation(&stack, token))
         {
         case E:
-            equal_shift();
+            equal_shift(&stack, &token);
+            get_token(&token);
             break;
         case S:
-            shift(&stack);
+            shift(&stack, &token);
+            get_token(&token);
             break;
         case R:
-            reduce();
+            reduce(&stack, &error_code);
             break;
         case X:
-            print_error(ERR_SYNTAX, "Expresion error.\n");
+            // print_error(ERR_SYNTAX, "Expresion error.\n");
             break;
         default:
             break;
         }
-        delete_token(&token);
-        get_token(&token);
-        sym_data = convert_token_to_data(token);
-        symstack_push(&stack, sym_data);
+
+        // sym_data = convert_token_to_data(token);
+        // symstack_push(&stack, sym_data);
 
         i += 1;
         if (i == 10)
         {
-            print_stack(&stack, 1);
+            // print_stack(&stack, 1);
             symstack_dispose(&stack);
         }
 
     } while (!symstack_is_empty(&stack));
 
     // print_stack(&stack, 1);
-    return EXIT_SUCCESS;
+    return error_code;
 }
