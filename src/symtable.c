@@ -35,7 +35,7 @@ unsigned long hash2(char *id, size_t size)
     while ((c = *id++))
         hash = ((hash << 5) + hash) + c;
 
-    return (hash % (size-1)) + 1;
+    return (hash % (size - 1)) + 1;
 }
 
 unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size)
@@ -45,8 +45,8 @@ unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size)
     unsigned long index = hash(wanted, size);
     unsigned long step = hash2(wanted, size);
 
-    for (int i = 0; items[index] != NULL; i++)   // gets hash of 1st null slot
-        index = (index + i * step) % size;       // if occupied, double hash
+    for (int i = 0; items[index] != NULL; i++) // gets hash of 1st null slot
+        index = (index + i * step) % size;     // if occupied, double hash
 
     return index;
 }
@@ -61,7 +61,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
     if (symtab == NULL)
         return NULL;
 
-    for (int i = 0; symtab->items[index] != NULL; i++)  
+    for (int i = 0; symtab->items[index] != NULL; i++)
     {
         if (!dstring_cmp(&(symtab->items[index])->name, id))
             if ((symtab->items[index])->active) // if name matches and item is active,g success
@@ -76,7 +76,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
 
 bool is_in_symtbale(symtab_t *symtab, dstring_t *id)
 {
-    return(symtable_search(symtab, id) != NULL);
+    return (symtable_search(symtab, id) != NULL);
 }
 
 symtab_item_t *item_init(dstring_t *id, bool *err)
@@ -106,12 +106,17 @@ void resize(symtab_t *symtab)
 {
     const size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553, 12409, 25229};
 
-    int i;
-    for (i = 0; symtab->size >= primes[i] && primes[i]; i++)
+    size_t new_size;
+    for (int i = 0; primes[i]; i++)
     {
+        if (symtab->size < primes[i])
+        {
+            new_size = primes[i];
+            break;
+        }
     }
-    DEBUG_PRINT("resizing table to %d",primes[i])
-    size_t new_size = primes[i];
+
+    DEBUG_PRINT("resizing table to %d", primes[i])
 
     symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
 
@@ -229,7 +234,6 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *
     return NULL;
 }
 
-
 uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type)
 {
     symtab_item_t *item = symtable_search(symtab, id);
@@ -331,7 +335,6 @@ bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err)
         return item->is_var_declared;
     }
 }
-
 
 uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type)
 {
