@@ -1,6 +1,15 @@
+/**
+ * @file expression.h
+ * @author Adrián Ponechal (xponec01@stud.fit.vutbr.cz)
+ * @brief Expression parsing structures, precedence table and functions declarations
+ * @date 2023-10-18
+ */
+
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 #include "error.h"
+#include "lexical_analyzer.h"
+#include "symstack.h"
 
 #define PREC_TABLE_SIZE 10
 typedef enum PREC_TABLE_OPERATIONS
@@ -16,21 +25,6 @@ typedef enum PREC_TABLE_OPERATIONS
  * 1) check and discuss precedence table
  * 2) prototpye function
  */
-
-// RO - Relational Operators , FC - Function Call
-const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
-    {
-        /*      | / * | + - | ?? | i | FC | RO | ( | ) | ! | $ | */
-        /* / * */ {R, R, R, S, S, R, R, R, R, R},
-        /* + - */ {S, R, R, S, S, R, S, R, R, R},
-        /* ??  */ {S, S, S, S, S, S, S, R, R, R},
-        /* i   */ {R, R, R, X, X, R, X, R, R, R},
-        /* FC  */ {R, R, R, X, X, R, X, R, R, R},
-        /* RO  */ {S, S, R, S, S, E, S, R, R, R},
-        /* (   */ {S, S, S, S, S, S, S, S, X, X},
-        /* )   */ {R, R, R, X, X, R, X, E, R, R},
-        /* !   */ {X, X, X, X, X, X, X, X, X, X},
-        /* $   */ {S, S, S, S, S, S, S, X, R, S}};
 
 typedef enum PREC_TAB_INDEX
 {
@@ -128,6 +122,14 @@ prec_tab_index_t convert_token_to_index(token_T token);
 prec_tab_index_t convert_term_to_index(symstack_data_t data);
 
 /**
+ * @brief Finds and returns the closest terminal from top of the stack
+ *
+ * @param stack
+ * @return node_t* - if null, no treminal was found
+ */
+node_t *get_closest_terminal(symstack_t *stack);
+
+/**
  * @brief Get the prec table operation object
  *
  * @return prec_table_operation_t
@@ -136,7 +138,7 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
 
 /* methods of operation */
 void equal_shift();
-void shift();
+void shift(symstack_t *stack);
 void reduce();
 void reduce_error();
 

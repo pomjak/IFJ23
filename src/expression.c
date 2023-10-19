@@ -1,3 +1,10 @@
+/**
+ * @file expression.c
+ * @author Adrián Ponechal (xponec01@stud.fit.vutbr.cz)
+ * @brief Expression parsing
+ * @date 2023-10-18
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -20,6 +27,21 @@
  * |- if token assignment is necessary
  */
 
+// RO - Relational Operators , FC - Function Call
+const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
+    {
+        /*      | / * | + - | ?? | i | FC | RO | ( | ) | ! | $ | */
+        /* / * */ {R, R, R, S, S, R, R, R, R, R},
+        /* + - */ {S, R, R, S, S, R, S, R, R, R},
+        /* ??  */ {S, S, S, S, S, S, S, R, R, R},
+        /* i   */ {R, R, R, X, X, R, X, R, R, R},
+        /* FC  */ {R, R, R, X, X, R, X, R, R, R},
+        /* RO  */ {S, S, R, S, S, E, S, R, R, R},
+        /* (   */ {S, S, S, S, S, S, S, S, X, X},
+        /* )   */ {R, R, R, X, X, R, X, E, R, R},
+        /* !   */ {X, X, X, X, X, X, X, X, X, X},
+        /* $   */ {S, S, S, S, S, S, S, X, R, S}};
+
 void push_initial_sym(symstack_t *stack)
 {
     symstack_data_t data;
@@ -31,6 +53,7 @@ void push_initial_sym(symstack_t *stack)
     data.token = token;
 
     strcpy(data.symbol, convert_token_type_to_string(token));
+    symstack_push(stack, data);
 }
 
 prec_tab_index_t convert_token_to_index(token_T token)
@@ -76,20 +99,31 @@ prec_tab_index_t convert_term_to_index(symstack_data_t data)
     return convert_token_to_index(data.token);
 }
 
-prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token)
+node_t *get_closest_terminal(symstack_t *stack)
 {
-    symstack_data_t closest_terminal;
+    node_t *current_node = symstack_peek(stack);
 
-    node_t *current_node = symstack_peek(&stack);
     while (current_node != NULL)
     {
         if (current_node->data.isTerminal)
         {
-            // convert term to index
-            return prec_tab[convert_term_to_index(current_node->data)][convert_token_to_index(token)];
+            return current_node;
         }
         current_node = current_node->previous;
     }
+    return current_node;
+}
+
+prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token)
+{
+    node_t *closest_terminal = get_closest_terminal(stack);
+    if (closest_terminal == NULL)
+    {
+        return X;
+    }
+    printf("[%d][%d]: ", convert_term_to_index(closest_terminal->data), convert_token_to_index(token));
+    prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
+    return prec_op;
 }
 
 /* methods of operation */
@@ -98,9 +132,10 @@ void equal_shift()
     printf("equal_shift\n");
 }
 
-void shift()
+void shift(symstack_t *stack)
 {
     printf("shift\n");
+    node_t *peek = symstack_peek(stack);
 }
 
 void reduce()
@@ -142,8 +177,10 @@ int expr()
     token_T token;
     get_token(&token);
     symstack_data_t sym_data = convert_token_to_data(token);
+    symstack_push(&stack, sym_data);
 
     // prepare sym_data to be pushed on stack
+    int i = 0;
     do
     {
         switch (get_prec_table_operation(&stack, token))
@@ -152,7 +189,7 @@ int expr()
             equal_shift();
             break;
         case S:
-            shift();
+            shift(&stack);
             break;
         case R:
             reduce();
@@ -163,8 +200,20 @@ int expr()
         default:
             break;
         }
+        delete_token(&token);
+        get_token(&token);
+        sym_data = convert_token_to_data(token);
+        symstack_push(&stack, sym_data);
 
-    } while (false);
+        i += 1;
+        if (i == 10)
+        {
+            print_stack(&stack, 1);
+            symstack_dispose(&stack);
+        }
 
+    } while (!symstack_is_empty(&stack));
+
+    // print_stack(&stack, 1);
     return EXIT_SUCCESS;
 }
