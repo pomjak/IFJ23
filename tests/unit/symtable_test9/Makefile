@@ -14,6 +14,7 @@ run: build
         echo -e "[info] test symtable 9 \e[32mPASS\e[0m"; \
     else \
         echo -e "[info] test symtable 9 \e[31mFAIL\e[0m"; \
+		exit 1;\
     fi
 
 	@echo "[info] performing valgrind check symtable 9"
