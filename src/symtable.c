@@ -372,7 +372,7 @@ param_t *param_init(dstring_t *name_of_param, bool *err)
         *err = true;
         return NULL;
     }
-
+    *err = false;
     dstring_init(&node->name);
     dstring_copy(name_of_param, &node->name);
     dstring_init(&node->label);
