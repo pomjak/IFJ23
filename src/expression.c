@@ -42,12 +42,14 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* !   */ {X, X, X, X, X, X, X, X, X, X},
         /* $   */ {S, S, S, S, S, S, S, X, R, S}};
 
-void set_error_code(int *error_code)
+int error_code_handler(int error_code)
 {
-    if (*error_code == EXIT_SUCCESS)
+    static int err = EXIT_SUCCESS;
+    if (err == EXIT_SUCCESS)
     {
-        *error_code = error_code;
+        err = error_code;
     }
+    return err;
 }
 
 void push_initial_sym(symstack_t *stack)
@@ -134,19 +136,35 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
     return prec_op;
 }
 
-node_t *symbol_arr_init()
+symbol_arr_t *symbol_arr_init()
 {
-    node_t *new_arr = (node_t *)malloc(sizeof(struct NODE));
+    symbol_arr_t *new_arr = (symbol_arr_t *)malloc(sizeof(symbol_arr_t));
     if (new_arr == NULL)
     {
         print_error(ERR_INTERNAL, "expression.c: symbol_arr_init: memory was not allocated.\n");
     }
+    new_arr->size = 0;
     return new_arr;
 }
 
-bool symbol_arr_append(node_t node);
+bool symbol_arr_append(symbol_arr_t *arr, node_t node)
+{
+    if (arr->size = 0)
+    {
+        // allocate new array
+    }
+    else
+    {
+        // realloc array and add item
+    }
+    return true;
+}
 
-void symbol_arr_free(node_t *sym_arr);
+void symbol_arr_free(symbol_arr_t *sym_arr)
+{
+    // free(sym_arr);
+    // sym_arr = NULL;
+}
 
 /* methods of operation */
 void equal_shift(symstack_t *stack, token_T *token)
@@ -170,11 +188,27 @@ prec_rule_t get_rule(symstack_t *stack, int *error_code)
     node_t *arr = symbol_arr_init();
     if (arr == NULL)
     {
-        set_error_code(ERR_INTERNAL);
+        error_code_handler(ERR_INTERNAL);
         return RULE_NO_RULE;
     }
 
+    // push all items until finds handle
+    node_t *current_node = symstack_peek(stack);
+    while (!current_node->data.isHandleBegin)
+    {
+        if (!symbol_arr_append(arr, *current_node))
+        {
+            error_code_handler(ERR_INTERNAL);
+            print_error(ERR_INTERNAL, "Fcking peace of shit\n");
+            return RULE_NO_RULE;
+        }
+        current_node = current_node->previous;
+    }
+
     // giant switch here
+    printf("GET RULE\n");
+    symbol_arr_free(arr);
+    return RULE_NO_RULE;
 }
 
 void reduce(symstack_t *stack, int *err_code)
@@ -182,7 +216,7 @@ void reduce(symstack_t *stack, int *err_code)
     printf("reduce\n");
     node_t *closest_term = get_closest_terminal(stack);
     prec_rule_t rule = get_rule(stack, err_code);
-    reduce_by_rule(&stack, rule);
+    // reduce_by_rule(stack, rule);
 }
 
 void reduce_error(symstack_t *stack)
