@@ -36,11 +36,6 @@ int main()
     assert(err == false);
 
 
-    assert(set_value(&global_sym_table, &item1, &value1) == 0);
-
-    assert(dstring_cmp(get_value(&global_sym_table, &item1),&value1) == 0);
-
-
     assert(set_return_type(&global_sym_table, &item1, integer) == 0);
     
     assert(get_return_type(&global_sym_table, &item1, &err) == integer);
@@ -66,13 +61,6 @@ int main()
     //so var declarations cannot be set
     assert(get_var_declaration(&global_sym_table, &item1, &err) == false);
     //thus err flag is raised
-    assert(err == true);
-
-    //same case as shoown earlier, func can't be constant
-    assert(set_constant(&global_sym_table, &item1, true) == 2);
-    
-    assert(get_constant(&global_sym_table, &item1, &err) == false);
-
     assert(err == true);
 
 

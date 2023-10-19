@@ -22,8 +22,6 @@ int main()
 
     dstring_init(&item);
 
-    dstring_init(&value1);
-
     char buffer[50];
 
     for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
@@ -97,8 +95,6 @@ int main()
     fclose(input);
 
     dstring_free(&item);
-
-    dstring_free(&value1);
 
     symtable_dispose(&global_sym_table);
 

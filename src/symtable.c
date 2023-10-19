@@ -89,8 +89,6 @@ symtab_item_t *item_init(dstring_t *id, bool *err)
     new->is_mutable = false;
     new->is_func_defined = false;
     new->is_var_declared = false;
-    new->is_const = false;
-    dstring_init(&new->value);
     new->parametrs = NULL;
     new->return_type = undefined;
     new->local_symtable = NULL;
@@ -186,7 +184,6 @@ void symtable_dispose(symtab_t *symtab)
         if (symtab->items[i] != NULL) // free only allocated pointer, not null pointers
         {
             dstring_free(&symtab->items[i]->name);
-            dstring_free(&symtab->items[i]->value);
 
             param_dispose(symtab->items[i]->parametrs);
 
@@ -227,23 +224,6 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *
     return NULL;
 }
 
-uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item)
-        return 1;
-    if (!dstring_copy(value, &item->value))
-        return ERR_INTERNAL;
-    return 0;
-}
-
-dstring_t *get_value(symtab_t *symtab, dstring_t *id)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item)
-        return NULL;
-    return (&item->value);
-}
 
 uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type)
 {
@@ -347,31 +327,6 @@ bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err)
     }
 }
 
-uint8_t set_constant(symtab_t *symtab, dstring_t *id, bool is_constant)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item)
-        return 1;
-    if (item->type == function)
-        return 2;
-    item->is_const = is_constant;
-    return 0;
-}
-
-bool get_constant(symtab_t *symtab, dstring_t *id, bool *err)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item || item->type == function)
-    {
-        *err = true;
-        return false;
-    }
-    else
-    {
-        *err = false;
-        return item->is_const;
-    }
-}
 
 uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type)
 {

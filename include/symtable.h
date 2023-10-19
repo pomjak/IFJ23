@@ -57,8 +57,6 @@ typedef struct symtab_item
     bool is_mutable;      // true for var, false for let
     bool is_func_defined; // true if func was already defined, else false
     bool is_var_declared; // true if item was already declared, else false
-    bool is_const;        // true if expression is constant "hello_world", "3", "2.7e10"
-    dstring_t value;      // value
     param_t *parametrs;   // pointer to param_t struct
     Type return_type;     // anything but func
     void *local_symtable; // points to local symtable if item is function
@@ -197,23 +195,6 @@ uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t
  */
 symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *err);
 
-/**
- * @brief Set the value of item directly in symtable
- * @param symtab        ptr to symtable
- * @param id            id of modified item
- * @param value         value to be set
- * @return uint8_t      return 0 if success, 1 if not found
- */
-uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value);
-
-/**
- * @brief Get the value of item
- *
- * @param symtab        ptr to symtable
- * @param id            id of modified item
- * @return dstring_t*   return found value as dstring pointer, else return NULL
- */
-dstring_t *get_value(symtab_t *symtab, dstring_t *id);
 
 /**
  * @brief Set the type of item directly in symtable
