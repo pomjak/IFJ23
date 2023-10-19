@@ -3,6 +3,8 @@
  * @brief Syntax / Semantics analysis header file
  * @author Simon Cagala <xcagal00@stud.fit.vutbr.cz>
  */
+#ifndef PARSER_H
+#define PARSER_H
 
 #include "error.h"
 #include "symtable.h"
@@ -27,19 +29,7 @@ typedef struct parser_t {
     int err_ret_code;           /// Exit code of the program
 } Parser;
 
-/**
- * Initializes a new Parser object
- * @param Parser Parser data structure
- * @return int error code
- */
-int parser_init(Parser *p);
-
-/**
- * Free data allocated by the parser
- * @param p 
- * @return int 
- */
-int parser_dispose(Parser *p);
+typedef unsigned int Rule;
 
 /**
  * @brief Parser entry point
@@ -48,3 +38,4 @@ int parser_dispose(Parser *p);
  */
 int parse();
 
+#endif
