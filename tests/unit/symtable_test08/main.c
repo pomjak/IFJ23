@@ -1,7 +1,7 @@
 /**
- * @file main.c (unit test 7)
+ * @file main.c (unit test 8)
  * @author Pomsar Jakub xpomsa00
- * @brief main for unit test 7 - adding params to item which is not function
+ * @brief main for unit test 8 - test set/get without added param
  * @version 0.1
  * @date 2023-10-17
  *
@@ -16,7 +16,7 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item, param, label;
-    uint8_t error = 255;
+    unsigned int error = 255;
     bool err;
 
     symtable_init(&global_sym_table);
@@ -34,27 +34,24 @@ int main()
     // insert new item
     symtable_insert(&global_sym_table, &item);
 
-    assert(set_type(&global_sym_table, &item, integer) == 0);
+    assert(set_type(&global_sym_table, &item, function) == 0);
 
-    assert(get_type(&global_sym_table, &item, &err) == integer);
+    assert(get_type(&global_sym_table, &item, &err) == function);
 
     assert(err == false);
     
-    // insert new param, however item is integer not function
-    assert(add_param(&global_sym_table, &item, &param, &err) == 2);
-    // try to set label for param, but param was not added and item is function
-    assert(set_param_label(&global_sym_table, &item, &param, &label) == 2);
-    // get label of param
-    assert(get_param_label(&global_sym_table, &item, &param, &error) == NULL);
-    // err flag is raised to value of 3 [param not found]
-    assert(error == 2);
+    //now item is function but param not set
+    assert(set_param_label(&global_sym_table, &item, &param, &label) == 3);
 
-    assert(set_param_type(&global_sym_table, &item, &param, integer) == 2);
+    assert(get_param_label(&global_sym_table, &item, &param, &error) == NULL);
+
+    assert(error == 3);
+
+    assert(set_param_type(&global_sym_table, &item, &param, integer) == 3);
 
     assert(get_param_type(&global_sym_table, &item, &param, &error) == undefined);
 
-    assert(error == 2);
-    
+    assert(error == 3);
     
     dstring_free(&item);
     dstring_free(&param);

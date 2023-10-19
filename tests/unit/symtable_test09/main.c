@@ -31,7 +31,7 @@ int main()
     assert(set_type(&global_sym_table, &item, function) == 0);
 
     bool err = true;
-    uint8_t error_int = 255;
+    unsigned int error_int = 255;
 
     assert(get_type(&global_sym_table, &item, &err) == function);
 
@@ -68,7 +68,7 @@ int main()
 
         symtab_item_t *get = (symtable_search(&global_sym_table, &item));
 
-        assert(search_param(get->parametrs, &param) != NULL);
+        assert(search_param(get->parameters, &param) != NULL);
 
         assert(get_param_type(&global_sym_table, &item, &param, &error_int) == i % 6);
 

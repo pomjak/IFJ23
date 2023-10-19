@@ -1,7 +1,7 @@
 /**
- * @file main.c (unit test 8)
+ * @file main.c (unit test 5)
  * @author Pomsar Jakub xpomsa00
- * @brief main for unit test 8 - test set/get without added param
+ * @brief main for unit test 5 - operations with params without err
  * @version 0.1
  * @date 2023-10-17
  *
@@ -16,8 +16,6 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item, param, label;
-    uint8_t error = 255;
-    bool err;
 
     symtable_init(&global_sym_table);
 
@@ -30,29 +28,33 @@ int main()
     dstring_init(&label);
     dstring_add_const_str(&label, "with");
 
-    
-    // insert new item
     symtable_insert(&global_sym_table, &item);
+
+    bool err;
 
     assert(set_type(&global_sym_table, &item, function) == 0);
 
     assert(get_type(&global_sym_table, &item, &err) == function);
 
     assert(err == false);
-    
-    //now item is function but param not set
-    assert(set_param_label(&global_sym_table, &item, &param, &label) == 3);
 
-    assert(get_param_label(&global_sym_table, &item, &param, &error) == NULL);
+    unsigned int error = 255;
+    //insert new param
+    assert(add_param(&global_sym_table, &item, &param, &err) == 0);
+    //set label for param
+    assert(set_param_label(&global_sym_table, &item, &param, &label) == 0);
+    //get label of param
+    assert(dstring_cmp(get_param_label(&global_sym_table, &item, &param, &error), &label) == 0);
+    //without error
+    assert(error == 0);
 
-    assert(error == 3);
+    assert(set_param_type(&global_sym_table, &item, &param, integer) == 0);
 
-    assert(set_param_type(&global_sym_table, &item, &param, integer) == 3);
+    assert(get_param_type(&global_sym_table, &item, &param, &error) == integer);
 
-    assert(get_param_type(&global_sym_table, &item, &param, &error) == undefined);
+    assert(error == 0);
 
-    assert(error == 3);
-    
+
     dstring_free(&item);
     dstring_free(&param);
     dstring_free(&label);
