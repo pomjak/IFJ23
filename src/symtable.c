@@ -20,7 +20,7 @@ void symtable_init(symtab_t *symtab)
  */
 unsigned long hash(char *id, size_t size)
 {
-    uint32_t hash = 0;
+    unsigned long hash = 0;
     const unsigned char *p;
 
     for (p = (const unsigned char *)id; *p != '\0'; p++)
@@ -146,7 +146,7 @@ void check_load(symtab_t *symtab)
         resize(symtab);
 }
 
-uint8_t symtable_insert(symtab_t *symtab, dstring_t *id)
+unsigned int symtable_insert(symtab_t *symtab, dstring_t *id)
 {
     symtab_item_t *item = symtable_search(symtab, id); // try to search in symtab
     if (!item)                                         // if not in symtab alloc new slot for data
@@ -164,7 +164,7 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id)
     return 0;
 }
 
-uint8_t symtable_delete(symtab_t *symtab, dstring_t *target)
+unsigned int symtable_delete(symtab_t *symtab, dstring_t *target)
 {
     symtab_item_t *item = symtable_search(symtab, target);
     if (!item)
@@ -204,7 +204,13 @@ void symtable_dispose(symtab_t *symtab)
     free(symtab->items);
 }
 
-uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab)
+void symtable_clear(symtab_t *local_symtab)
+{
+    symtable_dispose(local_symtab);
+    symtable_init(local_symtab);
+}
+
+unsigned int set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab)
 {
     symtab_item_t *item = symtable_search(global_symtab, func_id);
     if (!item)
@@ -234,7 +240,7 @@ symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *
     return NULL;
 }
 
-uint8_t set_type(symtab_t *symtab, dstring_t *id, Type type)
+unsigned int set_type(symtab_t *symtab, dstring_t *id, Type type)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
@@ -258,7 +264,7 @@ Type get_type(symtab_t *symtab, dstring_t *id, bool *err)
     }
 }
 
-uint8_t set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable)
+unsigned int set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
@@ -284,7 +290,7 @@ bool get_mutability(symtab_t *symtab, dstring_t *id, bool *err)
     }
 }
 
-uint8_t set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined)
+unsigned int set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
@@ -310,7 +316,7 @@ bool get_func_definition(symtab_t *symtab, dstring_t *id, bool *err)
     }
 }
 
-uint8_t set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared)
+unsigned int set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
@@ -336,7 +342,7 @@ bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err)
     }
 }
 
-uint8_t set_return_type(symtab_t *symtab, dstring_t *id, Type return_type)
+unsigned int set_return_type(symtab_t *symtab, dstring_t *id, Type return_type)
 {
     symtab_item_t *item = symtable_search(symtab, id);
     if (!item)
@@ -399,7 +405,7 @@ param_t *search_param(param_t *first, dstring_t *id)
     return NULL;
 }
 
-uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool *err)
+unsigned int add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool *err)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
@@ -420,7 +426,7 @@ uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param
     return 0;
 }
 
-uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type)
+unsigned int set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
@@ -436,7 +442,7 @@ uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_
     return 0;
 }
 
-Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err)
+Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *err)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
@@ -464,7 +470,7 @@ Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_par
     return node->type;
 }
 
-uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label)
+unsigned int set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)
@@ -480,7 +486,7 @@ uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of
     return 0;
 }
 
-dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, uint8_t *err)
+dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *err)
 {
     symtab_item_t *item = symtable_search(symtab, func_id);
     if (!item)

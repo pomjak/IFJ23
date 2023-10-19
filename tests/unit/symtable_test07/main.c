@@ -16,7 +16,7 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item, param, label;
-    uint8_t error = 255;
+    unsigned int  error = 255;
     bool err;
 
     symtable_init(&global_sym_table);
