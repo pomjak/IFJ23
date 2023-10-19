@@ -16,8 +16,6 @@
 #include "error.h"
 #include "debug.h"
 
-#define SYMTAB_SIZE 1021 // max size of htab items is prime number for better distribution
-
 /**
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil) or constant?
  *
