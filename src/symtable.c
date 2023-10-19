@@ -1,12 +1,21 @@
 #include "symtable.h"
 
-void symtable_init(symtab_t *symtab)
+void report_error(unsigned int *error, const unsigned int err_type)
 {
+    if (*error == SYMTAB_OK)
+        *error = err_type;
+}
+
+void symtable_init(symtab_t *symtab, unsigned int *error)
+{
+    *error = SYMTAB_OK;
     symtab->size = 11;
     symtab->count = 0;
     symtab->deactivated = 0;
 
     symtab->items = malloc(sizeof(symtab_item_t) * symtab->size);
+    if (!symtab->items)
+        report_error(error, ERR_INTERNAL);
 
     for (size_t i = 0; i < symtab->size; i++)
         symtab->items[i] = NULL;
@@ -51,58 +60,81 @@ unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size)
     return index;
 }
 
-symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
+symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id, unsigned int *error)
 {
+    *error = SYMTAB_OK;
+
+    if (symtab == NULL)
+    {
+        report_error(error, SYMTAB_NOT_INITIALIZED);
+        return NULL;
+    }
+
     char *wanted = dstring_to_str(id);
 
     unsigned long index = hash(wanted, symtab->size);
     unsigned long step = hash2(wanted, symtab->size);
 
-    if (symtab == NULL)
-        return NULL;
-
     for (int i = 0; symtab->items[index] != NULL; i++)
     {
         if (!dstring_cmp(&(symtab->items[index])->name, id))
+        {
             if ((symtab->items[index])->active) // if name matches and item is active,g success
+            {
                 return (symtab->items[index]);
-            else // if item is inactive, it was deleted, not found
+            }
+            else // if item is inactive, it was deleted, thus not found
+            {
+                report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
                 return NULL;
+            }
+        }
         else
+        {
             index = (index + i * step) % symtab->size;
+        }
     }
+    report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
     return NULL;
 }
 
-bool is_in_symtable(symtab_t *symtab, dstring_t *id)
-{
-    return (symtable_search(symtab, id) != NULL);
-}
-
-symtab_item_t *item_init(dstring_t *id, bool *err)
+symtab_item_t *item_init(dstring_t *id, unsigned int *error)
 {
     symtab_item_t *new = malloc(sizeof(symtab_item_t));
 
     if (!new)
     {
-        *err = true;
+        report_error(error, ERR_INTERNAL);
         return NULL;
     }
+
+    if (!dstring_init(&new->name))
+    {
+        report_error(error, ERR_INTERNAL);
+        return NULL;
+    }
+
+    if (!dstring_copy(id, &new->name))
+    {
+        report_error(error, ERR_INTERNAL);
+        return NULL;
+    }
+
     new->active = true;
-    dstring_init(&new->name);
+
     new->type = undefined;
     new->is_mutable = false;
     new->is_func_defined = false;
     new->is_var_declared = false;
+    new->is_nillable = false;
     new->parameters = NULL;
     new->return_type = undefined;
     new->local_symtable = NULL;
 
-    dstring_copy(id, &new->name);
     return new;
 }
 
-void resize(symtab_t *symtab)
+void resize(symtab_t *symtab, unsigned int *error)
 {
     const size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553, 12409, 25229};
 
@@ -116,9 +148,10 @@ void resize(symtab_t *symtab)
         }
     }
 
-    DEBUG_PRINT("resizing table to %d", primes[i])
-
     symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
+
+    if (!resized_items)
+        report_error(error,ERR_INTERNAL);
 
     for (size_t i = 0; i < new_size; i++)
         resized_items[i] = NULL;
@@ -140,30 +173,27 @@ void resize(symtab_t *symtab)
     symtab->deactivated = 0;
 }
 
-void check_load(symtab_t *symtab)
+void check_load(symtab_t *symtab, unsigned int *error)
 {
     if (0.65 < (float)((float)symtab->count / (float)symtab->size))
-        resize(symtab);
+        resize(symtab, error);
 }
 
-unsigned int symtable_insert(symtab_t *symtab, dstring_t *id)
+void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, id); // try to search in symtab
-    if (!item)                                         // if not in symtab alloc new slot for data
+    symtab_item_t *item = symtable_search(symtab, id, error); // try to search in symtab
+    if (!item)                                                // if not in symtab alloc new slot for data
     {
-        bool error = false;
-        symtab->items[get_hash(id, symtab->items, symtab->size)] = item_init(id, &error); // handover pointer to new allocated item
-        if (error)
-            return ERR_INTERNAL;
+        symtab->items[get_hash(id, symtab->items, symtab->size)] = item_init(id, error); // handover pointer to new allocated item
         symtab->count++;
-        check_load(symtab);
+        check_load(symtab, error);
     }
     else
-        return 1;
-
-    return 0;
+    {
+        report_error(error,SYMTAB_ERR_ITEM_NOT_FOUND);
+    }
 }
-
+// TODO finished here!!!
 unsigned int symtable_delete(symtab_t *symtab, dstring_t *target)
 {
     symtab_item_t *item = symtable_search(symtab, target);
@@ -204,15 +234,15 @@ void symtable_dispose(symtab_t *symtab)
     free(symtab->items);
 }
 
-void symtable_clear(symtab_t *local_symtab)
+void symtable_clear(symtab_t *local_symtab, unsigned int *error)
 {
     symtable_dispose(local_symtab);
-    symtable_init(local_symtab);
+    symtable_init(local_symtab, error);
 }
 
 unsigned int set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab)
 {
-    symtab_item_t *item = symtable_search(global_symtab, func_id);
+    symtab_item_t *item = symtable_search(global_symtab, func_id, error);
     if (!item)
         return 1;
     if (item->type != function)

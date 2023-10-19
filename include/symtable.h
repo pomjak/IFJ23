@@ -16,6 +16,7 @@
 #include "error.h"
 #include "debug.h"
 
+#define SYMTAB_OK 0
 #define SYMTAB_ERR_ITEM_NOT_FOUND 1
 #define SYMTAB_ERR_ITEM_NOT_FUNCTION 2
 #define SYMTAB_ERR_ITEM_IS_FUNCTION 3
@@ -73,6 +74,8 @@ typedef struct symtab
     size_t size;
     size_t deactivated;
 } symtab_t;
+
+void report_error(unsigned int *error, const unsigned int_);
 
 /**
  * @brief           Init of sym_table
@@ -150,7 +153,7 @@ void check_load(symtab_t *symtab,unsigned int *error);
  * @param id        id to be hashed and stored
  * @return unsigned int  0 if success, 1 if id is already in symtable, else err internal
  */
-unsigned int symtable_insert(symtab_t *symtab, dstring_t *id,unsigned int *error);
+void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error);
 
 /**
  * @brief delete (set active to false) in specified symtable based on id
