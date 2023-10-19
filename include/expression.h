@@ -100,8 +100,9 @@ typedef enum PREC_RULES
 /**
  * @brief sets first found error code, else nothing
  *
+ * @return new error code
  */
-void set_error_code(int *error_code);
+int error_code_handler(int error_code);
 
 /**
  * @brief pushes dollar on stack
@@ -141,12 +142,21 @@ node_t *get_closest_terminal(symstack_t *stack);
  */
 prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token);
 
+/***********************
+ * Dynamic symbol array *
+ ***********************/
+
+typedef struct SYMBOL_ARR
+{
+    node_t *arr;
+    size_t size;
+} symbol_arr_t;
 /**
  * @brief initializes dynamic symbol array
  *
  * @return node_t* - pointer to array
  */
-node_t *symbol_arr_init();
+symbol_arr_t *symbol_arr_init();
 
 /**
  * @brief add node to symbol array
@@ -155,14 +165,21 @@ node_t *symbol_arr_init();
  * @return true - added succefully
  * @return false - node was not added to array
  */
-bool symbol_arr_append(node_t node);
+bool symbol_arr_append(symbol_arr_t *arr, node_t node);
+
+/**
+ * @brief reverses symbol array
+ *
+ * @param arr
+ */
+void symbol_arr_reverse(symbol_arr_t *arr);
 
 /**
  * @brief frees symbol arr
  *
  * @param sym_arr
  */
-void symbol_arr_free(node_t *sym_arr);
+void symbol_arr_free(symbol_arr_t *sym_arr);
 
 /**
  * @brief pushes symbol on stack
@@ -210,7 +227,7 @@ void reduce(symstack_t *stack, int *err_code);
 void reduce_error(symstack_t *stack);
 
 /**
- * @brief returns error code
+ * @brief processes expression
  *
  * @return int error code
  */
