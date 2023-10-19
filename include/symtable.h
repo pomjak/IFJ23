@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include "dyn_string.h"
 #include "error.h"
+#include "debug.h"
 
 #define SYMTAB_SIZE 1021 // max size of htab items is prime number for better distribution
 
@@ -56,14 +57,18 @@ typedef struct symtab_item
     bool is_mutable;      // true for var, false for let
     bool is_func_defined; // true if func was already defined, else false
     bool is_var_declared; // true if item was already declared, else false
-    bool is_const;        // true if expression is constant "hello_world", "3", "2.7e10"
-    dstring_t value;      // value
     param_t *parametrs;   // pointer to param_t struct
     Type return_type;     // anything but func
     void *local_symtable; // points to local symtable if item is function
 } symtab_item_t;
 
-typedef symtab_item_t *symtab_t[SYMTAB_SIZE]; // ?FIXME maybe dynamic resizing is needed?
+typedef struct symtab
+{
+    symtab_item_t **items;
+    size_t count;
+    size_t size;
+    size_t deactivated;
+} symtab_t;
 
 /**
  * @brief Init of sym_table
@@ -75,11 +80,11 @@ void symtable_init(symtab_t *symtab);
 /**
  * @brief hash function implemented as sdbm algo
  *
- * @cite http://www.cse.yorku.ca/~oz/hash.html
- * @param id identifier to be hashed
- * @return u_int32_t hashed key
+ * @cite                http://www.cse.yorku.ca/~oz/hash.html
+ * @param id            identifier to be hashed
+ * @return u_int32_t    hashed key
  */
-unsigned long hash(char *id);
+unsigned long hash(char *id, size_t size);
 
 /**
  * @brief hash2 for double hashing when collision occurs implemented as djb2
@@ -88,16 +93,17 @@ unsigned long hash(char *id);
  * @param id            identifier to be hashed
  * @return u_int32_t    new hashed key
  */
-unsigned long hash2(char *id);
+unsigned long hash2(char *id, size_t size);
 
 /**
- * @brief get the hash of free slot or occupied slot with matching id using double hashing
- *
- * @param id
- * @param symtab
- * @return unsigned long
+ * @brief get the hash of free slot using double hashing
+ * 
+ * @param id                id to be hashed
+ * @param items             ptr to items of htab 
+ * @param size              size of items
+ * @return unsigned long    hash after double hashing
  */
-unsigned long get_hash(dstring_t *id, symtab_t *symtab);
+unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size);
 
 /**
  * @brief search in specified symtable based on id
@@ -109,12 +115,37 @@ unsigned long get_hash(dstring_t *id, symtab_t *symtab);
 symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
 
 /**
+ * @brief           returns true/false if id is stored in symtable
+ * 
+ * @param symtab    ptr to symtable
+ * @param id        id to be looked for
+ * @return true     if success
+ * @return false     if not found
+ */
+bool is_in_symtbale(symtab_t *symtab, dstring_t *id);
+
+/**
  * @brief init of one item in symtable
  *
  * @param id    id of item
  * @param err   backcheck flag
  */
 symtab_item_t *item_init(dstring_t *id, bool *err);
+
+/**
+ * @brief resizes symtable
+ *
+ * @param symtab ptr to symtable
+ */
+void resize(symtab_t *symtab);
+
+/**
+ * @brief calculates load of symtable, if needed symtable is resized
+ *
+ * @param size      size of symtable [max capacity]
+ * @param count     actual size of symtable [act N]
+ */
+void load(symtab_t *symtab);
 
 /**
  * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it
@@ -142,7 +173,7 @@ uint8_t symtable_delete(symtab_t *symtab, dstring_t *target);
 
 /**
  * @brief dispose all allocated params in linked list
- * 
+ *
  * @param first ptr to first param stored
  */
 void param_dispose(param_t *first);
@@ -174,23 +205,6 @@ uint8_t set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t
  */
 symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *err);
 
-/**
- * @brief Set the value of item directly in symtable
- * @param symtab        ptr to symtable
- * @param id            id of modified item
- * @param value         value to be set
- * @return uint8_t      return 0 if success, 1 if not found
- */
-uint8_t set_value(symtab_t *symtab, dstring_t *id, dstring_t *value);
-
-/**
- * @brief Get the value of item
- *
- * @param symtab        ptr to symtable
- * @param id            id of modified item
- * @return dstring_t*   return found value as dstring pointer, else return NULL
- */
-dstring_t *get_value(symtab_t *symtab, dstring_t *id);
 
 /**
  * @brief Set the type of item directly in symtable
@@ -272,25 +286,6 @@ uint8_t set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declare
  */
 bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err);
 
-/**
- * @brief Set the constant of variable item
- *
- * @param symtab        ptr to symtable
- * @param id            id of item
- * @param is_constant   desired value to be set for is_constant
- * @return uint8_t      0 if success, 1 if not found, 2 if item is function
- */
-uint8_t set_constant(symtab_t *symtab, dstring_t *id, bool is_constant);
-
-/**
- * @brief Get the constant object
- *
- * @param symtab        ptr to symtable
- * @param id            id of item
- * @param err           backcheck flag
- * @return bool         is_const of item if success, false and err set to true if not found
- */
-bool get_constant(symtab_t *symtab, dstring_t *id, bool *err);
 
 /**
  * @brief Set the return type of item if type is function
