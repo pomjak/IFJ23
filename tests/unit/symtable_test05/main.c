@@ -38,7 +38,7 @@ int main()
 
     assert(err == false);
 
-    uint8_t error = 255;
+    unsigned int error = 255;
     //insert new param
     assert(add_param(&global_sym_table, &item, &param, &err) == 0);
     //set label for param

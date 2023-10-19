@@ -31,7 +31,7 @@ int main()
     assert(set_type(&global_sym_table, &item, function) == 0);
 
     bool err = true;
-    uint8_t error_int = 255;
+    unsigned int error_int = 255;
 
     assert(get_type(&global_sym_table, &item, &err) == function);
 
