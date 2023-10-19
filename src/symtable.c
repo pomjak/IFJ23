@@ -486,23 +486,23 @@ dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name
     if (!item)
     {
         *err = 1;
-        return undefined;
+        return NULL;
     }
     if (item->type != function)
     {
         *err = 2;
-        return undefined;
+        return NULL;
     }
     if (!item->parametrs)
     {
         *err = 3;
-        return undefined;
+        return NULL;
     }
     param_t *node = search_param(item->parametrs, name_of_param);
     if (!node)
     {
         *err = 3;
-        return undefined;
+        return NULL;
     }
     *err = 0;
     return &node->label;
