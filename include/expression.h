@@ -12,6 +12,7 @@
 #include "symstack.h"
 
 #define PREC_TABLE_SIZE 10
+
 typedef enum PREC_TABLE_OPERATIONS
 {
     S, // shift
@@ -76,27 +77,31 @@ typedef enum SYMBOL_TYPE
 typedef enum PREC_RULES
 {
     // arithmetic rules
-    E_PLUS_E,  // E -> E + E
-    E_MINUS_E, // E -> E - E
-    E_MUL_E,   // E -> E * E
-    E_DIV_E,   // E -> E / E
+    RULE_E_PLUS_E,  // E -> E + E
+    RULE_E_MINUS_E, // E -> E - E
+    RULE_E_MUL_E,   // E -> E * E
+    RULE_E_DIV_E,   // E -> E / E
 
     // relational rules
-    E_LT_E,     // E -> E < E
-    E_LEQ_E,    // E -> E <= E
-    E_GT_E,     // E -> E > E
-    E_GEQ_E,    // E -> E >= E
-    E_EQ_E,     // E -> E == E
-    E_NEQ_E,    // E -> E != E
-    E_IS_NIL_E, // E -> E ?? E
+    RULE_E_LT_E,     // E -> E < E
+    RULE_E_LEQ_E,    // E -> E <= E
+    RULE_E_GT_E,     // E -> E > E
+    RULE_E_GEQ_E,    // E -> E >= E
+    RULE_E_EQ_E,     // E -> E == E
+    RULE_E_NEQ_E,    // E -> E != E
+    RULE_E_IS_NIL_E, // E -> E ?? E
 
-    PARL_E_PARR, // E -> (E)
-    OPERAND,     // E -> id
-    FUNC_CALL,   // E -> id(params)
-    NO_RULE
+    RULE_PARL_E_PARR, // E -> (E)
+    RULE_OPERAND,     // E -> id
+    RULE_FUNC_CALL,   // E -> id(params)
+    RULE_NO_RULE
 } prec_rule_t;
 
-// error_t precedence_analysis(PData_t *p_data);
+/**
+ * @brief sets first found error code, else nothing
+ *
+ */
+void set_error_code(int *error_code);
 
 /**
  * @brief pushes dollar on stack
@@ -136,11 +141,73 @@ node_t *get_closest_terminal(symstack_t *stack);
  */
 prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token);
 
-/* methods of operation */
-void equal_shift();
-void shift(symstack_t *stack);
-void reduce();
-void reduce_error();
+/**
+ * @brief initializes dynamic symbol array
+ *
+ * @return node_t* - pointer to array
+ */
+node_t *symbol_arr_init();
+
+/**
+ * @brief add node to symbol array
+ *
+ * @param node
+ * @return true - added succefully
+ * @return false - node was not added to array
+ */
+bool symbol_arr_append(node_t node);
+
+/**
+ * @brief frees symbol arr
+ *
+ * @param sym_arr
+ */
+void symbol_arr_free(node_t *sym_arr);
+
+/**
+ * @brief pushes symbol on stack
+ *
+ * @param stack
+ * @param token
+ */
+void equal_shift(symstack_t *stack, token_T *token);
+
+/**
+ * @brief operation shift - sets up handle and pushes symbol on stack
+ *
+ * @param stack
+ * @param token
+ */
+void shift(symstack_t *stack, token_T *token);
+
+/**
+ * @brief Get the rule based of symbols on stack
+ *
+ * @param stack
+ * @return prec_rule_t
+ */
+prec_rule_t get_rule(symstack_t *stack, int *error_code);
+
+/**
+ * @brief reduces symbol on stack by rule
+ *
+ * @param rule
+ */
+void reduce_by_rule(symstack_t *stack, prec_rule_t rule);
+
+/**
+ * @brief reduce symbols on stack
+ *
+ * @param stack
+ */
+void reduce(symstack_t *stack, int *err_code);
+
+/**
+ * @brief reduce expr to closest possible good state
+ *
+ * @param stack
+ */
+void reduce_error(symstack_t *stack);
 
 /**
  * @brief returns error code

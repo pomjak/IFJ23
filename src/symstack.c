@@ -171,8 +171,12 @@ void print_node(node_t *node, unsigned int width)
     {
         printf(" ");
     }
-
-    if (item_length > (width - indent - 2))
+    if (!node->data.isTerminal)
+    {
+        item_length = 1;
+        printf("E");
+    }
+    else if (item_length > (width - indent - 2))
     {
         printf("%.5s", node->data.symbol);
         item_length = 5;
