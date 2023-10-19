@@ -24,7 +24,7 @@ int main()
 
     //in symtable is stored item with id "item1"
     assert(symtable_insert(&global_sym_table, &item1) == 0);
-    //and succesfully searched
+    //and successfully searched
     assert(symtable_search(&global_sym_table, &item1) != NULL);
     //however delete on item with id "item1" returns 0
     assert(symtable_delete(&global_sym_table, &item1) == 0);

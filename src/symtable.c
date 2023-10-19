@@ -74,7 +74,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
     return NULL;
 }
 
-bool is_in_symtbale(symtab_t *symtab, dstring_t *id)
+bool is_in_symtable(symtab_t *symtab, dstring_t *id)
 {
     return (symtable_search(symtab, id) != NULL);
 }
@@ -94,7 +94,7 @@ symtab_item_t *item_init(dstring_t *id, bool *err)
     new->is_mutable = false;
     new->is_func_defined = false;
     new->is_var_declared = false;
-    new->parametrs = NULL;
+    new->parameters = NULL;
     new->return_type = undefined;
     new->local_symtable = NULL;
 
@@ -152,7 +152,7 @@ uint8_t symtable_insert(symtab_t *symtab, dstring_t *id)
     if (!item)                                         // if not in symtab alloc new slot for data
     {
         bool error = false;
-        symtab->items[get_hash(id, symtab->items, symtab->size)] = item_init(id, &error); // handover poiter to new allocated item
+        symtab->items[get_hash(id, symtab->items, symtab->size)] = item_init(id, &error); // handover pointer to new allocated item
         if (error)
             return ERR_INTERNAL;
         symtab->count++;
@@ -195,7 +195,7 @@ void symtable_dispose(symtab_t *symtab)
         {
             dstring_free(&symtab->items[i]->name);
 
-            param_dispose(symtab->items[i]->parametrs);
+            param_dispose(symtab->items[i]->parameters);
 
             free(symtab->items[i]);
             symtab->items[i] = NULL;
@@ -372,7 +372,7 @@ param_t *param_init(dstring_t *name_of_param, bool *err)
         *err = true;
         return NULL;
     }
-
+    *err = false;
     dstring_init(&node->name);
     dstring_copy(name_of_param, &node->name);
     dstring_init(&node->label);
@@ -406,11 +406,11 @@ uint8_t add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param
         return 1;
     if (item->type != function)
         return 2;
-    if (!item->parametrs)
-        item->parametrs = param_init(name_of_param, err);
+    if (!item->parameters)
+        item->parameters = param_init(name_of_param, err);
     else
     {
-        param_t *runner = item->parametrs;
+        param_t *runner = item->parameters;
         while (runner->next)
             runner = runner->next;
 
@@ -427,9 +427,9 @@ uint8_t set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_
         return 1;
     if (item->type != function)
         return 2;
-    if (!item->parametrs)
+    if (!item->parameters)
         return 3;
-    param_t *node = search_param(item->parametrs, name_of_param);
+    param_t *node = search_param(item->parameters, name_of_param);
     if (!node)
         return 3;
     node->type = type;
@@ -449,12 +449,12 @@ Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_par
         *err = 2;
         return undefined;
     }
-    if (!item->parametrs)
+    if (!item->parameters)
     {
         *err = 3;
         return undefined;
     }
-    param_t *node = search_param(item->parametrs, name_of_param);
+    param_t *node = search_param(item->parameters, name_of_param);
     if (!node)
     {
         *err = 3;
@@ -471,9 +471,9 @@ uint8_t set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of
         return 1;
     if (item->type != function)
         return 2;
-    if (!item->parametrs)
+    if (!item->parameters)
         return 3;
-    param_t *node = search_param(item->parametrs, name_of_param);
+    param_t *node = search_param(item->parameters, name_of_param);
     if (!node)
         return 3;
     dstring_copy(label, &node->label);
@@ -486,23 +486,23 @@ dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name
     if (!item)
     {
         *err = 1;
-        return undefined;
+        return NULL;
     }
     if (item->type != function)
     {
         *err = 2;
-        return undefined;
+        return NULL;
     }
-    if (!item->parametrs)
+    if (!item->parameters)
     {
         *err = 3;
-        return undefined;
+        return NULL;
     }
-    param_t *node = search_param(item->parametrs, name_of_param);
+    param_t *node = search_param(item->parameters, name_of_param);
     if (!node)
     {
         *err = 3;
-        return undefined;
+        return NULL;
     }
     *err = 0;
     return &node->label;
