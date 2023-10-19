@@ -74,6 +74,11 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id)
     return NULL;
 }
 
+bool is_in_symtbale(symtab_t *symtab, dstring_t *id)
+{
+    return(symtable_search(symtab, id) != NULL);
+}
+
 symtab_item_t *item_init(dstring_t *id, bool *err)
 {
     symtab_item_t *new = malloc(sizeof(symtab_item_t));

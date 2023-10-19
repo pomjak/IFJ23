@@ -115,6 +115,16 @@ unsigned long get_hash(dstring_t *id, symtab_item_t **items, size_t size);
 symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id);
 
 /**
+ * @brief           returns true/false if id is stored in symtable
+ * 
+ * @param symtab    ptr to symtable
+ * @param id        id to be looked for
+ * @return true     if success
+ * @return false     if not found
+ */
+bool is_in_symtbale(symtab_t *symtab, dstring_t *id);
+
+/**
  * @brief init of one item in symtable
  *
  * @param id    id of item
@@ -276,25 +286,6 @@ uint8_t set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declare
  */
 bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err);
 
-/**
- * @brief Set the constant of variable item
- *
- * @param symtab        ptr to symtable
- * @param id            id of item
- * @param is_constant   desired value to be set for is_constant
- * @return uint8_t      0 if success, 1 if not found, 2 if item is function
- */
-uint8_t set_constant(symtab_t *symtab, dstring_t *id, bool is_constant);
-
-/**
- * @brief Get the constant object
- *
- * @param symtab        ptr to symtable
- * @param id            id of item
- * @param err           backcheck flag
- * @return bool         is_const of item if success, false and err set to true if not found
- */
-bool get_constant(symtab_t *symtab, dstring_t *id, bool *err);
 
 /**
  * @brief Set the return type of item if type is function
