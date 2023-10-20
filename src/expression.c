@@ -11,6 +11,7 @@
 #include "expression.h"
 #include "lexical_analyzer.h"
 #include "symstack.h"
+#include "debug.h"
 
 /**
  * @brief Methods to write
@@ -79,6 +80,9 @@ prec_tab_index_t convert_token_to_index(token_T token)
     case TOKEN_NIL_CHECK:
         return INDEX_NILL_CHECK;
     case TOKEN_IDENTIFIER:
+    case TOKEN_INT:
+    case TOKEN_DBL:
+    case TOKEN_STRING:
         // if next token == (
         // return INDEX_FUNC_CALL
         // maybe not necessary according to they are the same
@@ -203,13 +207,14 @@ void symbol_arr_free(symbol_arr_t *sym_arr)
 /* methods of operation */
 void equal_shift(symstack_t *stack, token_T *token)
 {
-    // printf("equal_shift\n");
+    DEBUG_PRINT("equal shift\n");
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
 }
 
 void shift(symstack_t *stack, token_T *token)
 {
+    DEBUG_PRINT("shift\n");
     node_t *peek = symstack_peek(stack);
     peek->data.isHandleBegin = true;
     symstack_data_t sym_data = convert_token_to_data(*token);
@@ -222,7 +227,7 @@ prec_rule_t get_rule(symstack_t *stack)
     // get symbol and choose rule based on it
     symbol_arr_t *arr;
     symbol_arr_init(arr);
-    printf("init\n");
+    DEBUG_PRINT("sym_arr_init\n");
     if (arr == NULL)
     {
         error_code_handler(ERR_INTERNAL);
@@ -239,19 +244,19 @@ prec_rule_t get_rule(symstack_t *stack)
             print_error(ERR_INTERNAL, "Fcking peace of shit\n");
             return RULE_NO_RULE;
         }
-        printf("append\n");
+        DEBUG_PRINT("sym_arr_append\n");
         current_node = current_node->previous;
     }
 
     // giant switch here
-    printf("BEFORE FREE: \n arr_sym: %s\n", arr->arr[0].symbol);
     symbol_arr_free(arr);
+    DEBUG_PRINT("sym_arr_free\n");
     return RULE_NO_RULE;
 }
 
 void reduce(symstack_t *stack)
 {
-    printf("reduce\n");
+    DEBUG_PRINT("reduce\n");
     node_t *closest_term = get_closest_terminal(stack);
     prec_rule_t rule = get_rule(stack);
     // reduce_by_rule(stack, rule);
@@ -303,6 +308,7 @@ int expr()
         if (convert_token_to_index(token) == INDEX_DOLLAR)
         {
             // do some actions in here, end etc
+            DEBUG_PRINT("End of expression\n");
             symstack_dispose(&stack);
             break;
         }
@@ -337,6 +343,7 @@ int expr()
         }
 
     } while (!symstack_is_empty(&stack));
+    delete_token(&token);
 
     // print_stack(&stack, 1);
     return error_code_handler(EXIT_SUCCESS);

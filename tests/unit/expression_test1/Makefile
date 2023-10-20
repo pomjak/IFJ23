@@ -43,6 +43,10 @@ SRC=../../../src/
 local:
 	$(CC) -I../../../include $(SRC)/lexical_analyzer.c $(SRC)/error.c $(SRC)/dyn_string.c $(SRC)/expression.c $(SRC)/symstack.c main.c -o $(NAME)
 	./$(NAME) < input.txt
+	
+localdebug:
+	$(CC) -g -D DEBUG -D DEBUGL=2  -I../../../include $(SRC)/lexical_analyzer.c $(SRC)/error.c $(SRC)/dyn_string.c $(SRC)/expression.c $(SRC)/symstack.c main.c -o $(NAME)
+	./$(NAME) < input.txt
 
 localclean:
 	rm -rf *.dSYM  $(NAME)
