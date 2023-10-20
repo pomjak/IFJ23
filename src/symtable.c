@@ -308,6 +308,43 @@ bool get_mutability(symtab_t *symtab, dstring_t *id, unsigned int *error)
     return item->is_mutable;
 }
 
+void set_nillable(symtab_t *symtab, dstring_t *id, bool is_nillable, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, id, error);
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
+
+    if (item->type == function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
+        return;
+    }
+
+    item->is_nillable = is_nillable;
+}
+
+bool get_nillable(symtab_t *symtab, dstring_t *id, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, id, error);
+
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return false;
+    }
+
+    if (item->type == function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
+        return false;
+    }
+
+    return item->is_nillable;
+}
+
 void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined, unsigned int *error)
 {
     symtab_item_t *item = symtable_search(symtab, id, error);

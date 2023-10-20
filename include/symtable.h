@@ -231,8 +231,29 @@ void set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable, unsigned i
  * @param symtab        ptr to symtable
  * @param id            id of item
  * @param error         err flag
+ * @return bool         when success, or error flag is raised
  */
 bool get_mutability(symtab_t *symtab, dstring_t *id, unsigned int *error);
+
+/**
+ * @brief Set the nillable of object
+ * 
+ * @param symtab            ptr to symtable
+ * @param id                id of item
+ * @param nillable          desired value to be set for nil
+ * @param error             err flag
+ */
+void set_nillable(symtab_t *symtab, dstring_t *id, bool is_nillable, unsigned int *error);
+
+/**
+ * @brief Get the nillable of item
+ * 
+ * @param symtab            ptr to symtable
+ * @param id                id of item
+ * @param error             err flag
+ * @return bool             when success, or error flag is raised
+ */
+bool get_nillable(symtab_t *symtab, dstring_t *id, unsigned int *error);
 
 /**
  * @brief Set the func definition of item
