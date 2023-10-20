@@ -151,7 +151,10 @@ void resize(symtab_t *symtab, unsigned int *error)
     symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
 
     if (!resized_items)
+    {
         report_error(error, ERR_INTERNAL);
+        return;
+    }
 
     for (size_t i = 0; i < new_size; i++)
         resized_items[i] = NULL;
@@ -191,6 +194,7 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error)
     else
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
     }
 }
 
@@ -246,7 +250,10 @@ void set_type(symtab_t *symtab, dstring_t *id, Type type, unsigned int *error)
 {
     symtab_item_t *item = symtable_search(symtab, id, error);
     if (!item)
+    {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
     item->type = type;
 }
 
@@ -266,9 +273,17 @@ void set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable, unsigned i
 {
     symtab_item_t *item = symtable_search(symtab, id, error);
     if (!item)
+    {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
+
     if (item->type == function)
+    {
         report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
+        return;
+    }
+
     item->is_mutable = is_mutable;
 }
 
@@ -297,11 +312,13 @@ void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined, 
     if (!item)
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
     }
 
     if (item->type != function)
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return;
     }
 
     item->is_func_defined = is_func_defined;
@@ -331,13 +348,13 @@ void set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared, 
     if (!item)
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
-        return ;
+        return;
     }
 
     if (item->type == function)
     {
         report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
-        return ;
+        return;
     }
 
     item->is_var_declared = is_var_declared;
@@ -367,11 +384,13 @@ void set_return_type(symtab_t *symtab, dstring_t *id, Type return_type, unsigned
     if (!item)
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
     }
 
     if (item->type != function)
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return;
     }
 
     item->return_type = return_type;
@@ -405,13 +424,22 @@ param_t *param_init(dstring_t *name_of_param, unsigned int *error)
     }
 
     if (!dstring_init(&node->name))
+    {
         report_error(error, ERR_INTERNAL);
+        return NULL;
+    }
 
     if (!dstring_init(&node->label))
+    {
         report_error(error, ERR_INTERNAL);
+        return NULL;
+    }
 
     if (!dstring_copy(name_of_param, &node->name))
+    {
         report_error(error, ERR_INTERNAL);
+        return NULL;
+    }
 
     node->type = undefined;
     node->next = NULL;
