@@ -346,6 +346,39 @@ int main()
     assert(get_param_label(&global_sym_table, &item4, &param, &error) == undefined);
     assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
 
+
+/**
+     * @brief set nillable for param  (success only with function)
+     *
+     */
+    set_param_nil(&global_sym_table, &item1, &param, true, &error);
+    assert(error == SYMTAB_OK);
+
+    set_param_nil(&global_sym_table, &item2, &param, true, &error);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
+
+    set_param_nil(&global_sym_table, &item3, &param, true, &error);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
+
+    set_param_nil(&global_sym_table, &item4, &param, true, &error);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
+
+    /**
+     * @brief get type of param (success only with function)
+     *
+     */
+    assert(get_param_nil(&global_sym_table, &item1, &param, &error) == true);
+    assert(error == SYMTAB_OK);
+
+    assert(get_param_nil(&global_sym_table, &item2, &param, &error) == false);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
+
+    assert(get_param_nil(&global_sym_table, &item3, &param, &error) == false);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
+
+    assert(get_param_nil(&global_sym_table, &item4, &param, &error) == false);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
+
     /**
      * @brief dispose whole symtable and dstrings
      *

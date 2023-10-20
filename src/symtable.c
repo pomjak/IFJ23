@@ -129,7 +129,6 @@ symtab_item_t *item_init(dstring_t *id, unsigned int *error)
     new->is_nillable = false;
     new->parameters = NULL;
     new->return_type = undefined;
-    new->local_symtable = NULL;
 
     return new;
 }
@@ -659,4 +658,65 @@ dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name
     }
 
     return &node->label;
+}
+
+void set_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool nil, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, func_id, error);
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
+
+    if (item->type != function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return;
+    }
+
+    if (!item->parameters)
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return;
+    }
+
+    param_t *node = search_param(item->parameters, name_of_param, error);
+
+    if (!node)
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return;
+    }
+    node->is_nillable = nil;
+}
+
+bool get_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, func_id, error);
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return false;
+    }
+
+    if (item->type != function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return false;
+    }
+
+    if (!item->parameters)
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return false;
+    }
+    param_t *node = search_param(item->parameters, name_of_param, error);
+    if (!node)
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return false;
+    }
+
+    return node->is_nillable;
 }

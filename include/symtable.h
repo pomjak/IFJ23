@@ -47,6 +47,7 @@ typedef struct param
     dstring_t name;
     dstring_t label;
     Type type;
+    bool is_nillable;     // true if item can be nil
     struct param *next;
 } param_t;
 
@@ -65,7 +66,6 @@ typedef struct symtab_item
     bool is_nillable;     // true if item can be nil
     param_t *parameters;  // pointer to param_t struct
     Type return_type;     // anything but func
-    void *local_symtable; // points to local symtable if item is function
 } symtab_item_t;
 
 typedef struct symtab
@@ -386,3 +386,26 @@ void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_pa
  * @return dstring*         if success, else NULL and err flag is raised
  */
 dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);
+
+
+/**
+ * @brief Set the param nil object
+ * 
+ * @param symtab            ptr to symtable
+ * @param func_id           id of function with params
+ * @param name_of_param     name of param
+ * @param nil               value of param to be set
+ * @param error             error
+ */
+void set_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool nil, unsigned int *error);
+
+/**
+ * @brief Get the param nil object
+ * 
+ * @param symtab            ptr to symtable
+ * @param func_id           id of function with params
+ * @param name_of_param     name of param
+ * @param err               err flag
+ * @return bool             value if success, else false and err flag is raised
+ */
+bool get_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);
