@@ -23,6 +23,7 @@
 #define SYMTAB_ERR_PARAM_NOT_FOUND 4
 #define SYMTAB_NOT_INITIALIZED 5
 
+
 /**
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil)
  *
@@ -168,7 +169,7 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param target    target to be deleted(set inactive)
  * @return unsigned int  0 for successful deactivating, 1 otherwise
  */
-unsigned int symtable_delete(symtab_t *symtab, dstring_t *target,unsigned int *error);
+void symtable_delete(symtab_t *symtab, dstring_t *target,unsigned int *error);
 
 /**
  * @brief dispose all allocated params in linked list
@@ -183,7 +184,7 @@ void param_dispose(param_t *first);
  * @param local_symtab  ptr to local_table
  *
  */
-void symtable_clear(symtab_t *local_symtab);
+void symtable_clear(symtab_t *local_symtab, unsigned int *error);
 
 /**
  * @brief dispose all allocated items in symtable
@@ -200,7 +201,7 @@ void symtable_dispose(symtab_t *symtab);
  * @param type          type to be set
  * @return unsigned int      return 0 if success, 1 if not found
  */
-unsigned int set_type(symtab_t *symtab, dstring_t *id, Type type,unsigned int *error);
+void set_type(symtab_t *symtab, dstring_t *id, Type type,unsigned int *error);
 
 /**
  * @brief Get the type of item from symtab
@@ -220,7 +221,7 @@ Type get_type(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param is_mutable    desired value to be set for mutability
  * @return unsigned int      0 if success, 1 if not found, 2 if item is function
  */
-unsigned int set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable,unsigned int *error);
+void set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable,unsigned int *error);
 
 /**
  * @brief Get the mutability of item
@@ -240,7 +241,7 @@ bool get_mutability(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param is_func_defined   desired value to be set for definition of function
  * @return unsigned int          0 if success, 1 if not found, 2 if item is not function
  */
-unsigned int set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined,unsigned int *error);
+void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined,unsigned int *error);
 
 /**
  * @brief Get the func definition object
@@ -260,7 +261,7 @@ bool get_func_definition(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param is_var_declared   desired value to be set for declaration of item
  * @return unsigned int          0 if success, 1 if not found, 2 if item is function
  */
-unsigned int set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared,unsigned int *error);
+void set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared,unsigned int *error);
 
 /**
  * @brief Get the var declaration object
@@ -280,7 +281,7 @@ bool get_var_declaration(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param return_type   desired value to be set for return_type
  * @return unsigned int      0 if success, 1 if not found, 2 if item is not function
  */
-unsigned int set_return_type(symtab_t *symtab, dstring_t *id, Type return_type,unsigned int *error);
+void set_return_type(symtab_t *symtab, dstring_t *id, Type return_type,unsigned int *error);
 
 /**
  * @brief Get the return type of function
@@ -319,7 +320,7 @@ param_t *search_param(param_t *first, dstring_t *id,unsigned int *error);
  * @param err               err flag
  * @return unsigned int          0 if success, 1 if function not found, 2 if item is not function, err flag is raised if internal error occurs
  */
-unsigned int add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);
+void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);
 
 /**
  * @brief Set the param type
@@ -330,7 +331,7 @@ unsigned int add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_
  * @param type              type of param to be set
  * @return unsigned int          0 if success, 1 if function not found, 2 if item is not an function, 3 if param not found
  */
-unsigned int set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type,unsigned int *error);
+void set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type,unsigned int *error);
 
 /**
  * @brief Get the param type
@@ -353,7 +354,7 @@ Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_par
  * @param label             label of param to be set
  * @return unsigned int          0 if success, 1 if function not found, 2 if item is not an function, 3 if param not found
  */
-unsigned int set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label,unsigned int *error);
+void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label,unsigned int *error);
 
 /**
  * @brief Get the param label

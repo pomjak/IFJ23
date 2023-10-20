@@ -151,7 +151,7 @@ void resize(symtab_t *symtab, unsigned int *error)
     symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
 
     if (!resized_items)
-        report_error(error,ERR_INTERNAL);
+        report_error(error, ERR_INTERNAL);
 
     for (size_t i = 0; i < new_size; i++)
         resized_items[i] = NULL;
@@ -190,19 +190,21 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error)
     }
     else
     {
-        report_error(error,SYMTAB_ERR_ITEM_NOT_FOUND);
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
     }
 }
-// TODO finished here!!!
-unsigned int symtable_delete(symtab_t *symtab, dstring_t *target)
+
+void symtable_delete(symtab_t *symtab, dstring_t *target, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, target);
+    symtab_item_t *item = symtable_search(symtab, target, error);
     if (!item)
-        return 1;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
 
     item->active = false;
     symtab->deactivated++;
-    return 0;
 }
 void param_dispose(param_t *first)
 {
@@ -240,188 +242,190 @@ void symtable_clear(symtab_t *local_symtab, unsigned int *error)
     symtable_init(local_symtab, error);
 }
 
-unsigned int set_local_symtable(symtab_t *global_symtab, dstring_t *func_id, symtab_t *local_symtab)
+void set_type(symtab_t *symtab, dstring_t *id, Type type, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(global_symtab, func_id, error);
+    symtab_item_t *item = symtable_search(symtab, id, error);
     if (!item)
-        return 1;
-    if (item->type != function)
-        return 2;
-    item->local_symtable = local_symtab;
-    return 0;
-}
-
-symtab_t *get_local_symtable(symtab_t *global_symtab, dstring_t *func_id, bool *err)
-{
-    symtab_item_t *item = symtable_search(global_symtab, func_id);
-    if (!item)
-    {
-        *err = false;
-    }
-    else if (item->type != function)
-    {
-        *err = true;
-    }
-    else
-    {
-        *err = false;
-        return item->local_symtable;
-    }
-    return NULL;
-}
-
-unsigned int set_type(symtab_t *symtab, dstring_t *id, Type type)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item)
-        return 1;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
     item->type = type;
-    return 0;
 }
 
-Type get_type(symtab_t *symtab, dstring_t *id, bool *err)
+Type get_type(symtab_t *symtab, dstring_t *id, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, id);
+    symtab_item_t *item = symtable_search(symtab, id, error);
     if (item == NULL)
     {
-        *err = true;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
         return undefined;
     }
     else
-    {
-        *err = false;
         return item->type;
-    }
 }
 
-unsigned int set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable)
+void set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, id);
+    symtab_item_t *item = symtable_search(symtab, id, error);
     if (!item)
-        return 1;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
     if (item->type == function)
-        return 2;
+        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
     item->is_mutable = is_mutable;
-    return 0;
 }
 
-bool get_mutability(symtab_t *symtab, dstring_t *id, bool *err)
+bool get_mutability(symtab_t *symtab, dstring_t *id, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item || item->type == function)
+    symtab_item_t *item = symtable_search(symtab, id, error);
+
+    if (!item)
     {
-        *err = true;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
         return false;
     }
-    else
-    {
-        *err = false;
-        return item->is_mutable;
-    }
-}
 
-unsigned int set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item)
-        return 1;
-    if (item->type != function)
-        return 2;
-    item->is_func_defined = is_func_defined;
-    return 0;
-}
-
-bool get_func_definition(symtab_t *symtab, dstring_t *id, bool *err)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item || item->type != function)
-    {
-        *err = true;
-        return false;
-    }
-    else
-    {
-        *err = false;
-        return item->is_func_defined;
-    }
-}
-
-unsigned int set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item)
-        return 1;
     if (item->type == function)
-        return 2;
-    item->is_var_declared = is_var_declared;
-    return 0;
-}
-
-bool get_var_declaration(symtab_t *symtab, dstring_t *id, bool *err)
-{
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item || item->type == function)
     {
-        *err = true;
+        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
         return false;
     }
-    else
-    {
-        *err = false;
-        return item->is_var_declared;
-    }
+
+    return item->is_mutable;
 }
 
-unsigned int set_return_type(symtab_t *symtab, dstring_t *id, Type return_type)
+void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, id);
+    symtab_item_t *item = symtable_search(symtab, id, error);
     if (!item)
-        return 1;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+    }
+
     if (item->type != function)
-        return 2;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+    }
+
+    item->is_func_defined = is_func_defined;
+}
+
+bool get_func_definition(symtab_t *symtab, dstring_t *id, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, id, error);
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return false;
+    }
+
+    if (item->type != function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return false;
+    }
+
+    return item->is_func_defined;
+}
+
+void set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, id, error);
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return ;
+    }
+
+    if (item->type == function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
+        return ;
+    }
+
+    item->is_var_declared = is_var_declared;
+}
+
+bool get_var_declaration(symtab_t *symtab, dstring_t *id, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, id, error);
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return false;
+    }
+
+    if (item->type == function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
+        return false;
+    }
+
+    return item->is_var_declared;
+}
+
+void set_return_type(symtab_t *symtab, dstring_t *id, Type return_type, unsigned int *error)
+{
+    symtab_item_t *item = symtable_search(symtab, id, error);
+    if (!item)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+    }
+
+    if (item->type != function)
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+    }
 
     item->return_type = return_type;
-
-    return 0;
 }
 
-Type get_return_type(symtab_t *symtab, dstring_t *id, bool *err)
+Type get_return_type(symtab_t *symtab, dstring_t *id, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, id);
-    if (!item || item->type != function)
+    symtab_item_t *item = symtable_search(symtab, id, error);
+    if (!item)
     {
-        *err = true;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
         return undefined;
     }
-    else
+
+    if (item->type != function)
     {
-        *err = false;
-        return item->return_type;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return undefined;
     }
+
+    return item->return_type;
 }
 
-param_t *param_init(dstring_t *name_of_param, bool *err)
+param_t *param_init(dstring_t *name_of_param, unsigned int *error)
 {
     param_t *node = malloc(sizeof(param_t));
     if (!node)
     {
-        *err = true;
+        report_error(error, ERR_INTERNAL);
         return NULL;
     }
-    *err = false;
-    dstring_init(&node->name);
-    dstring_copy(name_of_param, &node->name);
-    dstring_init(&node->label);
+
+    if (!dstring_init(&node->name))
+        report_error(error, ERR_INTERNAL);
+
+    if (!dstring_init(&node->label))
+        report_error(error, ERR_INTERNAL);
+
+    if (!dstring_copy(name_of_param, &node->name))
+        report_error(error, ERR_INTERNAL);
+
     node->type = undefined;
     node->next = NULL;
 
     return node;
 }
 
-param_t *search_param(param_t *first, dstring_t *id)
+param_t *search_param(param_t *first, dstring_t *id, unsigned int *error)
 {
     if (!first)
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
         return NULL;
+    }
 
     param_t *node = first;
 
@@ -432,114 +436,160 @@ param_t *search_param(param_t *first, dstring_t *id)
         node = node->next;
     } while (node);
 
+    report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
     return NULL;
 }
 
-unsigned int add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, bool *err)
+void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, func_id);
+    symtab_item_t *item = symtable_search(symtab, func_id, error);
     if (!item)
-        return 1;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
+
     if (item->type != function)
-        return 2;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return;
+    }
+
     if (!item->parameters)
-        item->parameters = param_init(name_of_param, err);
+    {
+        item->parameters = param_init(name_of_param, error);
+    }
     else
     {
         param_t *runner = item->parameters;
+
         while (runner->next)
             runner = runner->next;
 
-        runner->next = param_init(name_of_param, err);
+        runner->next = param_init(name_of_param, error);
         (runner->next)->next = NULL;
     }
-    return 0;
 }
 
-unsigned int set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type)
+void set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, func_id);
+    symtab_item_t *item = symtable_search(symtab, func_id, error);
     if (!item)
-        return 1;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
+
     if (item->type != function)
-        return 2;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return;
+    }
+
     if (!item->parameters)
-        return 3;
-    param_t *node = search_param(item->parameters, name_of_param);
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return;
+    }
+
+    param_t *node = search_param(item->parameters, name_of_param, error);
+
     if (!node)
-        return 3;
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return;
+    }
     node->type = type;
-    return 0;
 }
 
-Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *err)
+Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, func_id);
+    symtab_item_t *item = symtable_search(symtab, func_id, error);
     if (!item)
     {
-        *err = 1;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
         return undefined;
     }
+
     if (item->type != function)
     {
-        *err = 2;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
         return undefined;
     }
+
     if (!item->parameters)
     {
-        *err = 3;
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
         return undefined;
     }
-    param_t *node = search_param(item->parameters, name_of_param);
+    param_t *node = search_param(item->parameters, name_of_param, error);
     if (!node)
     {
-        *err = 3;
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
         return undefined;
     }
-    *err = 0;
+
     return node->type;
 }
 
-unsigned int set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label)
+void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, func_id);
+    symtab_item_t *item = symtable_search(symtab, func_id, error);
     if (!item)
-        return 1;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return;
+    }
+
     if (item->type != function)
-        return 2;
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
+        return;
+    }
+
     if (!item->parameters)
-        return 3;
-    param_t *node = search_param(item->parameters, name_of_param);
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return;
+    }
+
+    param_t *node = search_param(item->parameters, name_of_param, error);
     if (!node)
-        return 3;
+    {
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
+        return;
+    }
     dstring_copy(label, &node->label);
-    return 0;
 }
 
-dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *err)
+dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, func_id);
+    symtab_item_t *item = symtable_search(symtab, func_id, error);
     if (!item)
     {
-        *err = 1;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
         return NULL;
     }
+
     if (item->type != function)
     {
-        *err = 2;
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FUNCTION);
         return NULL;
     }
+
     if (!item->parameters)
     {
-        *err = 3;
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
         return NULL;
     }
-    param_t *node = search_param(item->parameters, name_of_param);
+
+    param_t *node = search_param(item->parameters, name_of_param, error);
+
     if (!node)
     {
-        *err = 3;
+        report_error(error, SYMTAB_ERR_PARAM_NOT_FOUND);
         return NULL;
     }
-    *err = 0;
+
     return &node->label;
 }
