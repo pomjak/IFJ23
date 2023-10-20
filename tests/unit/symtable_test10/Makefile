@@ -21,7 +21,7 @@ run: build
 	if $(VALGRIND) ./$(NAME) > ./valgrind_output.txt 2>&1; then \
         echo -e "[info] valgrind check symtable 10 \e[32mOK\e[0m"; \
     else \
-        echo -e "[info] valgrind check symtable 0 \e[33mWARN VALGRIND\e[0m"; \
+        echo -e "[info] valgrind check symtable 10 \e[33mWARN VALGRIND\e[0m"; \
     fi
 
 

@@ -16,9 +16,12 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item, value1;
+    unsigned int error;
+
     FILE *input = fopen("input.txt", "r");
 
-    symtable_init(&global_sym_table);
+    symtable_init(&global_sym_table, &error);
+    assert(error == SYMTAB_OK);
 
     dstring_init(&item);
 
@@ -33,31 +36,11 @@ int main()
 
         dstring_add_const_str(&item, buffer);
 
-        assert(symtable_insert(&global_sym_table, &item) == 0);
+        symtable_insert(&global_sym_table, &item, &error);
+        assert(error == SYMTAB_OK);
 
-        assert(set_type(&global_sym_table, &item, i % 6) == 0);
-    }
-
-    rewind(input);
-    bool err;
-
-
-    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
-    {
-        if (strchr(buffer, '\n') != NULL)
-            *(strchr(buffer, '\n')) = '\0';
-
-        err = true;
-
-        dstring_clear(&item);
-
-        dstring_add_const_str(&item, buffer);
-
-        assert(symtable_search(&global_sym_table, &item) != NULL);
-
-        assert(get_type(&global_sym_table, &item, &err) == i % 6);
-
-        assert(err == false);
+        set_type(&global_sym_table, &item, i % 6, &error);
+        assert(error == SYMTAB_OK);
     }
 
     rewind(input);
@@ -71,8 +54,11 @@ int main()
 
         dstring_add_const_str(&item, buffer);
 
-        if (i % 2)
-            assert(symtable_delete(&global_sym_table, &item) == 0);
+        assert(symtable_search(&global_sym_table, &item, &error) != NULL);
+        assert(error == SYMTAB_OK);
+
+        assert(get_type(&global_sym_table, &item, &error) == i % 6);
+        assert(error == SYMTAB_OK);
     }
 
     rewind(input);
@@ -87,11 +73,35 @@ int main()
         dstring_add_const_str(&item, buffer);
 
         if (i % 2)
-            assert(symtable_search(&global_sym_table, &item) == NULL);
+        {
+            symtable_delete(&global_sym_table, &item, &error);
+            assert(error == SYMTAB_OK);
+        }
+    }
+
+    rewind(input);
+
+    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
+    {
+        if (strchr(buffer, '\n') != NULL)
+            *(strchr(buffer, '\n')) = '\0';
+
+        dstring_clear(&item);
+
+        dstring_add_const_str(&item, buffer);
+
+        if (i % 2)
+        {
+            assert(symtable_search(&global_sym_table, &item, &error) == NULL);
+            assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
+        }
         else
-            assert(symtable_search(&global_sym_table, &item) != NULL);
+        {
+            assert(symtable_search(&global_sym_table, &item, &error) != NULL);
+            assert(error == SYMTAB_OK);
+        }
     }
-    
+
     fclose(input);
 
     dstring_free(&item);

@@ -18,11 +18,11 @@
 
 #define SYMTAB_OK 0
 #define SYMTAB_ERR_ITEM_NOT_FOUND 1
-#define SYMTAB_ERR_ITEM_NOT_FUNCTION 2
-#define SYMTAB_ERR_ITEM_IS_FUNCTION 3
-#define SYMTAB_ERR_PARAM_NOT_FOUND 4
-#define SYMTAB_NOT_INITIALIZED 5
-
+#define SYMTAB_ERR_ITEM_ALREADY_STORED 2
+#define SYMTAB_ERR_ITEM_NOT_FUNCTION 3
+#define SYMTAB_ERR_ITEM_IS_FUNCTION 4
+#define SYMTAB_ERR_PARAM_NOT_FOUND 5
+#define SYMTAB_NOT_INITIALIZED 6
 
 /**
  * @brief different types that can be stored are function, variable and its type(int,dbl,str,nil)
@@ -138,7 +138,7 @@ symtab_item_t *item_init(dstring_t *id, unsigned int *error);
  * @param symtab    ptr to symtable
  * @param error     err flag
  */
-void resize(symtab_t *symtab,unsigned int *error);
+void resize(symtab_t *symtab, unsigned int *error);
 
 /**
  * @brief calculates load of symtable, if needed symtable is resized
@@ -147,10 +147,10 @@ void resize(symtab_t *symtab,unsigned int *error);
  * @param count     actual size of symtable [act N]
  * @param error     err flag
  */
-void check_load(symtab_t *symtab,unsigned int *error);
+void check_load(symtab_t *symtab, unsigned int *error);
 
 /**
- * @brief inserts the symtab_item_t data into the specified symtable, if it already exists and matches the id, then updates it
+ * @brief inserts the symtab_item_t data into the specified symtable, if it already err
  *
  * @param symtab    the specified table for the data to be inserted into
  * @param id        id to be hashed and stored
@@ -171,7 +171,7 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param target    target to be deleted(set inactive)
  * @return unsigned int  0 for successful deactivating, 1 otherwise
  */
-void symtable_delete(symtab_t *symtab, dstring_t *target,unsigned int *error);
+void symtable_delete(symtab_t *symtab, dstring_t *target, unsigned int *error);
 
 /**
  * @brief dispose all allocated params in linked list
@@ -179,7 +179,6 @@ void symtable_delete(symtab_t *symtab, dstring_t *target,unsigned int *error);
  * @param first ptr to first param stored
  */
 void param_dispose(param_t *first);
-
 
 /**
  * @brief               clearing all data of local_table
@@ -204,7 +203,7 @@ void symtable_dispose(symtab_t *symtab);
  * @param type          type to be set
  * @param error         error flag
  */
-void set_type(symtab_t *symtab, dstring_t *id, Type type,unsigned int *error);
+void set_type(symtab_t *symtab, dstring_t *id, Type type, unsigned int *error);
 
 /**
  * @brief Get the type of item from symtab
@@ -224,7 +223,7 @@ Type get_type(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param is_mutable        desired value to be set for mutability
  * @param error             err flag
  */
-void set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable,unsigned int *error);
+void set_mutability(symtab_t *symtab, dstring_t *id, bool is_mutable, unsigned int *error);
 
 /**
  * @brief Get the mutability of item
@@ -243,7 +242,7 @@ bool get_mutability(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param is_func_defined   desired value to be set for definition of function
  * @param error             err flag
  */
-void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined,unsigned int *error);
+void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined, unsigned int *error);
 
 /**
  * @brief Get the func definition object
@@ -263,7 +262,7 @@ bool get_func_definition(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param is_var_declared   desired value to be set for declaration of item
  * @param error             err flag
  */
-void set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared,unsigned int *error);
+void set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared, unsigned int *error);
 
 /**
  * @brief Get the var declaration object
@@ -283,7 +282,7 @@ bool get_var_declaration(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * @param return_type       desired value to be set for return_type
  * @param error             err flag
  */
-void set_return_type(symtab_t *symtab, dstring_t *id, Type return_type,unsigned int *error);
+void set_return_type(symtab_t *symtab, dstring_t *id, Type return_type, unsigned int *error);
 
 /**
  * @brief Get the return type of function
@@ -311,7 +310,7 @@ param_t *param_init(dstring_t *name_of_param, unsigned int *error);
  * @param id            id to be searched for
  * @return param_t*     when success, else NULL
  */
-param_t *search_param(param_t *first, dstring_t *id,unsigned int *error);
+param_t *search_param(param_t *first, dstring_t *id, unsigned int *error);
 
 /**
  * @brief add param to the end of linked list of params
@@ -332,7 +331,7 @@ void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, u
  * @param type              type of param to be set
  * @param error             err flag
  */
-void set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type,unsigned int *error);
+void set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type, unsigned int *error);
 
 /**
  * @brief Get the param type
@@ -354,7 +353,7 @@ Type get_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_par
  * @param label             label of param to be set
  * @param error             error
  */
-void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label,unsigned int *error);
+void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, dstring_t *label, unsigned int *error);
 
 /**
  * @brief Get the param label
@@ -363,6 +362,6 @@ void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_pa
  * @param func_id           id of function with params
  * @param name_of_param     name of param
  * @param err               err flag
- * @return dstring*         if success, else NULL and err flag is raised 
+ * @return dstring*         if success, else NULL and err flag is raised
  */
 dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);

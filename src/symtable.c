@@ -186,14 +186,16 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error)
 {
     symtab_item_t *item = symtable_search(symtab, id, error); // try to search in symtab
     if (!item)                                                // if not in symtab alloc new slot for data
-    {
+    {   
+        *error = SYMTAB_OK; //only case when it is okay that search failed
+
         symtab->items[get_hash(id, symtab->items, symtab->size)] = item_init(id, error); // handover pointer to new allocated item
         symtab->count++;
         check_load(symtab, error);
     }
     else
     {
-        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        report_error(error, SYMTAB_ERR_ITEM_ALREADY_STORED);
         return;
     }
 }
