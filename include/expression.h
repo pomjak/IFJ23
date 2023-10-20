@@ -148,15 +148,14 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
 
 typedef struct SYMBOL_ARR
 {
-    node_t *arr;
+    symstack_data_t *arr;
     size_t size;
 } symbol_arr_t;
+
 /**
  * @brief initializes dynamic symbol array
- *
- * @return node_t* - pointer to array
  */
-symbol_arr_t *symbol_arr_init();
+void symbol_arr_init(symbol_arr_t *new_arr);
 
 /**
  * @brief add node to symbol array
@@ -165,7 +164,7 @@ symbol_arr_t *symbol_arr_init();
  * @return true - added succefully
  * @return false - node was not added to array
  */
-bool symbol_arr_append(symbol_arr_t *arr, node_t node);
+bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data);
 
 /**
  * @brief reverses symbol array
@@ -203,7 +202,7 @@ void shift(symstack_t *stack, token_T *token);
  * @param stack
  * @return prec_rule_t
  */
-prec_rule_t get_rule(symstack_t *stack, int *error_code);
+prec_rule_t get_rule(symstack_t *stack);
 
 /**
  * @brief reduces symbol on stack by rule
@@ -217,7 +216,7 @@ void reduce_by_rule(symstack_t *stack, prec_rule_t rule);
  *
  * @param stack
  */
-void reduce(symstack_t *stack, int *err_code);
+void reduce(symstack_t *stack);
 
 /**
  * @brief reduce expr to closest possible good state

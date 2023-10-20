@@ -136,34 +136,68 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
     return prec_op;
 }
 
-symbol_arr_t *symbol_arr_init()
+void symbol_arr_init(symbol_arr_t *new_arr)
 {
-    symbol_arr_t *new_arr = (symbol_arr_t *)malloc(sizeof(symbol_arr_t));
-    if (new_arr == NULL)
-    {
-        print_error(ERR_INTERNAL, "expression.c: symbol_arr_init: memory was not allocated.\n");
-    }
+    new_arr->arr = NULL;
     new_arr->size = 0;
-    return new_arr;
 }
 
-bool symbol_arr_append(symbol_arr_t *arr, node_t node)
+bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data)
 {
-    if (arr->size = 0)
+    if (sym_arr->size == 0)
     {
         // allocate new array
+        sym_arr->arr = (symstack_data_t *)malloc(sizeof(symstack_data_t));
+        sym_arr->size = 1;
+        if (sym_arr->arr == NULL)
+        {
+            sym_arr->size = 0;
+            return false;
+        }
+        sym_arr->arr[0] = data;
     }
     else
     {
         // realloc array and add item
+        sym_arr->size += 1;
+        sym_arr->arr = realloc(sym_arr->arr, (sym_arr->size) * sizeof(symstack_data_t));
+        if (sym_arr->arr == NULL)
+        {
+            sym_arr->size -= 1;
+            return false;
+        }
+        sym_arr->arr[sym_arr->size - 1] = data;
     }
     return true;
 }
 
+void symbol_arr_reverse(symbol_arr_t *sym_arr)
+{
+    int start = 0;
+    int end = sym_arr->size - 1;
+
+    while (start < end)
+    {
+        // Swap elements at start and end
+        symstack_data_t temp = sym_arr->arr[start];
+        sym_arr->arr[start] = sym_arr->arr[end];
+        sym_arr->arr[end] = temp;
+
+        // Move the indices toward the center
+        start++;
+        end--;
+    }
+}
+
 void symbol_arr_free(symbol_arr_t *sym_arr)
 {
-    // free(sym_arr);
-    // sym_arr = NULL;
+    for (int i = 0; i < sym_arr->size; i++)
+    {
+        delete_token(&sym_arr->arr[i].token);
+    }
+
+    free(sym_arr->arr);
+    sym_arr->size = 0;
 }
 
 /* methods of operation */
@@ -180,12 +214,15 @@ void shift(symstack_t *stack, token_T *token)
     peek->data.isHandleBegin = true;
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
+    print_stack(stack, 1);
 }
 
-prec_rule_t get_rule(symstack_t *stack, int *error_code)
+prec_rule_t get_rule(symstack_t *stack)
 {
     // get symbol and choose rule based on it
-    node_t *arr = symbol_arr_init();
+    symbol_arr_t *arr;
+    symbol_arr_init(arr);
+    printf("init\n");
     if (arr == NULL)
     {
         error_code_handler(ERR_INTERNAL);
@@ -196,26 +233,27 @@ prec_rule_t get_rule(symstack_t *stack, int *error_code)
     node_t *current_node = symstack_peek(stack);
     while (!current_node->data.isHandleBegin)
     {
-        if (!symbol_arr_append(arr, *current_node))
+        if (!symbol_arr_append(arr, current_node->data))
         {
             error_code_handler(ERR_INTERNAL);
             print_error(ERR_INTERNAL, "Fcking peace of shit\n");
             return RULE_NO_RULE;
         }
+        printf("append\n");
         current_node = current_node->previous;
     }
 
     // giant switch here
-    printf("GET RULE\n");
+    printf("BEFORE FREE: \n arr_sym: %s\n", arr->arr[0].symbol);
     symbol_arr_free(arr);
     return RULE_NO_RULE;
 }
 
-void reduce(symstack_t *stack, int *err_code)
+void reduce(symstack_t *stack)
 {
     printf("reduce\n");
     node_t *closest_term = get_closest_terminal(stack);
-    prec_rule_t rule = get_rule(stack, err_code);
+    prec_rule_t rule = get_rule(stack);
     // reduce_by_rule(stack, rule);
 }
 
@@ -265,6 +303,7 @@ int expr()
         if (convert_token_to_index(token) == INDEX_DOLLAR)
         {
             // do some actions in here, end etc
+            symstack_dispose(&stack);
             break;
         }
         switch (get_prec_table_operation(&stack, token))
@@ -278,7 +317,7 @@ int expr()
             get_token(&token);
             break;
         case R:
-            reduce(&stack, &error_code);
+            reduce(&stack);
             break;
         case X:
             // print_error(ERR_SYNTAX, "Expresion error.\n");
@@ -300,5 +339,5 @@ int expr()
     } while (!symstack_is_empty(&stack));
 
     // print_stack(&stack, 1);
-    return error_code;
+    return error_code_handler(EXIT_SUCCESS);
 }
