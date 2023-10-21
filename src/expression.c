@@ -222,6 +222,38 @@ void shift(symstack_t *stack, token_T *token)
     print_stack(stack, 1);
 }
 
+prec_rule_t choose_operator_rule(symstack_data_t data)
+{
+    switch (data.token.type)
+    {
+    // arithmetic rules
+    case TOKEN_ADD:
+        return RULE_E_PLUS_E;
+    case TOKEN_SUB:
+        return RULE_E_MINUS_E;
+    case TOKEN_MUL:
+        return RULE_E_MUL_E;
+    case TOKEN_DIV:
+        return RULE_E_DIV_E;
+
+    // relational rules
+    case TOKEN_LT:
+        return RULE_E_LT_E;
+    case TOKEN_LEQ:
+        return RULE_E_LEQ_E;
+    case TOKEN_GT:
+        return RULE_E_GT_E;
+    case TOKEN_GEQ:
+        return RULE_E_GEQ_E;
+    case TOKEN_EQ:
+        return RULE_E_EQ_E;
+    case TOKEN_NIL_CHECK:
+        return RULE_E_IS_NIL_E;
+    default:
+        return RULE_NO_RULE;
+    }
+}
+
 prec_rule_t get_rule(symstack_t *stack)
 {
     // get symbol and choose rule based on it
@@ -248,10 +280,52 @@ prec_rule_t get_rule(symstack_t *stack)
         current_node = current_node->previous;
     }
 
+    symbol_arr_reverse(arr);
+
     // giant switch here
+    prec_rule_t rule = RULE_NO_RULE;
+    switch (arr->size)
+    {
+    case 1:
+        // question of function handling here
+        if (arr->arr[0].token.type == TOKEN_IDENTIFIER)
+        {
+            rule = RULE_OPERAND;
+            break;
+        }
+        rule = RULE_NO_RULE;
+        break;
+    case 2:
+        // E!
+        if (arr->arr[0].isTerminal && arr->arr[1].token.type == TOKEN_NOT_NIL)
+        {
+            rule = RULE_E_NOT_NIL;
+            break;
+        }
+        else if (arr->arr[0].token.type == TOKEN_L_PAR && arr->arr[2].token.type == TOKEN_R_PAR)
+        {
+            rule = RULE_PARL_E_PARR;
+            break;
+        }
+        rule = RULE_NO_RULE;
+        break;
+    case 3:
+        // choose rule E_OP_E
+        if (!arr->arr[0].isTerminal && !arr->arr[2].isTerminal)
+        {
+            rule = choose_operator_rule(arr->arr[1]);
+            break;
+        }
+        rule = RULE_NO_RULE;
+        break;
+    default:
+        rule = RULE_NO_RULE;
+        break;
+    }
+
     symbol_arr_free(arr);
     DEBUG_PRINT("sym_arr_free\n");
-    return RULE_NO_RULE;
+    return rule;
 }
 
 void reduce(symstack_t *stack)
@@ -259,6 +333,11 @@ void reduce(symstack_t *stack)
     DEBUG_PRINT("reduce\n");
     node_t *closest_term = get_closest_terminal(stack);
     prec_rule_t rule = get_rule(stack);
+    if (rule == RULE_NO_RULE)
+    {
+        reduce_error(stack);
+        return;
+    }
     // reduce_by_rule(stack, rule);
 }
 
