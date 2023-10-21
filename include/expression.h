@@ -41,37 +41,37 @@ typedef enum PREC_TAB_INDEX
     INDEX_DOLLAR
 } prec_tab_index_t;
 
-typedef enum SYMBOL_TYPE
-{
-    // arithmetic operator symbols
-    SYM_PLUS,
-    SYM_MINUS,
-    SYM_MUL,
-    SYM_DIV,
-    SYM_CONCAT,
+// typedef enum SYMBOL_TYPE
+// {
+//     // arithmetic operator symbols
+//     SYM_PLUS,
+//     SYM_MINUS,
+//     SYM_MUL,
+//     SYM_DIV,
+//     SYM_CONCAT,
 
-    // relational operator symbols
-    SYM_LT,
-    SYM_LEQ,
-    SYM_GT,
-    SYM_GEQ,
-    SYM_EQ,
-    SYM_NEQ,
+//     // relational operator symbols
+//     SYM_LT,
+//     SYM_LEQ,
+//     SYM_GT,
+//     SYM_GEQ,
+//     SYM_EQ,
+//     SYM_NEQ,
 
-    // operand symbols
-    SYM_NULL,
-    SYM_ID,
-    SYM_INT,
-    SYM_FLOAT,
-    SYM_STRING,
+//     // operand symbols
+//     SYM_NULL,
+//     SYM_ID,
+//     SYM_INT,
+//     SYM_FLOAT,
+//     SYM_STRING,
 
-    // parantheses
-    SYM_PAR_L,
-    SYM_PAR_R,
-    SYM_DOLLAR,
-    NON_TERMINAL,
-    SYM_REDUCE_END
-} prec_sym_type_t;
+//     // parantheses
+//     SYM_PAR_L,
+//     SYM_PAR_R,
+//     SYM_DOLLAR,
+//     NON_TERMINAL,
+//     SYM_REDUCE_END
+// } prec_sym_type_t;
 
 // precedense rules
 typedef enum PREC_RULES
@@ -90,6 +90,7 @@ typedef enum PREC_RULES
     RULE_E_EQ_E,     // E -> E == E
     RULE_E_NEQ_E,    // E -> E != E
     RULE_E_IS_NIL_E, // E -> E ?? E
+    RULE_E_NOT_NIL,  // E -> E!
 
     RULE_PARL_E_PARR, // E -> (E)
     RULE_OPERAND,     // E -> id
@@ -195,6 +196,13 @@ void equal_shift(symstack_t *stack, token_T *token);
  * @param token
  */
 void shift(symstack_t *stack, token_T *token);
+
+/**
+ * @brief choses rule based on given operator
+ *
+ * @param data
+ */
+prec_rule_t choose_operator_rule(symstack_data_t data);
 
 /**
  * @brief Get the rule based of symbols on stack
