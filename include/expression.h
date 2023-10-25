@@ -226,7 +226,7 @@ prec_rule_t get_rule(symstack_t *stack, symbol_arr_t *arr);
  * @param stack
  * @param rule
  */
-void reduce_and_generate(symbol_arr_t *arr, prec_rule_t rule);
+void reduce_and_generate(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule);
 
 /**
  * @brief reduce symbols on stack
