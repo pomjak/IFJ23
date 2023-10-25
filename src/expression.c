@@ -135,8 +135,8 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
     {
         return X;
     }
-    printf("[%d][%d]: \n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token));
     prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
+    printf("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token), prec_op);
     return prec_op;
 }
 
@@ -182,15 +182,13 @@ void symbol_arr_push_reduction_exp(symstack_t *stack, symbol_arr_t *arr)
         error_code_handler(ERR_INTERNAL);
     }
 
-    DEBUG_PRINT("sym_arr_init\n");
-
     symstack_data_t current_symbol = symstack_pop(stack);
     while (!current_symbol.isHandleBegin)
     {
         if (!symbol_arr_append(arr, current_symbol))
         {
             error_code_handler(ERR_INTERNAL);
-            print_error(ERR_INTERNAL, "Fcking piece of shit\n");
+            print_error(ERR_INTERNAL, "Could not append symbol to symbol array.\n");
         }
         DEBUG_PRINT("sym_arr_append\n");
         current_symbol = symstack_pop(stack);
@@ -245,7 +243,7 @@ void shift(symstack_t *stack, token_T *token)
     peek->data.isHandleBegin = true;
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
-    print_stack(stack, 1);
+    // print_stack(stack, 1);
 }
 
 prec_rule_t choose_operator_rule(symstack_data_t data)
@@ -328,8 +326,9 @@ prec_rule_t get_rule(symstack_t *stack, symbol_arr_t *arr)
     return rule;
 }
 
-void reduce_and_generate(symbol_arr_t *arr, prec_rule_t rule)
+void reduce_and_generate(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule)
 {
+    symstack_data_t data;
     switch (rule)
     {
     /* 3 token states */
@@ -379,6 +378,10 @@ void reduce_and_generate(symbol_arr_t *arr, prec_rule_t rule)
         break;
 
     case RULE_OPERAND:
+        data.isHandleBegin = false;
+        data.isTerminal = false;
+        strcpy(data.symbol, "E");
+        symstack_push(stack, data);
         DEBUG_PRINT("Generate OPERAND %s\n", arr->arr[0].symbol);
         break;
     case RULE_FUNC_CALL:
@@ -399,10 +402,8 @@ void reduce(symstack_t *stack)
     // get symbol and choose rule based on it
 
     symbol_arr_t arr;
-    DEBUG_PRINT("sym_arr_after_init\n");
     symbol_arr_init(&arr);
     symbol_arr_push_reduction_exp(stack, &arr);
-    DEBUG_PRINT("push_reduction\n");
     symbol_arr_reverse(&arr);
 
     prec_rule_t rule = get_rule(stack, &arr);
@@ -411,7 +412,7 @@ void reduce(symstack_t *stack)
         reduce_error(stack);
         return;
     }
-    reduce_and_generate(stack, rule);
+    reduce_and_generate(stack, &arr, rule);
     symbol_arr_free(&arr);
     DEBUG_PRINT("sym_arr_free\n");
 }
@@ -440,6 +441,7 @@ int expr()
 {
     /* error handling */
     int error_code = EXIT_SUCCESS;
+    bool is_end_of_expression = false;
 
     // init stack
     symstack_t stack;
@@ -455,7 +457,7 @@ int expr()
 
     print_stack(&stack, 1);
     // prepare sym_data to be pushed on stack
-    int i = 0;
+    // int i = 0;
     do
     {
         // check when end -> if token is $ thats the end of expr
@@ -463,8 +465,7 @@ int expr()
         {
             // do some actions in here, end etc
             DEBUG_PRINT("End of expression\n");
-            symstack_dispose(&stack);
-            break;
+            is_end_of_expression = true;
         }
         switch (get_prec_table_operation(&stack, token))
         {
@@ -485,14 +486,10 @@ int expr()
         default:
             break;
         }
+    } while (!symstack_is_empty(&stack) && !is_end_of_expression);
 
-        i += 1;
-        if (i == 10)
-        {
-            symstack_dispose(&stack);
-        }
-
-    } while (!symstack_is_empty(&stack));
+    print_stack(&stack, 1);
+    symstack_dispose(&stack);
     delete_token(&token);
 
     return error_code_handler(EXIT_SUCCESS);
