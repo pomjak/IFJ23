@@ -136,19 +136,27 @@ void symbol_arr_init(symbol_arr_t *new_arr);
 bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data);
 
 /**
- * @brief pushes symbols to array from stack until it finds handle. Also removes handle begin
+ * @brief copies symbols to array from stack until it finds handle.
  *
  * @param stack
- * @param arr
+ * @param sym_arr
  */
-void symbol_arr_push_reduction_exp(symstack_t *stack, symbol_arr_t *arr);
+void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr);
+
+/**
+ * @brief moves symbols to array from stack until it finds handle. Removes handle
+ *
+ * @param stack
+ * @param sym_arr
+ */
+void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr);
 
 /**
  * @brief reverses symbol array
  *
- * @param arr
+ * @param sym_arr
  */
-void symbol_arr_reverse(symbol_arr_t *arr);
+void symbol_arr_reverse(symbol_arr_t *sym_arr);
 
 /**
  * @brief frees symbol arr
@@ -192,9 +200,10 @@ prec_rule_t get_rule(symstack_t *stack);
  * @brief reduces symbol on stack by rule and triggers proper code generation
  *
  * @param stack
+ * @param sym_arr
  * @param rule
  */
-void generate_by_rule(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule);
+void generate_by_rule(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule);
 
 /**
  * @brief reduce symbols on stack
@@ -208,7 +217,7 @@ void reduce(symstack_t *stack);
  *
  * @param stack
  */
-void reduce_error(symbol_arr_t *arr);
+void reduce_error(symstack_t *stack);
 
 /**
  * @brief processes expression
