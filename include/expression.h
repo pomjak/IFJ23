@@ -41,38 +41,6 @@ typedef enum PREC_TAB_INDEX
     INDEX_DOLLAR
 } prec_tab_index_t;
 
-// typedef enum SYMBOL_TYPE
-// {
-//     // arithmetic operator symbols
-//     SYM_PLUS,
-//     SYM_MINUS,
-//     SYM_MUL,
-//     SYM_DIV,
-//     SYM_CONCAT,
-
-//     // relational operator symbols
-//     SYM_LT,
-//     SYM_LEQ,
-//     SYM_GT,
-//     SYM_GEQ,
-//     SYM_EQ,
-//     SYM_NEQ,
-
-//     // operand symbols
-//     SYM_NULL,
-//     SYM_ID,
-//     SYM_INT,
-//     SYM_FLOAT,
-//     SYM_STRING,
-
-//     // parantheses
-//     SYM_PAR_L,
-//     SYM_PAR_R,
-//     SYM_DOLLAR,
-//     NON_TERMINAL,
-//     SYM_REDUCE_END
-// } prec_sym_type_t;
-
 // precedense rules
 typedef enum PREC_RULES
 {
@@ -218,7 +186,7 @@ prec_rule_t choose_operator_rule(symstack_data_t data);
  * @param stack
  * @return prec_rule_t
  */
-prec_rule_t get_rule(symstack_t *stack, symbol_arr_t *arr);
+prec_rule_t get_rule(symstack_t *stack);
 
 /**
  * @brief reduces symbol on stack by rule and triggers proper code generation
@@ -226,7 +194,7 @@ prec_rule_t get_rule(symstack_t *stack, symbol_arr_t *arr);
  * @param stack
  * @param rule
  */
-void reduce_and_generate(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule);
+void generate_by_rule(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule);
 
 /**
  * @brief reduce symbols on stack
@@ -236,11 +204,11 @@ void reduce_and_generate(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule)
 void reduce(symstack_t *stack);
 
 /**
- * @brief reduce expr to closest possible good state
+ * @brief report err in expression
  *
  * @param stack
  */
-void reduce_error(symstack_t *stack);
+void reduce_error(symbol_arr_t *arr);
 
 /**
  * @brief processes expression
