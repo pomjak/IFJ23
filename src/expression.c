@@ -175,9 +175,9 @@ bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data)
     return true;
 }
 
-void symbol_arr_push_reduction_exp(symstack_t *stack, symbol_arr_t *arr)
+void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
 {
-    if (arr == NULL)
+    if (sym_arr == NULL)
     {
         error_code_handler(ERR_INTERNAL);
     }
@@ -185,7 +185,7 @@ void symbol_arr_push_reduction_exp(symstack_t *stack, symbol_arr_t *arr)
     node_t *current_node = symstack_peek(stack);
     while (!current_node->data.isHandleBegin)
     {
-        if (!symbol_arr_append(arr, current_node->data))
+        if (!symbol_arr_append(sym_arr, current_node->data))
         {
             error_code_handler(ERR_INTERNAL);
             print_error(ERR_INTERNAL, "Could not append symbol to symbol array.\n");
@@ -193,6 +193,25 @@ void symbol_arr_push_reduction_exp(symstack_t *stack, symbol_arr_t *arr)
         DEBUG_PRINT("sym_arr_append\n");
         current_node = current_node->previous;
     }
+}
+
+void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
+{
+    symstack_data_t current_symbol = symstack_pop(stack);
+    while (!current_symbol.isHandleBegin)
+    {
+        if (!symbol_arr_append(sym_arr, current_symbol))
+        {
+            print_error(ERR_INTERNAL, "Could not push symbol to symbol array.\n");
+            error_code_handler(ERR_INTERNAL);
+            symstack_dispose(stack);
+            return;
+        }
+        current_symbol = symstack_pop(stack);
+    }
+    // remove handle and push it back
+    current_symbol.isHandleBegin = false;
+    symstack_push(stack, current_symbol);
 }
 
 void symbol_arr_reverse(symbol_arr_t *sym_arr)
@@ -239,7 +258,6 @@ void shift(symstack_t *stack, token_T *token)
     peek->data.isHandleBegin = true;
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
-    // print_stack(stack, 1);
 }
 
 prec_rule_t choose_operator_rule(symstack_data_t data)
@@ -279,7 +297,8 @@ prec_rule_t get_rule(symstack_t *stack)
     symbol_arr_t sym_arr;
     symbol_arr_init(&sym_arr);
 
-    symbol_arr_push_reduction_exp(stack, &sym_arr);
+    symbol_arr_copy_exp_to_arr(stack, &sym_arr);
+    symbol_arr_reverse(&sym_arr);
 
     prec_rule_t rule = RULE_NO_RULE;
     switch (sym_arr.size)
@@ -408,19 +427,34 @@ void generate_by_rule(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule)
 void reduce(symstack_t *stack)
 {
     prec_rule_t rule = get_rule(stack);
+
     if (rule == RULE_NO_RULE)
     {
-        print_error(ERR_SYNTAX, "No matched rule.\n");
         error_code_handler(ERR_SYNTAX);
+        reduce_error(stack);
+        return;
     }
-    else
-    {
-        printf("RULE: %d\n", rule);
-    }
+
+    printf("RULE: %d\n", rule);
+    /* reduce by rule */
+    symbol_arr_t sym_arr;
+    symbol_arr_init(&sym_arr);
+
+    printf("BEFORE MOVE\n");
+    print_stack(stack, 1);
+
+    symbol_arr_move_expr_to_arr(stack, &sym_arr);
+
+    printf("AFTER MOVE\n");
+    print_stack(stack, 1);
+
+    /* generate_by_rule() */
+    symbol_arr_free(&sym_arr);
 }
 
-void reduce_error(symbol_arr_t *arr)
+void reduce_error(symstack_t *stack)
 {
+    // reduce array and get error
 }
 
 /**
@@ -492,7 +526,10 @@ int expr()
     } while (!symstack_is_empty(&stack) && !is_end_of_expression);
 
     print_stack(&stack, 1);
-    symstack_dispose(&stack);
+    if (!symstack_is_empty(&stack))
+    {
+        symstack_dispose(&stack);
+    };
     delete_token(&token);
 
     return error_code_handler(EXIT_SUCCESS);

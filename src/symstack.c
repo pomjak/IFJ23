@@ -191,7 +191,14 @@ void print_node(node_t *node, unsigned int width)
         printf(" ");
     }
 
-    printf("|\n");
+    if (node->data.isHandleBegin)
+    {
+        printf("| <\n");
+    }
+    else
+    {
+        printf("|\n");
+    }
 }
 
 void print_stack(const symstack_t *stack, unsigned int width)
