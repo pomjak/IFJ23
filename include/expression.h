@@ -166,6 +166,12 @@ void symbol_arr_reverse(symbol_arr_t *sym_arr);
 void symbol_arr_free(symbol_arr_t *sym_arr);
 
 /**
+ * @brief prints symbol array
+ *
+ */
+void print_symbol_arr(symbol_arr_t *sym_arr);
+
+/**
  * @brief pushes symbol on stack
  *
  * @param stack
@@ -194,7 +200,7 @@ prec_rule_t choose_operator_rule(symstack_data_t data);
  * @param stack
  * @return prec_rule_t
  */
-prec_rule_t get_rule(symstack_t *stack);
+prec_rule_t get_rule(symbol_arr_t *sym_arr);
 
 /**
  * @brief reduces symbol on stack by rule and triggers proper code generation
@@ -208,16 +214,16 @@ void generate_by_rule(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule
 /**
  * @brief reduce symbols on stack
  *
- * @param stack
+ * @param sym_arr
  */
 void reduce(symstack_t *stack);
 
 /**
  * @brief report err in expression
  *
- * @param stack
+ * @param sym_arr
  */
-void reduce_error(symstack_t *stack);
+void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr);
 
 /**
  * @brief processes expression
