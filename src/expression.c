@@ -136,7 +136,7 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
         return X;
     }
     prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
-    printf("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token), prec_op);
+    // printf("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token), prec_op);
     return prec_op;
 }
 
@@ -182,21 +182,17 @@ void symbol_arr_push_reduction_exp(symstack_t *stack, symbol_arr_t *arr)
         error_code_handler(ERR_INTERNAL);
     }
 
-    symstack_data_t current_symbol = symstack_pop(stack);
-    while (!current_symbol.isHandleBegin)
+    node_t *current_node = symstack_peek(stack);
+    while (!current_node->data.isHandleBegin)
     {
-        if (!symbol_arr_append(arr, current_symbol))
+        if (!symbol_arr_append(arr, current_node->data))
         {
             error_code_handler(ERR_INTERNAL);
             print_error(ERR_INTERNAL, "Could not append symbol to symbol array.\n");
         }
         DEBUG_PRINT("sym_arr_append\n");
-        current_symbol = symstack_pop(stack);
+        current_node = current_node->previous;
     }
-
-    // delete handle and push it to stack
-    current_symbol.isHandleBegin = false;
-    symstack_push(stack, current_symbol);
 }
 
 void symbol_arr_reverse(symbol_arr_t *sym_arr)
@@ -278,32 +274,41 @@ prec_rule_t choose_operator_rule(symstack_data_t data)
     }
 }
 
-prec_rule_t get_rule(symstack_t *stack, symbol_arr_t *arr)
+prec_rule_t get_rule(symstack_t *stack)
 {
-    // giant switch here
+    symbol_arr_t sym_arr;
+    symbol_arr_init(&sym_arr);
+
+    symbol_arr_push_reduction_exp(stack, &sym_arr);
+
     prec_rule_t rule = RULE_NO_RULE;
-    switch (arr->size)
+    switch (sym_arr.size)
     {
     case 1:
         // question of function handling here
-        if (arr->arr[0].token.type == TOKEN_IDENTIFIER)
+        if (sym_arr.arr[0].token.type == TOKEN_IDENTIFIER)
         {
+            // find id in symtable
 
+            // if id.type == func {
+            //  rule = RULE_FUNC_CALL
+            //  check function call syntax
+            // }
+
+            // else RULE_OPERAND
             rule = RULE_OPERAND;
-            // maybe reduce by rule in here
-            // reduce_by_rule(stack, rule);
             break;
         }
         rule = RULE_NO_RULE;
         break;
     case 2:
         // E!
-        if (arr->arr[0].isTerminal && arr->arr[1].token.type == TOKEN_NOT_NIL)
+        if (sym_arr.arr[0].isTerminal && sym_arr.arr[1].token.type == TOKEN_NOT_NIL)
         {
             rule = RULE_E_NOT_NIL;
             break;
         }
-        else if (arr->arr[0].token.type == TOKEN_L_PAR && arr->arr[2].token.type == TOKEN_R_PAR)
+        else if (sym_arr.arr[0].token.type == TOKEN_L_PAR && sym_arr.arr[2].token.type == TOKEN_R_PAR)
         {
             rule = RULE_PARL_E_PARR;
             break;
@@ -312,9 +317,9 @@ prec_rule_t get_rule(symstack_t *stack, symbol_arr_t *arr)
         break;
     case 3:
         // choose rule E_OP_E
-        if (!arr->arr[0].isTerminal && !arr->arr[2].isTerminal)
+        if (!sym_arr.arr[0].isTerminal && !sym_arr.arr[2].isTerminal)
         {
-            rule = choose_operator_rule(arr->arr[1]);
+            rule = choose_operator_rule(sym_arr.arr[1]);
             break;
         }
         rule = RULE_NO_RULE;
@@ -323,10 +328,12 @@ prec_rule_t get_rule(symstack_t *stack, symbol_arr_t *arr)
         rule = RULE_NO_RULE;
         break;
     }
+
+    symbol_arr_free(&sym_arr);
     return rule;
 }
 
-void reduce_and_generate(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule)
+void generate_by_rule(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule)
 {
     symstack_data_t data;
     switch (rule)
@@ -378,10 +385,10 @@ void reduce_and_generate(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule)
         break;
 
     case RULE_OPERAND:
-        data.isHandleBegin = false;
-        data.isTerminal = false;
-        strcpy(data.symbol, "E");
-        symstack_push(stack, data);
+        // data.isHandleBegin = false;
+        // data.isTerminal = false;
+        // strcpy(data.symbol, "E");
+        // symstack_push(stack, data);
         DEBUG_PRINT("Generate OPERAND %s\n", arr->arr[0].symbol);
         break;
     case RULE_FUNC_CALL:
@@ -392,34 +399,28 @@ void reduce_and_generate(symstack_t *stack, symbol_arr_t *arr, prec_rule_t rule)
         DEBUG_PRINT("No rule selected.");
         break;
     }
+    data.isHandleBegin = false;
+    data.isTerminal = false;
+    strcpy(data.symbol, "E");
+    symstack_push(stack, data);
 }
 
 void reduce(symstack_t *stack)
 {
-    DEBUG_PRINT("reduce\n");
-    node_t *closest_term = get_closest_terminal(stack);
-
-    // get symbol and choose rule based on it
-
-    symbol_arr_t arr;
-    symbol_arr_init(&arr);
-    symbol_arr_push_reduction_exp(stack, &arr);
-    symbol_arr_reverse(&arr);
-
-    prec_rule_t rule = get_rule(stack, &arr);
+    prec_rule_t rule = get_rule(stack);
     if (rule == RULE_NO_RULE)
     {
-        reduce_error(stack);
-        return;
+        print_error(ERR_SYNTAX, "No matched rule.\n");
+        error_code_handler(ERR_SYNTAX);
     }
-    reduce_and_generate(stack, &arr, rule);
-    symbol_arr_free(&arr);
-    DEBUG_PRINT("sym_arr_free\n");
+    else
+    {
+        printf("RULE: %d\n", rule);
+    }
 }
 
-void reduce_error(symstack_t *stack)
+void reduce_error(symbol_arr_t *arr)
 {
-    printf("reduce_error\n");
 }
 
 /**
@@ -479,9 +480,11 @@ int expr()
             break;
         case R:
             reduce(&stack);
+            return EXIT_SUCCESS;
             break;
         case X:
             // print_error(ERR_SYNTAX, "Expresion error.\n");
+            printf("Cycle.\n");
             break;
         default:
             break;
