@@ -54,11 +54,11 @@ bool symstack_push(symstack_t *stack, symstack_data_t data)
 symstack_data_t symstack_pop(symstack_t *stack)
 {
     symstack_data_t old_node_data;
+    old_node_data.token.type = TOKEN_UNDEFINED;
     if (!symstack_is_empty(stack))
     {
         node_t *old_node = stack->top;
         old_node_data = old_node->data;
-
         stack->top = old_node->previous;
         stack->size -= 1;
         free(old_node);
@@ -193,7 +193,7 @@ void print_node(node_t *node, unsigned int width)
 
     if (node->data.isHandleBegin)
     {
-        printf("| <\n");
+        printf("| < \n");
     }
     else
     {
