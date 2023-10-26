@@ -41,7 +41,7 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* (   */ {S, S, S, S, S, S, S, S, X, X},
         /* )   */ {R, R, R, X, X, R, X, E, R, R},
         /* !   */ {X, X, X, X, X, X, X, X, X, X},
-        /* $   */ {S, S, S, S, S, S, S, X, R, S}};
+        /* $   */ {S, S, S, S, S, S, S, X, R, R}};
 
 int error_code_handler(int error_code)
 {
@@ -211,8 +211,6 @@ void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
     }
     // remove handle and push it back
     current_symbol.isHandleBegin = false;
-    // print_token(current_symbol.token);
-    printf("\n");
     symstack_push(stack, current_symbol);
 }
 
@@ -276,10 +274,6 @@ void shift(symstack_t *stack, token_T *token)
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
     print_stack(stack, 1);
-    // if (sym_data.isTerminal)
-    // {
-    //     print_token(sym_data.token);
-    // }
 }
 
 prec_rule_t choose_operator_rule(symstack_data_t data)
@@ -429,6 +423,15 @@ void generate_by_rule(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule
     }
 }
 
+void push_non_term_on_stack(symstack_t *stack)
+{
+    symstack_data_t data;
+    data.isHandleBegin = false;
+    data.isTerminal = false;
+    strcpy(data.symbol, "E");
+    symstack_push(stack, data);
+}
+
 void reduce(symstack_t *stack)
 {
     symbol_arr_t sym_arr;
@@ -436,13 +439,7 @@ void reduce(symstack_t *stack)
     symbol_arr_move_expr_to_arr(stack, &sym_arr);
     symbol_arr_reverse(&sym_arr);
 
-    print_symbol_arr(&sym_arr);
-
-    symstack_data_t data;
-    data.isHandleBegin = false;
-    data.isTerminal = false;
-    strcpy(data.symbol, "E");
-    symstack_push(stack, data);
+    // print_symbol_arr(&sym_arr);
 
     prec_rule_t rule = get_rule(&sym_arr);
 
@@ -454,7 +451,13 @@ void reduce(symstack_t *stack)
         return;
     }
 
-    /* reduce by rule */
+    push_non_term_on_stack(stack);
+
+    /** TODO:
+     * reduce by rule
+     * |- need to check semantics and get expression result type
+     * |- push non-term with (token) type on stack
+     */
     generate_by_rule(stack, &sym_arr, rule);
     symbol_arr_free(&sym_arr);
 }
@@ -475,11 +478,13 @@ void reduce(symstack_t *stack)
 void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 {
     // reduce array and get error
+    push_non_term_on_stack(stack);
+
     error_code_handler(ERR_SYNTAX);
     switch (sym_arr->size)
     {
     case 1:
-        print_error(ERR_SYNTAX, "WTF.\n");
+        print_error(ERR_SYNTAX, "WTF. Symbol got: %s \n", sym_arr->arr[0].symbol);
         break;
     case 2:
         // first E
@@ -570,7 +575,7 @@ int expr()
     do
     {
         // check when end -> if token is $ thats the end of expr
-        if (convert_token_to_index(token) == INDEX_DOLLAR)
+        if (convert_token_to_index(token) == INDEX_DOLLAR && !is_end_of_expression)
         {
             // do some actions in here, end etc
             DEBUG_PRINT("End of expression\n");
@@ -590,6 +595,7 @@ int expr()
             break;
         case R:
             reduce(&stack);
+            print_stack(&stack, 1);
             break;
         case X:
             // set up array
@@ -602,13 +608,13 @@ int expr()
             // free error
             symbol_arr_free(&sym_arr);
 
+            // symstack_dispose(&stack);
             break;
         default:
             break;
         }
-    } while (!symstack_is_empty(&stack) && !is_end_of_expression);
-
-    print_stack(&stack, 1);
+        // } while (!symstack_is_empty(&stack));
+    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data)) == INDEX_DOLLAR && (convert_token_to_index(token) == INDEX_DOLLAR)));
     if (!symstack_is_empty(&stack))
     {
         symstack_dispose(&stack);

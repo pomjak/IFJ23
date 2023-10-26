@@ -212,6 +212,13 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr);
 void generate_by_rule(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule);
 
 /**
+ * @brief pushes non-terminal on stack
+ *
+ * @param stack
+ */
+void push_non_term_on_stack(symstack_t *stack);
+
+/**
  * @brief reduce symbols on stack
  *
  * @param sym_arr
