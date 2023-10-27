@@ -403,7 +403,7 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
 void push_non_term_on_stack(symstack_t *stack, symstack_data_t *term)
 {
     term->isTerminal = false;
-    symstack_push(stack, *term);
+    // symstack_push(stack, *term);
 }
 
 void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule)
@@ -416,7 +416,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     // id reduction
     case RULE_OPERAND:
         // set to non-terminal
-        push_non_term_on_stack(stack, &sym_arr->arr[0]);
+        // push_non_term_on_stack(stack, &sym_arr->arr[0]);
+        sym_arr->arr[0].isTerminal = false;
+        symstack_push(stack, sym_arr->arr[0]);
         break;
 
     // unary operations
@@ -428,12 +430,13 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
 
     // binary operations
     case RULE_E_PLUS_E:
-        expr_symbol = process_addition(sym_arr);
-        push_non_term_on_stack(stack, &expr_symbol);
-        return;
     case RULE_E_MINUS_E:
-    case RULE_E_DIV_E:
     case RULE_E_MUL_E:
+    case RULE_E_DIV_E:
+        expr_symbol = process_arithmetic_operation(sym_arr);
+        sym_arr->arr[0].isTerminal = false;
+        symstack_push(stack, sym_arr->arr[0]);
+        return;
 
     // relational operations
     case RULE_E_LT_E:
@@ -443,7 +446,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_EQ_E:
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
-        printf("Not implemented.\n");
+        process_relational_operation(sym_arr);
         break;
     default:
         break;
@@ -478,14 +481,7 @@ void reduce(symstack_t *stack)
 void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 {
     error_code_handler(ERR_SYNTAX);
-    print_stack(stack, 1);
     print_symbol_arr(sym_arr);
-
-    printf("\t\t\tTOKEN TYPE: %d\n", sym_arr->arr[0].token.type);
-    if (sym_arr->arr[0].isTerminal)
-    {
-        printf("\t\t\tTERMINAL %d\n", sym_arr->arr[0].token.type);
-    }
 
     /*
     E (
@@ -499,6 +495,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
     // if (is_operand(sym_arr->arr[0]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
     if (is_operand(sym_arr->arr[0]))
     {
+
         data.token.type = sym_arr->arr[0].token.type;
         // E )
         if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
@@ -506,7 +503,8 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
             print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
         }
         // E E
-        else if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
+        // else if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
+        else if (is_operand(sym_arr->arr[1]))
         {
             // if 2 operand types are not equal
             if (sym_arr->arr[0].token.type != sym_arr->arr[1].token.type)
@@ -529,7 +527,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
             print_error(ERR_SYNTAX, "Missing operator.\n");
         }
         // E (
-        else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
+        else if (sym_arr->arr[1].token.type == TOKEN_L_PAR)
         {
             print_error(ERR_SYNTAX, "Missing operator.\n");
         }
@@ -568,12 +566,13 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 
     data.isHandleBegin = false;
     data.isTerminal = false;
-    strcpy(data.symbol, "E");
-    push_non_term_on_stack(stack, &data);
+    strcpy(data.symbol, "ERR");
+    symstack_push(stack, data);
 }
 
 void expr_error(symstack_t *stack)
 {
+    print_stack(stack, 1);
     symbol_arr_t sym_arr;
     symbol_arr_init(&sym_arr);
 
@@ -621,7 +620,7 @@ int expr()
     get_token(&token);
     symstack_data_t sym_data = convert_token_to_data(token);
 
-    print_stack(&stack, 1);
+    // print_stack(&stack, 1);
     do
     {
         switch (get_prec_table_operation(&stack, token))
@@ -636,23 +635,21 @@ int expr()
             break;
         case R:
             reduce(&stack);
-            print_stack(&stack, 1);
+            // print_stack(&stack, 1);
             break;
         case X:
-            // set up array
             sym_data = convert_token_to_data(token);
             symstack_push(&stack, sym_data);
 
             expr_error(&stack);
 
             get_token(&token);
-
             break;
         default:
             print_error(ERR_INTERNAL, "Unknown precedense table operation.\n");
             return ERR_INTERNAL;
         }
-    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data)) == INDEX_DOLLAR && (convert_token_to_index(token) == INDEX_DOLLAR)));
+    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(token) == INDEX_DOLLAR)));
     if (!symstack_is_empty(&stack))
     {
         symstack_dispose(&stack);
@@ -662,17 +659,28 @@ int expr()
     return error_code_handler(EXIT_SUCCESS);
 }
 
-symstack_data_t process_addition(symbol_arr_t *sym_arr)
+symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 {
     token_T first_operand = sym_arr->arr[0].token;
     token_T second_operand = sym_arr->arr[2].token;
 
     symstack_data_t expr_symbol;
+    if (first_operand.type == TOKEN_STRING || second_operand.type == TOKEN_STRING)
+    {
+        expr_symbol = process_contcatenation(sym_arr);
+        return expr_symbol;
+    }
+
+    if (sym_arr->arr[1].token.type == TOKEN_DIV)
+    {
+        expr_symbol = process_divsion(sym_arr);
+        return expr_symbol;
+    }
 
     // if adding same types
     if (first_operand.type == second_operand.type)
     {
-        if (first_operand.type == TOKEN_INT || first_operand.type == TOKEN_DBL || first_operand.type == TOKEN_STRING)
+        if (first_operand.type == TOKEN_INT || first_operand.type == TOKEN_DBL)
         {
             expr_symbol.token.type = first_operand.type;
         }
@@ -685,38 +693,126 @@ symstack_data_t process_addition(symbol_arr_t *sym_arr)
         return expr_symbol;
     }
 
-    printf("Not same operands.\n");
-    // int + int = int
-    // int + double = double
-    // str + str2 = strstr2
-    // else err
-
     // if tokens are not strings
-    if (first_operand.type != TOKEN_STRING && second_operand.type != TOKEN_STRING)
-    {
+    // if (first_operand.type != TOKEN_STRING && second_operand.type != TOKEN_STRING)
+    // {
 
-        if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
-        {
-            DEBUG_PRINT("Generate conversion \"int2double %s\"\n", );
-            expr_symbol.token.type = TOKEN_DBL;
-            return expr_symbol;
-        }
-        else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
-        {
-            expr_symbol.token.type = TOKEN_INT;
-            return expr_symbol;
-        }
-
-        print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
-        error_code_handler(ERR_UNCOMPATIBILE_TYPE);
-        DEBUG_PRINT("Generate ADDITION %s + %s\n", first_operand.value, first_operand.value);
-    }
-    else if (first_operand.type == TOKEN_STRING && second_operand.type == TOKEN_STRING)
+    if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
     {
         DEBUG_PRINT("Generate conversion \"int2double %s\"\n", );
+        expr_symbol.token.type = TOKEN_DBL;
+        return expr_symbol;
     }
+    else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
+    {
+        expr_symbol.token.type = TOKEN_INT;
+        return expr_symbol;
+    }
+
+    print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
+    error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+    DEBUG_PRINT("Generate ADDITION %s + %s\n", first_operand.value, first_operand.value);
+    // }
+
     error_code_handler(ERR_UNCOMPATIBILE_TYPE);
     print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     expr_symbol.token.type = TOKEN_UNDEFINED;
+    return expr_symbol;
+}
+
+symstack_data_t process_divsion(symbol_arr_t *sym_arr)
+{
+    symstack_data_t expr_symbol;
+    token_T first_operand = sym_arr->arr[0].token;
+    token_T second_operand = sym_arr->arr[2].token;
+    expr_symbol.token.type = TOKEN_DBL;
+
+    if (second_operand.type == TOKEN_INT)
+    {
+        if (second_operand.value.int_val == 0)
+        {
+            error_code_handler(ERR_SEMANTIC_ERR);
+            print_error(ERR_SEMANTIC_ERR, "Division by zero.\n");
+            return expr_symbol;
+        }
+    }
+    else if (second_operand.type == TOKEN_DBL)
+    {
+        if (second_operand.value.double_val == 0.0)
+        {
+            error_code_handler(ERR_SEMANTIC_ERR);
+            print_error(ERR_SEMANTIC_ERR, "Division by zero.\n");
+            return expr_symbol;
+        }
+    }
+    DEBUG_PRINT("Generate division\n");
+    return expr_symbol;
+}
+
+symstack_data_t process_contcatenation(symbol_arr_t *sym_arr)
+{
+    symstack_data_t expr_symbol;
+    expr_symbol.isHandleBegin = false;
+    expr_symbol.isTerminal = false;
+    expr_symbol.token.type = TOKEN_STRING;
+
+    token_T first_operand = sym_arr->arr[0].token;
+    token_T second_operand = sym_arr->arr[2].token;
+
+    if (first_operand.type == TOKEN_STRING && second_operand.type == TOKEN_STRING)
+    {
+        DEBUG_PRINT("Generate concatenation\n");
+        return expr_symbol;
+    }
+    print_error(ERR_UNCOMPATIBILE_TYPE, "Concatenation with uncompatibile types.\n");
+    error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+    return expr_symbol;
+}
+
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
+{
+    symstack_data_t expr_symbol;
+    expr_symbol.isHandleBegin = false;
+    expr_symbol.isTerminal = false;
+
+    token_T first_operand = sym_arr->arr[0].token;
+    token_T second_operand = sym_arr->arr[2].token;
+
+    if (first_operand.type != second_operand.type)
+    {
+        error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+        print_error(ERR_UNCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+        return expr_symbol;
+    }
+
+    // generate code
+    switch (sym_arr->arr[1].token.type)
+    {
+    case TOKEN_EQ:
+        DEBUG_PRINT("Genereate == comparation\n");
+        break;
+    case TOKEN_GEQ:
+        DEBUG_PRINT("Genereate >= comparation\n");
+        break;
+    case TOKEN_LEQ:
+        DEBUG_PRINT("Genereate <= comparation\n");
+        break;
+    case TOKEN_NEQ:
+        DEBUG_PRINT("Genereate != comparation\n");
+        break;
+    case TOKEN_LT:
+        DEBUG_PRINT("Genereate < comparation\n");
+        break;
+    case TOKEN_GT:
+        DEBUG_PRINT("Genereate > comparation\n");
+        break;
+    case TOKEN_NIL_CHECK:
+        DEBUG_PRINT("Genereate ?? check\n");
+        break;
+
+    default:
+        break;
+    }
+    DEBUG_PRINT("Genereate comparation\n");
     return expr_symbol;
 }

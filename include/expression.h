@@ -271,6 +271,12 @@ int expr();
  * Reduction rule functions *
  ****************************/
 
-symstack_data_t process_addition(symbol_arr_t *sym_arr);
+symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr);
+
+symstack_data_t process_divsion(symbol_arr_t *sym_arr);
+
+symstack_data_t process_contcatenation(symbol_arr_t *sym_arr);
+
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr);
 
 #endif
