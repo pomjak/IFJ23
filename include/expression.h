@@ -12,6 +12,7 @@
 #include "symstack.h"
 
 #define PREC_TABLE_SIZE 10
+#define MAX_EXPR_SIZE 3
 
 typedef enum PREC_TABLE_OPERATIONS
 {
@@ -65,51 +66,6 @@ typedef enum PREC_RULES
     RULE_FUNC_CALL,   // E -> id(params)
     RULE_NO_RULE
 } prec_rule_t;
-
-/**
- * @brief sets first found error code, else nothing
- *
- * @return new error code
- */
-int error_code_handler(int error_code);
-
-/**
- * @brief pushes dollar on stack
- *
- * @param stack
- */
-void push_initial_sym(symstack_t *stack);
-
-/**
- * @brief convert token to precedence table index based on it's data
- *
- * @param token
- * @return prec_tab_index_t - index
- */
-prec_tab_index_t convert_token_to_index(token_T token);
-
-/**
- * @brief converts term to precedence table index based on it's data
- *
- * @param data
- * @return prec_tab_index_t - index
- */
-prec_tab_index_t convert_term_to_index(symstack_data_t data);
-
-/**
- * @brief Finds and returns the closest terminal from top of the stack
- *
- * @param stack
- * @return node_t* - if null, no treminal was found
- */
-node_t *get_closest_terminal(symstack_t *stack);
-
-/**
- * @brief Get the prec table operation object
- *
- * @return prec_table_operation_t
- */
-prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token);
 
 /***********************
  * Dynamic symbol array *
@@ -171,6 +127,64 @@ void symbol_arr_free(symbol_arr_t *sym_arr);
  */
 void print_symbol_arr(symbol_arr_t *sym_arr);
 
+/***********************************
+ * Expression supportive functions *
+ **********************************/
+
+/**
+ * @brief sets first found error code, else nothing
+ *
+ * @return new error code
+ */
+int error_code_handler(int error_code);
+
+/**
+ * @brief pushes dollar on stack
+ *
+ * @param stack
+ */
+void push_initial_sym(symstack_t *stack);
+
+/**
+ * @brief checks if symbol is operand type (token type of INT STRING DOUBLE IDENTIFIER)
+ *
+ * @param symbol
+ * @return true
+ * @return false
+ */
+bool is_operand(symstack_data_t symbol);
+
+/**
+ * @brief convert token to precedence table index based on it's data
+ *
+ * @param token
+ * @return prec_tab_index_t - index
+ */
+prec_tab_index_t convert_token_to_index(token_T token);
+
+/**
+ * @brief converts term to precedence table index based on it's data
+ *
+ * @param data
+ * @return prec_tab_index_t - index
+ */
+prec_tab_index_t convert_term_to_index(symstack_data_t data);
+
+/**
+ * @brief Finds and returns the closest terminal from top of the stack
+ *
+ * @param stack
+ * @return node_t* - if null, no treminal was found
+ */
+node_t *get_closest_terminal(symstack_t *stack);
+
+/**
+ * @brief Get the prec table operation object
+ *
+ * @return prec_table_operation_t
+ */
+prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token);
+
 /**
  * @brief pushes symbol on stack
  *
@@ -203,20 +217,18 @@ prec_rule_t choose_operator_rule(symstack_data_t data);
 prec_rule_t get_rule(symbol_arr_t *sym_arr);
 
 /**
- * @brief reduces symbol on stack by rule and triggers proper code generation
+ * @brief sets the isTerminal to false of chosen terminal
  *
- * @param stack
- * @param sym_arr
- * @param rule
+ * @param term
  */
-void generate_by_rule(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule);
+void push_non_term_on_stack(symstack_t *stack, symstack_data_t *term);
 
 /**
- * @brief pushes non-terminal on stack
+ * @brief pushes result symbol of reduced expression
  *
  * @param stack
  */
-void push_non_term_on_stack(symstack_t *stack);
+void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule);
 
 /**
  * @brief reduce symbols on stack
@@ -233,10 +245,23 @@ void reduce(symstack_t *stack);
 void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr);
 
 /**
+ * @brief manages expression error state
+ *
+ * @param stack
+ */
+void expr_error(symstack_t *stack);
+
+/**
  * @brief processes expression
  *
  * @return int error code
  */
 int expr();
+
+/****************************
+ * Reduction rule functions *
+ ****************************/
+
+symstack_data_t process_addition(symbol_arr_t *sym_arr);
 
 #endif

@@ -38,10 +38,128 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* i   */ {R, R, R, X, X, R, X, R, R, R},
         /* FC  */ {R, R, R, X, X, R, X, R, R, R},
         /* RO  */ {S, S, R, S, S, E, S, R, R, R},
-        /* (   */ {S, S, S, S, S, S, S, S, X, X},
-        /* )   */ {R, R, R, X, X, R, X, E, R, R},
+        /* (   */ {S, S, S, S, S, S, S, E, X, X},
+        /* )   */ {R, R, R, X, X, R, X, R, R, R},
         /* !   */ {X, X, X, X, X, X, X, X, X, X},
         /* $   */ {S, S, S, S, S, S, S, X, R, R}};
+
+void symbol_arr_init(symbol_arr_t *new_arr)
+{
+    new_arr->arr = NULL;
+    new_arr->size = 0;
+}
+
+bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data)
+{
+    if (sym_arr->size == 0)
+    {
+        // allocate new array
+        sym_arr->arr = (symstack_data_t *)malloc(sizeof(symstack_data_t));
+        sym_arr->size = 1;
+        if (sym_arr->arr == NULL)
+        {
+            sym_arr->size = 0;
+            return false;
+        }
+        sym_arr->arr[0] = data;
+    }
+    else
+    {
+        // realloc array and add item
+        sym_arr->size += 1;
+        sym_arr->arr = realloc(sym_arr->arr, (sym_arr->size) * sizeof(symstack_data_t));
+        if (sym_arr->arr == NULL)
+        {
+            sym_arr->size -= 1;
+            return false;
+        }
+        sym_arr->arr[sym_arr->size - 1] = data;
+    }
+    return true;
+}
+
+void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
+{
+    if (sym_arr == NULL)
+    {
+        error_code_handler(ERR_INTERNAL);
+    }
+
+    node_t *current_node = symstack_peek(stack);
+    while (!current_node->data.isHandleBegin)
+    {
+        if (!symbol_arr_append(sym_arr, current_node->data))
+        {
+            error_code_handler(ERR_INTERNAL);
+            print_error(ERR_INTERNAL, "Could not append symbol to symbol array.\n");
+        }
+        DEBUG_PRINT("sym_arr_append\n");
+        current_node = current_node->previous;
+    }
+}
+
+void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
+{
+    symstack_data_t current_symbol = symstack_pop(stack);
+    while (!current_symbol.isHandleBegin && !symstack_is_empty(stack) && sym_arr->size < MAX_EXPR_SIZE)
+    {
+        if (!symbol_arr_append(sym_arr, current_symbol))
+        {
+            print_error(ERR_INTERNAL, "Could not push symbol to symbol array.\n");
+            error_code_handler(ERR_INTERNAL);
+            symstack_dispose(stack);
+            return;
+        }
+        current_symbol = symstack_pop(stack);
+    }
+    // remove handle and push it back
+    current_symbol.isHandleBegin = false;
+    symstack_push(stack, current_symbol);
+}
+
+void symbol_arr_reverse(symbol_arr_t *sym_arr)
+{
+    int start = 0;
+    int end = sym_arr->size - 1;
+
+    while (start < end)
+    {
+        // Swap elements at start and end
+        symstack_data_t temp = sym_arr->arr[start];
+        sym_arr->arr[start] = sym_arr->arr[end];
+        sym_arr->arr[end] = temp;
+
+        // Move the indices toward the center
+        start++;
+        end--;
+    }
+}
+
+void symbol_arr_free(symbol_arr_t *sym_arr)
+{
+    for (int i = 0; i < sym_arr->size; i++)
+    {
+        delete_token(&sym_arr->arr[i].token);
+    }
+
+    free(sym_arr->arr);
+    sym_arr->size = 0;
+}
+
+void print_symbol_arr(symbol_arr_t *sym_arr)
+{
+    for (int i = 0; i < sym_arr->size; i++)
+    {
+        if (sym_arr->arr[i].token.type == TOKEN_IDENTIFIER || sym_arr->arr[i].token.type == TOKEN_STRING)
+        {
+            printf("sym_arr[%d]: %s\n", i, sym_arr->arr[i].token.value.string_val.str);
+        }
+        else
+        {
+            printf("sym_arr[%d]: %s\n", i, sym_arr->arr[i].symbol);
+        }
+    }
+}
 
 int error_code_handler(int error_code)
 {
@@ -65,6 +183,15 @@ void push_initial_sym(symstack_t *stack)
 
     strcpy(data.symbol, convert_token_type_to_string(token));
     symstack_push(stack, data);
+}
+
+bool is_operand(symstack_data_t symbol)
+{
+    if (symbol.token.type == TOKEN_IDENTIFIER || symbol.token.type == TOKEN_INT || symbol.token.type == TOKEN_DBL || symbol.token.type == TOKEN_STRING)
+    {
+        return true;
+    }
+    return false;
 }
 
 prec_tab_index_t convert_token_to_index(token_T token)
@@ -140,130 +267,13 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
     return prec_op;
 }
 
-void symbol_arr_init(symbol_arr_t *new_arr)
-{
-    new_arr->arr = NULL;
-    new_arr->size = 0;
-}
-
-bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data)
-{
-    if (sym_arr->size == 0)
-    {
-        // allocate new array
-        sym_arr->arr = (symstack_data_t *)malloc(sizeof(symstack_data_t));
-        sym_arr->size = 1;
-        if (sym_arr->arr == NULL)
-        {
-            sym_arr->size = 0;
-            return false;
-        }
-        sym_arr->arr[0] = data;
-    }
-    else
-    {
-        // realloc array and add item
-        sym_arr->size += 1;
-        sym_arr->arr = realloc(sym_arr->arr, (sym_arr->size) * sizeof(symstack_data_t));
-        if (sym_arr->arr == NULL)
-        {
-            sym_arr->size -= 1;
-            return false;
-        }
-        sym_arr->arr[sym_arr->size - 1] = data;
-    }
-    return true;
-}
-
-void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
-{
-    if (sym_arr == NULL)
-    {
-        error_code_handler(ERR_INTERNAL);
-    }
-
-    node_t *current_node = symstack_peek(stack);
-    while (!current_node->data.isHandleBegin)
-    {
-        if (!symbol_arr_append(sym_arr, current_node->data))
-        {
-            error_code_handler(ERR_INTERNAL);
-            print_error(ERR_INTERNAL, "Could not append symbol to symbol array.\n");
-        }
-        DEBUG_PRINT("sym_arr_append\n");
-        current_node = current_node->previous;
-    }
-}
-
-void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
-{
-    symstack_data_t current_symbol = symstack_pop(stack);
-    while (!current_symbol.isHandleBegin)
-    {
-        if (!symbol_arr_append(sym_arr, current_symbol))
-        {
-            print_error(ERR_INTERNAL, "Could not push symbol to symbol array.\n");
-            error_code_handler(ERR_INTERNAL);
-            symstack_dispose(stack);
-            return;
-        }
-        current_symbol = symstack_pop(stack);
-    }
-    // remove handle and push it back
-    current_symbol.isHandleBegin = false;
-    symstack_push(stack, current_symbol);
-}
-
-void symbol_arr_reverse(symbol_arr_t *sym_arr)
-{
-    int start = 0;
-    int end = sym_arr->size - 1;
-
-    while (start < end)
-    {
-        // Swap elements at start and end
-        symstack_data_t temp = sym_arr->arr[start];
-        sym_arr->arr[start] = sym_arr->arr[end];
-        sym_arr->arr[end] = temp;
-
-        // Move the indices toward the center
-        start++;
-        end--;
-    }
-}
-
-void symbol_arr_free(symbol_arr_t *sym_arr)
-{
-    for (int i = 0; i < sym_arr->size; i++)
-    {
-        delete_token(&sym_arr->arr[i].token);
-    }
-
-    free(sym_arr->arr);
-    sym_arr->size = 0;
-}
-
-void print_symbol_arr(symbol_arr_t *sym_arr)
-{
-    for (int i = 0; i < sym_arr->size; i++)
-    {
-        if (sym_arr->arr[i].token.type == TOKEN_IDENTIFIER || sym_arr->arr[i].token.type == TOKEN_STRING)
-        {
-            printf("sym_arr[%d]: %s\n", i, sym_arr->arr[i].token.value.string_val.str);
-        }
-        else
-        {
-            printf("sym_arr[%d]: %s\n", i, sym_arr->arr[i].symbol);
-        }
-    }
-}
-
 /* methods of operation */
 void equal_shift(symstack_t *stack, token_T *token)
 {
     DEBUG_PRINT("equal shift\n");
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
+    print_stack(stack, 1);
 }
 
 void shift(symstack_t *stack, token_T *token)
@@ -301,6 +311,8 @@ prec_rule_t choose_operator_rule(symstack_data_t data)
         return RULE_E_GEQ_E;
     case TOKEN_EQ:
         return RULE_E_EQ_E;
+    case TOKEN_NEQ:
+        return RULE_E_NEQ_E;
     case TOKEN_NIL_CHECK:
         return RULE_E_IS_NIL_E;
     default:
@@ -315,7 +327,7 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
     {
     case 1:
         // question of function handling here
-        if (sym_arr->arr[0].token.type == TOKEN_IDENTIFIER)
+        if (is_operand(sym_arr->arr[0]))
         {
             // find id in symtable
 
@@ -337,11 +349,6 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
             rule = RULE_E_NOT_NIL;
             break;
         }
-        else if (sym_arr->arr[0].token.type == TOKEN_L_PAR && sym_arr->arr[2].token.type == TOKEN_R_PAR)
-        {
-            rule = RULE_PARL_E_PARR;
-            break;
-        }
         rule = RULE_NO_RULE;
         break;
     case 3:
@@ -351,6 +358,12 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
             rule = choose_operator_rule(sym_arr->arr[1]);
             break;
         }
+        else if (sym_arr->arr[0].token.type == TOKEN_L_PAR && sym_arr->arr[2].token.type == TOKEN_R_PAR)
+        {
+            rule = RULE_PARL_E_PARR;
+            break;
+        }
+
         rule = RULE_NO_RULE;
         break;
     default:
@@ -360,85 +373,64 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
     return rule;
 }
 
-void generate_by_rule(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule)
+void push_non_term_on_stack(symstack_t *stack, symstack_data_t *term)
 {
+    term->isTerminal = false;
+    symstack_push(stack, *term);
+}
+
+void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule)
+{
+    // see expression types
+    symstack_data_t expr_symbol;
+
     switch (rule)
     {
-    /* 3 token states */
-    // arithmetic rules
-    case RULE_E_PLUS_E:
-        DEBUG_PRINT("Generate %s + %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_MINUS_E:
-        DEBUG_PRINT("Generate %s - %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_MUL_E:
-        DEBUG_PRINT("Generate %s / %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_DIV_E:
-        DEBUG_PRINT("Generate %s * %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-
-    // relational rules
-    case RULE_E_LT_E:
-        DEBUG_PRINT("Generate %s = %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_LEQ_E:
-        DEBUG_PRINT("Generate %s <= %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_GT_E:
-        DEBUG_PRINT("Generate %s > %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_GEQ_E:
-        DEBUG_PRINT("Generate %s >= %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_EQ_E:
-        DEBUG_PRINT("Generate %s == %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_NEQ_E:
-        DEBUG_PRINT("Generate %s != %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_IS_NIL_E:
-        DEBUG_PRINT("Generate %s ?? %s\n", sym_arr->arr[0].symbol, sym_arr->arr[2].symbol);
-        break;
-    case RULE_E_NOT_NIL:
-        DEBUG_PRINT("Generate %s! \n", sym_arr->arr[0].symbol);
-        break;
-
-    // other
-    case RULE_PARL_E_PARR:
-        DEBUG_PRINT("Generate (%s)\n", sym_arr->arr[1].symbol);
-        break;
-
+    // id reduction
     case RULE_OPERAND:
-        DEBUG_PRINT("Generate OPERAND %s\n", sym_arr->arr[0].token.value.string_val.str);
-        break;
-    case RULE_FUNC_CALL:
-        DEBUG_PRINT("Generate %s(<params>) \n", sym_arr->arr[0].symbol);
+        // set to non-terminal
+        push_non_term_on_stack(stack, &sym_arr->arr[0]);
         break;
 
+    // unary operations
+    // E!
+    case RULE_E_NOT_NIL:
+        // change type nilable to false
+        push_non_term_on_stack(stack, &sym_arr->arr[0]);
+        break;
+
+    // binary operations
+    case RULE_E_PLUS_E:
+        expr_symbol = process_addition(sym_arr);
+        push_non_term_on_stack(stack, &expr_symbol);
+        return;
+    case RULE_E_MINUS_E:
+    case RULE_E_DIV_E:
+    case RULE_E_MUL_E:
+
+    // relational operations
+    case RULE_E_LT_E:
+    case RULE_E_LEQ_E:
+    case RULE_E_GT_E:
+    case RULE_E_GEQ_E:
+    case RULE_E_EQ_E:
+    case RULE_E_NEQ_E:
+    case RULE_E_IS_NIL_E:
+        break;
     default:
-        DEBUG_PRINT("No rule selected.");
         break;
     }
 }
 
-void push_non_term_on_stack(symstack_t *stack)
-{
-    symstack_data_t data;
-    data.isHandleBegin = false;
-    data.isTerminal = false;
-    strcpy(data.symbol, "E");
-    symstack_push(stack, data);
-}
-
 void reduce(symstack_t *stack)
 {
+    // maybe load only 3 top symbols
     symbol_arr_t sym_arr;
     symbol_arr_init(&sym_arr);
     symbol_arr_move_expr_to_arr(stack, &sym_arr);
     symbol_arr_reverse(&sym_arr);
 
+    // printf("expr to be reduced: \n");
     // print_symbol_arr(&sym_arr);
 
     prec_rule_t rule = get_rule(&sym_arr);
@@ -451,91 +443,94 @@ void reduce(symstack_t *stack)
         return;
     }
 
-    push_non_term_on_stack(stack);
-
-    /** TODO:
-     * reduce by rule
-     * |- need to check semantics and get expression result type
-     * |- push non-term with (token) type on stack
-     */
-    generate_by_rule(stack, &sym_arr, rule);
+    push_reduced_symbol_on_stack(stack, &sym_arr, rule);
     symbol_arr_free(&sym_arr);
 }
 
-/**
- * ERROR_LIST:
- * E E
- * E )
- * E TERM
- *
- * ( E
- * ( )
- * ( TERM
- *
- * TERM E
- *
- */
 void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 {
     // reduce array and get error
-    push_non_term_on_stack(stack);
+    symstack_data_t data;
+    data.isHandleBegin = false;
+    data.token.type = TOKEN_UNDEFINED;
+    strcpy(data.symbol, "E");
+
+    push_non_term_on_stack(stack, &data);
 
     error_code_handler(ERR_SYNTAX);
-    switch (sym_arr->size)
+
+    print_symbol_arr(sym_arr);
+
+    // if next symbol is not operator -> missing operator
+    // else -> missing operand
+
+    // if (is_operand(sym_arr->arr[1]))
+    // {
+    // }
+
+    // if next symbol is ) -> missing L par
+    // if first is ( next symbol is ) -> missing operand
+
+    if (is_operand(sym_arr->arr[0]))
     {
-    case 1:
-        print_error(ERR_SYNTAX, "WTF. Symbol got: %s \n", sym_arr->arr[0].symbol);
-        break;
-    case 2:
-        // first E
-        if (!sym_arr->arr[0].isTerminal)
+        // E )
+        if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
         {
-            // E E
-            if (!sym_arr->arr[1].isTerminal)
-            {
-                print_error(ERR_SYNTAX, "Missing operator.\n");
-            }
-            // E )
-            else if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
-            {
-                print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
-            }
-            // E TERM
-            else
-            {
-                print_error(ERR_SYNTAX, "Missing operand.\n");
-            }
+            print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
         }
-        // first (
-        else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
+        // E TERM
+        else if (is_operand(sym_arr->arr[1]))
         {
-            // ( E
-            if (!sym_arr->arr[1].isTerminal)
-            {
-                print_error(ERR_SYNTAX, "Missing right parenthesis.\n");
-            }
-            // ( )
-            else if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
-            {
-                print_error(ERR_SYNTAX, "Missing operand.\n");
-            }
-            // ( TERM
-            else
-            {
-                print_error(ERR_SYNTAX, "Unexpected termnial.\n");
-            }
+            print_error(ERR_SYNTAX, "Missing operator.\n");
         }
-        // else first TERM
+        // E TERM
         else
         {
-            print_error(ERR_SYNTAX, "Missing operand.\n");
+            print_token(sym_arr->arr[1].token);
+            print_error(ERR_SYNTAX, "Missing operand1.\n");
         }
-        break;
-
-    default:
-        print_error(ERR_SYNTAX, "Default wtf.\n");
-        break;
     }
+    // first (
+    else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
+    {
+        // ( E
+        if (!sym_arr->arr[1].isTerminal)
+        {
+            print_error(ERR_SYNTAX, "Missing right parenthesis.\n");
+        }
+        // ( )
+        else if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
+        {
+            print_error(ERR_SYNTAX, "Missing operand2.\n");
+        }
+        // ( TERM
+        else
+        {
+            print_error(ERR_SYNTAX, "Unexpected termnial.\n");
+        }
+    }
+    // else first TERM
+    else
+    {
+        printf("operator types: %d %d\n", sym_arr->arr[0].token.type, sym_arr->arr[1].token.type);
+        print_error(ERR_SYNTAX, "Missing operand3.\n");
+    }
+}
+
+void expr_error(symstack_t *stack)
+{
+    symbol_arr_t sym_arr;
+    symbol_arr_init(&sym_arr);
+
+    // here push it to handle
+    symbol_arr_move_expr_to_arr(stack, &sym_arr);
+    symbol_arr_reverse(&sym_arr);
+
+    // reduce with error
+    reduce_error(stack, &sym_arr);
+
+    // free error
+    symbol_arr_free(&sym_arr);
 }
 
 /**
@@ -574,15 +569,6 @@ int expr()
     print_stack(&stack, 1);
     do
     {
-        // check when end -> if token is $ thats the end of expr
-        if (convert_token_to_index(token) == INDEX_DOLLAR && !is_end_of_expression)
-        {
-            // do some actions in here, end etc
-            DEBUG_PRINT("End of expression\n");
-            is_end_of_expression = true;
-        }
-
-        symbol_arr_t sym_arr;
         switch (get_prec_table_operation(&stack, token))
         {
         case E:
@@ -599,21 +585,17 @@ int expr()
             break;
         case X:
             // set up array
-            symbol_arr_init(&sym_arr);
-            symbol_arr_move_expr_to_arr(&stack, &sym_arr);
+            sym_data = convert_token_to_data(token);
+            symstack_push(&stack, sym_data);
 
-            // reduce with error
-            reduce_error(&stack, &sym_arr);
+            expr_error(&stack);
+            get_token(&token);
 
-            // free error
-            symbol_arr_free(&sym_arr);
-
-            // symstack_dispose(&stack);
             break;
         default:
-            break;
+            print_error(ERR_INTERNAL, "Unknown precedense table operation.\n");
+            return ERR_INTERNAL;
         }
-        // } while (!symstack_is_empty(&stack));
     } while (!((convert_term_to_index(get_closest_terminal(&stack)->data)) == INDEX_DOLLAR && (convert_token_to_index(token) == INDEX_DOLLAR)));
     if (!symstack_is_empty(&stack))
     {
@@ -622,4 +604,63 @@ int expr()
     delete_token(&token);
 
     return error_code_handler(EXIT_SUCCESS);
+}
+
+symstack_data_t process_addition(symbol_arr_t *sym_arr)
+{
+    token_T first_operand = sym_arr->arr[0].token;
+    token_T second_operand = sym_arr->arr[2].token;
+
+    symstack_data_t expr_symbol;
+
+    // if adding same types
+    if (first_operand.type == second_operand.type)
+    {
+        if (first_operand.type == TOKEN_INT || first_operand.type == TOKEN_DBL || first_operand.type == TOKEN_STRING)
+        {
+            expr_symbol.token.type = first_operand.type;
+        }
+        else
+        {
+            print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
+            error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+            expr_symbol.token.type = TOKEN_UNDEFINED;
+        }
+        return expr_symbol;
+    }
+
+    printf("Not same operands.\n");
+    // int + int = int
+    // int + double = double
+    // str + str2 = strstr2
+    // else err
+
+    // if tokens are not strings
+    if (first_operand.type != TOKEN_STRING && second_operand.type != TOKEN_STRING)
+    {
+
+        if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
+        {
+            DEBUG_PRINT("Generate conversion \"int2double %s\"\n", );
+            expr_symbol.token.type = TOKEN_DBL;
+            return expr_symbol;
+        }
+        else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
+        {
+            expr_symbol.token.type = TOKEN_INT;
+            return expr_symbol;
+        }
+
+        print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
+        error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+        DEBUG_PRINT("Generate ADDITION %s + %s\n", first_operand.value, first_operand.value);
+    }
+    else if (first_operand.type == TOKEN_STRING && second_operand.type == TOKEN_STRING)
+    {
+        DEBUG_PRINT("Generate conversion \"int2double %s\"\n", );
+    }
+    error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+    print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
+    expr_symbol.token.type = TOKEN_UNDEFINED;
+    return expr_symbol;
 }
