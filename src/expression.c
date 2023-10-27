@@ -187,9 +187,36 @@ void push_initial_sym(symstack_t *stack)
 
 bool is_operand(symstack_data_t symbol)
 {
-    if (symbol.token.type == TOKEN_IDENTIFIER || symbol.token.type == TOKEN_INT || symbol.token.type == TOKEN_DBL || symbol.token.type == TOKEN_STRING)
+    token_type_T symbol_type = symbol.token.type;
+    if (symbol_type == TOKEN_IDENTIFIER || symbol_type == TOKEN_INT || symbol_type == TOKEN_DBL || symbol_type == TOKEN_STRING)
     {
         return true;
+    }
+    return false;
+}
+
+bool is_binary_operator(symstack_data_t symbol)
+{
+    switch (symbol.token.type)
+    {
+    // arithmetic
+    case TOKEN_ADD:
+    case TOKEN_SUB:
+    case TOKEN_MUL:
+    case TOKEN_DIV:
+
+    // relational
+    case TOKEN_ASS:
+    case TOKEN_EQ:
+    case TOKEN_NEQ:
+    case TOKEN_GT:
+    case TOKEN_LT:
+    case TOKEN_GEQ:
+    case TOKEN_LEQ:
+    case TOKEN_NIL_CHECK:
+        return true;
+    default:
+        break;
     }
     return false;
 }
@@ -416,6 +443,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_EQ_E:
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
+        printf("Not implemented.\n");
         break;
     default:
         break;
@@ -449,53 +477,75 @@ void reduce(symstack_t *stack)
 
 void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 {
-    // reduce array and get error
-    symstack_data_t data;
-    data.isHandleBegin = false;
-    data.token.type = TOKEN_UNDEFINED;
-    strcpy(data.symbol, "E");
-
-    push_non_term_on_stack(stack, &data);
-
     error_code_handler(ERR_SYNTAX);
-
+    print_stack(stack, 1);
     print_symbol_arr(sym_arr);
 
-    // if next symbol is not operator -> missing operator
-    // else -> missing operand
+    printf("\t\t\tTOKEN TYPE: %d\n", sym_arr->arr[0].token.type);
+    if (sym_arr->arr[0].isTerminal)
+    {
+        printf("\t\t\tTERMINAL %d\n", sym_arr->arr[0].token.type);
+    }
 
-    // if (is_operand(sym_arr->arr[1]))
-    // {
-    // }
+    /*
+    E (
+    E E
+    E )
+    E operator E
+    */
+    symstack_data_t data;
+    data.token.type = TOKEN_UNDEFINED;
 
-    // if next symbol is ) -> missing L par
-    // if first is ( next symbol is ) -> missing operand
-
+    // if (is_operand(sym_arr->arr[0]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
     if (is_operand(sym_arr->arr[0]))
     {
+        data.token.type = sym_arr->arr[0].token.type;
         // E )
         if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
         {
             print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
         }
-        // E TERM
-        else if (is_operand(sym_arr->arr[1]))
+        // E E
+        else if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
+        {
+            // if 2 operand types are not equal
+            if (sym_arr->arr[0].token.type != sym_arr->arr[1].token.type)
+            {
+                // if both operands are not strings
+                if (sym_arr->arr[0].token.type != TOKEN_STRING && sym_arr->arr[1].token.type != TOKEN_DT_STRING)
+                {
+                    // if one of them is double
+                    if (sym_arr->arr[0].token.type == TOKEN_DBL || sym_arr->arr[1].token.type == TOKEN_DBL)
+                    {
+                        data.token.type = TOKEN_DBL;
+                    }
+                    else
+                    {
+                        data.token.type = TOKEN_INT;
+                    }
+                }
+            }
+            data.token.type = sym_arr->arr[1].token.type;
+            print_error(ERR_SYNTAX, "Missing operator.\n");
+        }
+        // E (
+        else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
         {
             print_error(ERR_SYNTAX, "Missing operator.\n");
         }
-        // E TERM
-        else
+        else if (is_binary_operator(sym_arr->arr[1]))
         {
-            print_token(sym_arr->arr[1].token);
-            print_error(ERR_SYNTAX, "Missing operand1.\n");
+            print_error(ERR_SYNTAX, "Missing second operand.\n");
         }
     }
     // first (
     else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
     {
         // ( E
-        if (!sym_arr->arr[1].isTerminal)
+        // if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
+        if (is_operand(sym_arr->arr[1]))
         {
+            data.token.type = sym_arr->arr[1].token.type;
             print_error(ERR_SYNTAX, "Missing right parenthesis.\n");
         }
         // ( )
@@ -506,7 +556,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         // ( TERM
         else
         {
-            print_error(ERR_SYNTAX, "Unexpected termnial.\n");
+            print_error(ERR_SYNTAX, "Unexpected terminal.\n");
         }
     }
     // else first TERM
@@ -515,6 +565,11 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         printf("operator types: %d %d\n", sym_arr->arr[0].token.type, sym_arr->arr[1].token.type);
         print_error(ERR_SYNTAX, "Missing operand3.\n");
     }
+
+    data.isHandleBegin = false;
+    data.isTerminal = false;
+    strcpy(data.symbol, "E");
+    push_non_term_on_stack(stack, &data);
 }
 
 void expr_error(symstack_t *stack)
@@ -589,6 +644,7 @@ int expr()
             symstack_push(&stack, sym_data);
 
             expr_error(&stack);
+
             get_token(&token);
 
             break;

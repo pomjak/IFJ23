@@ -155,6 +155,15 @@ void push_initial_sym(symstack_t *stack);
 bool is_operand(symstack_data_t symbol);
 
 /**
+ * @brief checks if symbol is operator
+ *
+ * @param symbol
+ * @return true
+ * @return false
+ */
+bool is_binary_operator(symstack_data_t symbol);
+
+/**
  * @brief convert token to precedence table index based on it's data
  *
  * @param token
