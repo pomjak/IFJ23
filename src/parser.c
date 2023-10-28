@@ -12,12 +12,24 @@
  * @brief Initializes data needed by the parser
  * 
  * @param p 
- * @return int 
+ * @return bool 
  */
-static int parser_init(Parser *p) 
+static bool parser_init(Parser *p) 
 {
     symtable_init(&p->global_symtab);
     symtable_init(&p->local_symtab);
+    p->current_id = NULL;
+    p->left_id = NULL;
+    p->right_id = NULL;
+    p->in_cond = false;
+    p->in_declaration = false;
+    p->in_function = false;
+    p->in_loop = false;
+    p->err_ret_code = 0;
+
+    int err_ret;
+    _add_builtins(p, &err_ret);
+    if(err_ret) return false;
 }
 /**
  * @brief Free all data allocated by the parser
@@ -37,6 +49,9 @@ static inline void _add_builtins(Parser *p, int *err)
 
 int parse()
 {
+    Parser parse_data;
+
+
     return;
 }
 
