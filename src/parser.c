@@ -25,7 +25,6 @@ static bool parser_init(Parser *p)
     p->in_declaration = false;
     p->in_function = false;
     p->in_loop = false;
-    p->err_ret_code = 0;
 
     int err_ret;
     _add_builtins(p, &err_ret);
@@ -36,23 +35,25 @@ static bool parser_init(Parser *p)
  * 
  * @param p 
  */
-static inline void parser_dispose(Parser *p)
+static void parser_dispose(Parser *p)
 {
     symtable_dispose(&p->global_symtab);
     symtable_dispose(&p->local_symtab);
 }
 
-static inline void _add_builtins(Parser *p, int *err)
+static void _add_builtins(Parser *p, int *err)
 {
     return;
 }
 
 int parse()
 {
+    unsigned ret_code;
     Parser parse_data;
 
+    if(ret_code = prog(&parse_data)) return ret_code;
 
-    return;
+    return EXIT_SUCCESS;
 }
 
 

@@ -26,7 +26,6 @@ typedef struct parser_t {
     symtab_item_t *right_id;    /// Identifier of right-side function
     symtab_t global_symtab;     /// Global symbol table
     symtab_t local_symtab;      /// Local symbol table
-    int err_ret_code;           /// Exit code of the program
 } Parser;
 
 typedef unsigned int Rule;
