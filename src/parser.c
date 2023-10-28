@@ -26,14 +26,10 @@ static bool parser_init(Parser *p) {
     p->in_declaration = false;
     p->in_function = false;
     p->in_loop = false;
-
-    int err_ret;
-    _add_builtins(p, &err_ret);
-    if (err_ret) return false;
 }
+
 /**
  * @brief Free all data allocated by the parser
- *
  * @param p
  */
 static void parser_dispose(Parser *p) {
@@ -41,9 +37,18 @@ static void parser_dispose(Parser *p) {
     symtable_dispose(&p->local_symtab);
 }
 
-static void _add_builtins(Parser *p, int *err) { return; }
+/**
+ * @brief Fill global symtable with builtin functions
+ * 
+ * @param p Parser object
+ */
+static void _add_builtins(Parser *p) { 
+    return; 
+}
 
-int parse() {
+
+unsigned int parse() {
+
     unsigned ret_code;
     Parser parse_data;
     if (ret_code = prog(&parse_data)) return ret_code;
@@ -51,10 +56,11 @@ int parse() {
     return EXIT_SUCCESS;
 }
 
+// ==================
 //  Rule definitions
-
+// ==================
 /**
- * @brief <prog> -> <stmt-list>
+ * @brief <prog> -> <stmt> <prog> | func ID ( <param_list> <func_ret_type> { <func_body> <prog> | EOF
  */
 static Rule prog(Parser *p) {
     unsigned res;
@@ -71,7 +77,8 @@ static Rule prog(Parser *p) {
 }
 
 /**
- * @brief <stmt> -> <var-def> | <while_loop> | <condition>
+ * @brief <stmt> -> var <define> | let <define> | IF <expression_type> | 
+ * while EXP { <block_body> | if <cond_clause> { <block_body> else { <block_body>
  */
 static Rule stmt(Parser *p) {
     unsigned res;
@@ -107,7 +114,7 @@ static Rule define(Parser *p) {
 }
 
 /**
- * @brief <var_def_cont> -> : <type> <opt_assign> | <asign_exp>
+ * @brief <var_def_cont> -> : <type> <opt_assign> | = EXP
  */
 static Rule var_def_cont(Parser *p) {
     unsigned res;
@@ -123,19 +130,21 @@ static Rule var_def_cont(Parser *p) {
 }
 
 /**
- * @brief <opt_assign> -> <assign_exp> | eps
+ * @brief <opt_assign> -> = EXP | eps
  */
 static Rule opt_assign(Parser *p) {
     unsigned res;
 
-    ASSERT_TOK_TYPE(TOKEN_ASS);
-    // expression
+    if(p->curr_tok.type == TOKEN_ASS) {
+        // TODO expressions
+    }
+    else return EXIT_SUCCESS;
 
     return res;
 }
 
 /**
- * @brief <expr_type> -> <assign_exp> | ( <arg_list>
+ * @brief <expr_type> -> = EXP | ( <arg_list>
  */
 static Rule expr_type(Parser *p) {
     unsigned res;
@@ -146,6 +155,7 @@ static Rule expr_type(Parser *p) {
         case TOKEN_L_PAR:
             GET_TOKEN();
             NEXT_RULE(arg_list);
+            break;
         default:
             return ERR_SYNTAX;
     }
@@ -194,6 +204,7 @@ static Rule arg_next(Parser *p) {
     case TOKEN_COMMA:
         GET_TOKEN();
         NEXT_RULE(arg);
+        break;
     case TOKEN_R_PAR:
         return EXIT_SUCCESS;    
     default:
@@ -218,7 +229,7 @@ static Rule arg(Parser *p) {
 }
 
 /**
- * @brief <param_list> -> <param> <param_next>
+ * @brief <param_list> -> <param> <param_next> | )
  */
 static Rule param_list(Parser *p) {
     unsigned res;
@@ -244,68 +255,211 @@ static Rule param_next(Parser *p) {
     case TOKEN_COMMA:
         GET_TOKEN();
         NEXT_RULE(param);
+        break;
     default:
         return ERR_SYNTAX;
     }
 }
 
 /**
- * @brief <param> -> <param_label> ID : <type>
+ * @brief <param> ->  "_" "ID" ":" <type> | "ID" "ID" ":" <type>
  */
-static Rule param(Parser *p);
+static Rule param(Parser *p) {
+    unsigned res;
+
+    switch (p->curr_tok.type)
+    {
+    case TOKEN_UND_SCR:
+        break;
+    case TOKEN_IDENTIFIER:
+        break;
+    default:
+        return ERR_SYNTAX;
+    }
+    GET_TOKEN();
+    ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
+    // symtable ID stuff
+    GET_TOKEN();
+    ASSERT_TOK_TYPE(TOKEN_COL);
+
+    GET_TOKEN();
+    NEXT_RULE(type);
+
+    return EXIT_SUCCESS;
+}
 
 /**
  * @brief <blk_body> -> <stmt> <blk_body> | }
  */
-static Rule block_body(Parser *p);
+static Rule block_body(Parser *p) {
+    unsigned res;
+
+    if(p->curr_tok.type == TOKEN_R_BKT) {
+        return EXIT_SUCCESS;
+    }
+    else {
+        NEXT_RULE(stmt);
+
+        // next rule block_body again
+    }
+}
 
 /**
  * @brief <func_body> -> <func_stmt> <func_body> | }
  */
-static Rule func_body(Parser *p);
+static Rule func_body(Parser *p) {
+    unsigned res;
+
+    if(p->curr_tok.type == TOKEN_R_BKT) {
+        return EXIT_SUCCESS;
+    }
+    else {
+        NEXT_RULE(func_stmt);
+
+        // next rule func_body again
+    }
+}
 
 /**
- * @brief <func_stmt> -> <var_def> | <id_construct> | while EXP { <func_body> |
+ * @brief <func_stmt> -> var <def> | let <def> | ID <expression-type> | while EXP { <func_body> |
  * if <cond_clause> { <func_body> else { <func_body> | return <opt_ret>
  */
-static Rule func_stmt(Parser *p);
+static Rule func_stmt(Parser *p) {
+    unsigned res;
+
+    switch (p->curr_tok.type) {
+        case TOKEN_VAR:
+            break;
+        case TOKEN_LET:
+            break;
+        case TOKEN_IDENTIFIER:
+            break;
+        case TOKEN_WHILE:
+            break;
+        case TOKEN_IF:
+            break;
+        case TOKEN_RETURN:
+            break;
+        default:
+            return ERR_SYNTAX;
+    }
+}
 
 /**
  * @brief <func_ret_type> -> eps | -> <type>
  */
-static Rule func_ret_type(Parser *p);
+static Rule func_ret_type(Parser *p) {
+    unsigned res;
+
+    if(p->curr_tok.type == TOKEN_SUB) {
+        GET_TOKEN();
+        ASSERT_TOK_TYPE(TOKEN_GT);
+        GET_TOKEN();
+        NEXT_RULE(type);
+    }
+    else return EXIT_SUCCESS;
+}
 
 /**
  * @brief <opt_ret> -> EXP | eps
  */
-static Rule opt_ret(Parser *p);
+static Rule opt_ret(Parser *p); // TODO
 
 /**
  * @brief <opt_type> ->  : <type> | eps
  */
-static Rule opt_type(Parser *p);
+static Rule opt_type(Parser *p) {
+    unsigned res;
+
+    if(p->curr_tok.type == TOKEN_COL) {
+        GET_TOKEN();
+        NEXT_RULE(type);
+    }
+    else return EXIT_SUCCESS;
+
+}
 
 /**
  * @brief <type> -> Int<nilable> | String<nilable> | Double<nilable>
  */
-static Rule type(Parser *p);
+static Rule type(Parser *p) {
+    unsigned res;
+
+    switch (p->curr_tok.type)
+    {
+    case TOKEN_DT_INT:
+        GET_TOKEN();
+        NEXT_RULE(nilable);
+        break;
+    case TOKEN_DT_DOUBLE:
+        GET_TOKEN();
+        NEXT_RULE(nilable);
+        break;
+    case TOKEN_DT_STRING:
+        GET_TOKEN();
+        NEXT_RULE(nilable);
+        break;
+    default:
+        return ERR_SYNTAX;
+    }
+}
 
 /**
  * @brief <nilable> -> ? | eps
  */
-static Rule nilable(Parser *p);
+static Rule nilable(Parser *p) {
+    unsigned res;
+
+    if(p->curr_tok.type == TOKEN_NIL_CHECK) {
+        GET_TOKEN();
+        return EXIT_SUCCESS;
+    }
+    else return EXIT_SUCCESS;
+}
 
 /**
  * @brief <opt_arg> -> : <term> | eps
  */
-static Rule opt_arg(Parser *p);
+static Rule opt_arg(Parser *p) {
+    unsigned res;
+
+    if(p->curr_tok.type == TOKEN_COL) {
+        GET_TOKEN();
+        NEXT_RULE(term);
+    }
+    else return EXIT_SUCCESS;
+}
 
 /**
  * @brief <term> -> ID | literal
  */
-static Rule term(Parser *p);
+static Rule term(Parser *p) {
+    unsigned res;
+
+    if(p->curr_tok.type == TOKEN_IDENTIFIER) {
+        // sth
+    }
+    else {
+        NEXT_RULE(literal);
+    }
+    return EXIT_SUCCESS;
+}
 
 /**
  * @brief <literal> -> INT_LIT | STR_LIT | DBL_LIT
  */
-static Rule literal(Parser *p);
+static Rule literal(Parser *p) {
+    unsigned res;
+
+    switch (p->curr_tok.type)
+    {
+    case TOKEN_INT:
+        break;
+    case TOKEN_DBL:
+        break;
+    case TOKEN_STRING:
+        break;
+    default:
+        return ERR_SYNTAX;
+    }
+}

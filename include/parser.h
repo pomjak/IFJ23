@@ -33,8 +33,8 @@ typedef unsigned int Rule;
 /**
  * @brief Parser entry point
  * 
- * @return int ret_code
+ * @return uint ret_code
  */
-int parse();
+unsigned int parse();
 
 #endif
