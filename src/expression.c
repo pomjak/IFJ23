@@ -699,19 +699,21 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
     {
-        DEBUG_PRINT("Generate conversion \"int2double %s\"\n", );
+        DEBUG_PRINT("Generate conversion \"int2double\"\n");
+        DEBUG_PRINT("Generate ADDITION %f + %f\n", first_operand.value.double_val, second_operand.value.double_val);
         expr_symbol.token.type = TOKEN_DBL;
         return expr_symbol;
     }
     else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
     {
+        DEBUG_PRINT("Generate ADDITION %d + %d\n", first_operand.value.int_val, second_operand.value.int_val);
         expr_symbol.token.type = TOKEN_INT;
         return expr_symbol;
     }
 
     print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     error_code_handler(ERR_UNCOMPATIBILE_TYPE);
-    DEBUG_PRINT("Generate ADDITION %s + %s\n", first_operand.value, first_operand.value);
+
     // }
 
     error_code_handler(ERR_UNCOMPATIBILE_TYPE);
@@ -813,6 +815,5 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     default:
         break;
     }
-    DEBUG_PRINT("Genereate comparation\n");
     return expr_symbol;
 }
