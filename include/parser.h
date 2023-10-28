@@ -20,7 +20,7 @@ typedef struct parser_t {
     bool in_declaration;        /// Parser is inside a function declaration
     bool in_cond;               /// Parser is inside a condition statement
     bool in_loop;               /// Parser is inside a while loop
-    token_T *curr_tok;          /// Currently processed token
+    token_T curr_tok;          /// Currently processed token
     symtab_item_t *current_id;  /// Identifier of currently processed function
     symtab_item_t *left_id;     /// Identifier of left-side variable
     symtab_item_t *right_id;    /// Identifier of right-side function
