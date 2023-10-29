@@ -62,7 +62,7 @@ static void parser_dispose(Parser *p) {
  * 
  * @param p Parser object
  */
-static bool _add_builtins(Parser *p) {
+static bool add_builtins(Parser *p) {
     unsigned int st_err;
     dstring_t builtin_id;
     dstring_t param_name;
@@ -114,10 +114,10 @@ unsigned int parse() {
     Parser parse_data;
 
     if(parser_init(&parse_data)) return ERR_INTERNAL;
-    if(_add_builtins(&parse_data)) return ERR_INTERNAL;
+    if(add_builtins(&parse_data)) return ERR_INTERNAL;
 
     if (ret_code = prog(&parse_data)) return ret_code;
-    
+
     parser_dispose(&parse_data);
     return EXIT_SUCCESS;
 }
