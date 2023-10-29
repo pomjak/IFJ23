@@ -18,7 +18,7 @@
     set_nillable(&p->global_symtab, &builtin_id, _nilable, st_err);     \
     set_func_definition(&p->global_symtab, &builtin_id, true, st_err)
 
-#define ADD_BUILTIN_PARAM(_label, _param_name, _param_type, _nil)                       \
+#define dADD_BUILTIN_PARAM(_label, _param_name, _param_type, _nil)                       \
     dstring_clear(&label_name);                                                         \
     dstring_clear(&param_name);                                                         \
     dstring_add_const_str(&label_name, _label);                                         \
@@ -348,6 +348,7 @@ static Rule param_next(Parser *p) {
  * @brief <param> ->  "_" "ID" ":" <type> | "ID" "ID" ":" <type>
  */
 static Rule param(Parser *p) {
+    DEBUG_PRINT("Param Rule");
     unsigned res;
 
     switch (p->curr_tok.type)
@@ -357,6 +358,7 @@ static Rule param(Parser *p) {
     case TOKEN_IDENTIFIER:
         break;
     default:
+    print_error(ERR_SYNTAX, "Unexpected token, identifier (or _) expected");
         return ERR_SYNTAX;
     }
     GET_TOKEN();
@@ -375,6 +377,7 @@ static Rule param(Parser *p) {
  * @brief <blk_body> -> <stmt> <blk_body> | }
  */
 static Rule block_body(Parser *p) {
+    DEBUG_PRINT("BlockBody Rule");
     unsigned res;
 
     if(p->curr_tok.type == TOKEN_R_BKT) {
@@ -391,6 +394,7 @@ static Rule block_body(Parser *p) {
  * @brief <func_body> -> <func_stmt> <func_body> | }
  */
 static Rule func_body(Parser *p) {
+    DEBUG_PRINT("FuncBody Rule");
     unsigned res;
 
     if(p->curr_tok.type == TOKEN_R_BKT) {
@@ -408,6 +412,7 @@ static Rule func_body(Parser *p) {
  * if <cond_clause> { <func_body> else { <func_body> | return <opt_ret>
  */
 static Rule func_stmt(Parser *p) {
+    DEBUG_PRINT("FuncStatement Rule");
     unsigned res;
 
     switch (p->curr_tok.type) {
@@ -432,6 +437,7 @@ static Rule func_stmt(Parser *p) {
  * @brief <func_ret_type> -> eps | -> <type>
  */
 static Rule func_ret_type(Parser *p) {
+    DEBUG_PRINT("FuncRetType Rule");
     unsigned res;
 
     if(p->curr_tok.type == TOKEN_SUB) {
@@ -446,12 +452,17 @@ static Rule func_ret_type(Parser *p) {
 /**
  * @brief <opt_ret> -> EXP | eps
  */
-static Rule opt_ret(Parser *p); // TODO
+static Rule opt_ret(Parser *p){
+    DEBUG_PRINT("OptRet Rule");
+    unsigned res;
+    return EXIT_SUCCESS;
+} // TODO
 
 /**
  * @brief <opt_type> ->  : <type> | eps
  */
 static Rule opt_type(Parser *p) {
+    DEBUG_PRINT("OptType Rule");
     unsigned res;
 
     if(p->curr_tok.type == TOKEN_COL) {
@@ -466,6 +477,7 @@ static Rule opt_type(Parser *p) {
  * @brief <type> -> Int<nilable> | String<nilable> | Double<nilable>
  */
 static Rule type(Parser *p) {
+    DEBUG_PRINT("Type Rule");
     unsigned res;
 
     switch (p->curr_tok.type)
@@ -491,6 +503,7 @@ static Rule type(Parser *p) {
  * @brief <nilable> -> ? | eps
  */
 static Rule nilable(Parser *p) {
+    DEBUG_PRINT("Nilable Rule");
     unsigned res;
 
     if(p->curr_tok.type == TOKEN_NIL_CHECK) {
@@ -504,6 +517,7 @@ static Rule nilable(Parser *p) {
  * @brief <opt_arg> -> : <term> | eps
  */
 static Rule opt_arg(Parser *p) {
+    DEBUG_PRINT("OptArg Rule");
     unsigned res;
 
     if(p->curr_tok.type == TOKEN_COL) {
@@ -517,6 +531,7 @@ static Rule opt_arg(Parser *p) {
  * @brief <term> -> ID | literal
  */
 static Rule term(Parser *p) {
+    DEBUG_PRINT("Term Rule");
     unsigned res;
 
     if(p->curr_tok.type == TOKEN_IDENTIFIER) {
@@ -532,6 +547,7 @@ static Rule term(Parser *p) {
  * @brief <literal> -> INT_LIT | STR_LIT | DBL_LIT
  */
 static Rule literal(Parser *p) {
+    DEBUG_PRINT("Literal Rule");
     unsigned res;
 
     switch (p->curr_tok.type)
@@ -545,4 +561,5 @@ static Rule literal(Parser *p) {
     default:
         return ERR_SYNTAX;
     }
+    return EXIT_SUCCESS;
 }
