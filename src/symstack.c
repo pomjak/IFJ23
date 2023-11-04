@@ -42,8 +42,10 @@ void dispose_stack(symstack_t *first, unsigned int *error)
     while (*first)
     {
         temp = (*first)->next;
+
         symtable_dispose((*first)->local_sym);
         free((*first)->local_sym);
+        
         free(*first);
         (*first) = temp;
     }
