@@ -17,7 +17,7 @@ typedef struct symstack_element
     symtab_t *local_sym;
     struct symstack_element *next;
 
-}symstack_t;
+}*symstack_t;
 
 /**
  * @brief init symstack
@@ -33,3 +33,5 @@ void init_symstack(symstack_t *first);
  * @param error     error flag from symtab
  */
 void add_scope(symstack_t *first, unsigned int *error);
+
+void dispose_stack(symstack_t *first, unsigned int *error);

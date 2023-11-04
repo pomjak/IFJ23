@@ -14,14 +14,38 @@
 void init_symstack(symstack_t *first)
 {
     first = NULL;
+    return;
 }
 
 void add_scope(symstack_t *first, unsigned int *error)
 {
-    if(!first)
+
+    symstack_t new = malloc(sizeof(struct symstack_element));
+
+    if (!new)
     {
-        symstack_t *new = malloc(sizeof(symstack_t));
-        new->next = NULL;
-        new->local_sym = create_local_symtab(error);
+        report_error(error, ERR_INTERNAL);
+        return;
     }
+
+    new->next = *first;
+    new->local_sym = create_local_symtab(error);
+    *first = new;
+}
+
+void dispose_stack(symstack_t *first, unsigned int *error)
+{
+    symstack_t temp;
+    if (*first == NULL)
+        return;
+
+    while (*first)
+    {
+        temp = (*first)->next;
+        symtable_dispose((*first)->local_sym);
+        free((*first)->local_sym);
+        free(*first);
+        (*first) = temp;
+    }
+    first = NULL;
 }
