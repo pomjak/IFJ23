@@ -1,3 +1,13 @@
+/**
+ * @file symtable.c
+ * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz>
+ * @brief Implementation of symtable (version hashtable with open addressing)
+ * @version 0.1
+ * @date 2023-10-13
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 #include "symtable.h"
 
 void report_error(unsigned int *error, const unsigned int err_type)
