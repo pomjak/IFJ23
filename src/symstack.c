@@ -16,10 +16,12 @@ void init_symstack(symstack_t *first)
     first = NULL;
 }
 
-void add_scope(symstack_t *first)
+void add_scope(symstack_t *first, unsigned int *error)
 {
     if(!first)
     {
-        
+        symstack_t *new = malloc(sizeof(symstack_t));
+        new->next = NULL;
+        new->local_sym = create_local_symtab(error);
     }
 }

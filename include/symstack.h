@@ -12,10 +12,11 @@
 #include <stdio.h>
 #include "symtable.h"
 
-typedef struct 
+typedef struct symstack_element
 {
-    symtab_t local_sym;
+    symtab_t *local_sym;
     struct symstack_element *next;
+
 }symstack_t;
 
 /**
@@ -28,6 +29,7 @@ void init_symstack(symstack_t *first);
 /**
  * @brief adds local symtable for new scope
  * 
- * @param first 
+ * @param first     ptr to stack
+ * @param error     error flag from symtab
  */
-void add_scope(symstack_t *first);
+void add_scope(symstack_t *first, unsigned int *error);
