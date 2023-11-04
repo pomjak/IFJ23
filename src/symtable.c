@@ -1,3 +1,13 @@
+/**
+ * @file symtable.c
+ * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz>
+ * @brief Implementation of symtable (version hashtable with open addressing)
+ * @version 0.1
+ * @date 2023-10-13
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 #include "symtable.h"
 
 void report_error(unsigned int *error, const unsigned int err_type)
@@ -316,12 +326,6 @@ void set_nillable(symtab_t *symtab, dstring_t *id, bool is_nillable, unsigned in
         return;
     }
 
-    if (item->type == function)
-    {
-        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
-        return;
-    }
-
     item->is_nillable = is_nillable;
 }
 
@@ -332,12 +336,6 @@ bool get_nillable(symtab_t *symtab, dstring_t *id, unsigned int *error)
     if (!item)
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
-        return false;
-    }
-
-    if (item->type == function)
-    {
-        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
         return false;
     }
 

@@ -188,11 +188,11 @@ int main()
     assert(error == SYMTAB_OK);
 
     /**
-     * @brief set nullability of variable (fails with function)
+     * @brief set nullability of variable (okay)
      *
      */
     set_nillable(&global_sym_table, &item1, true, &error);
-    assert(error == SYMTAB_ERR_ITEM_IS_FUNCTION);
+    assert(error == SYMTAB_OK);
 
     set_nillable(&global_sym_table, &item2, true, &error);
     assert(error == SYMTAB_OK);
@@ -204,11 +204,11 @@ int main()
     assert(error == SYMTAB_OK);
 
     /**
-     * @brief get nil of variable (fails with function)
+     * @brief get nil of variable (should be okay)
      *
      */
-    assert(get_nillable(&global_sym_table, &item1, &error) == false);
-    assert(error == SYMTAB_ERR_ITEM_IS_FUNCTION);
+    assert(get_nillable(&global_sym_table, &item1, &error) == true);
+    assert(error == SYMTAB_OK);
 
     assert(get_nillable(&global_sym_table, &item2, &error) == true);
     assert(error == SYMTAB_OK);

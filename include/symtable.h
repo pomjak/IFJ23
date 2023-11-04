@@ -1,6 +1,6 @@
 /**
  * @file symtable.h
- * @author Pomsar Jakub xpomsa00
+ * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz>
  * @brief Implementation of symtable (version hashtable with open addressing)
  * @version 0.1
  * @date 2023-10-13
@@ -169,7 +169,6 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * essentially making it appear as though the item has been deleted.
  * @param symtab    targeted symtab
  * @param target    target to be deleted(set inactive)
- * @return unsigned int  0 for successful deactivating, 1 otherwise
  */
 void symtable_delete(symtab_t *symtab, dstring_t *target, unsigned int *error);
 
