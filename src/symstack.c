@@ -1,20 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-void hello_stack(void)
-{
-    printf("if you see this, you haven't implemented stack...\n");
-}
-
-
-#ifdef SYMSTACK_TEST
-
-int main(int argc, char ** argv)
-{
-    (void)argc;
-    (void)argv;
-
-    return EXIT_SUCCESS;
-}
-
-#endif
+/**
+ * @file symstack.c
+ * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz>
+ * @brief   Implementation of stack for local symbol tables
+ * @version 0.1
+ * @date 2023-11-04
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
