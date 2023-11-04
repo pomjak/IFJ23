@@ -8,3 +8,18 @@
  * @copyright Copyright (c) 2023
  *
  */
+
+#include "symstack.h"
+
+void init_symstack(symstack_t *first)
+{
+    first = NULL;
+}
+
+void add_scope(symstack_t *first)
+{
+    if(!first)
+    {
+        
+    }
+}

@@ -9,3 +9,25 @@
  *
  */
 
+#include <stdio.h>
+#include "symtable.h"
+
+typedef struct 
+{
+    symtab_t local_sym;
+    struct symstack_element *next;
+}symstack_t;
+
+/**
+ * @brief init symstack
+ * 
+ * @param first 
+ */
+void init_symstack(symstack_t *first);
+
+/**
+ * @brief adds local symtable for new scope
+ * 
+ * @param first 
+ */
+void add_scope(symstack_t *first);
