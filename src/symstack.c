@@ -35,18 +35,23 @@ void add_scope(symstack_t *first, unsigned int *error)
 
 void pop_scope(symstack_t *first, unsigned int *error)
 {
-    symstack_t temp;
-    temp = (*first)->next;
+    if (*first)
+    {
+        symstack_t temp;
+        temp = (*first)->next;
 
-    symtable_dispose((*first)->local_sym);
-    free((*first)->local_sym);
+        symtable_dispose((*first)->local_sym);
+        free((*first)->local_sym);
 
-    free(*first);
-    (*first) = temp;
+        free(*first);
+        (*first) = temp;
+    }
 }
 
 void dispose_stack(symstack_t *first, unsigned int *error)
 {
+    *error = SYMTAB_OK;
+    
     symstack_t temp;
     if (*first == NULL)
         return;
@@ -81,6 +86,7 @@ symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error
         else
             break;
     }
-
-    return symtable_search(stack->local_sym, id, error);
+    if(stack)
+        return symtable_search(stack->local_sym, id, error);
+    else return NULL;
 }

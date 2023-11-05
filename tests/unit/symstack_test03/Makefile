@@ -9,7 +9,7 @@ build:
 run: build
 	@echo "[info] performing test symstack 3"
 	
-	if ./$(NAME) > ./output.txt 3>&1; then \
+	if ./$(NAME) > ./output.txt 2>&1; then \
         echo -e "[info] test symstack 3 \e[32mPASS\e[0m"; \
     else \
         echo -e "[info] test symstack 3 \e[31mFAIL\e[0m"; \

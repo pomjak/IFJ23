@@ -64,45 +64,45 @@ int main()
     }
 
     rewind(input);
-    // int i = 0;
-    // for (i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
-    // {
-    //     if (strchr(buffer, '\n') != NULL)
-    //         *(strchr(buffer, '\n')) = '\0';
+    int i = 0;
+    for (i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
+    {
+        if (strchr(buffer, '\n') != NULL)
+            *(strchr(buffer, '\n')) = '\0';
 
-    //     dstring_clear(&item);
+        dstring_clear(&item);
 
-    //     dstring_add_const_str(&item, buffer);
+        dstring_add_const_str(&item, buffer);
 
-    //     if (i % 2)
-    //     {
-    //         pop_scope(&stack, &error);
-    //         assert(error == SYMTAB_OK);
-    //     }
-    // }
-    // int cnt = i;
-    // rewind(input);
+        if (i % 2)
+        {
+            pop_scope(&stack, &error);
+            assert(error == SYMTAB_OK);
+        }
+    }
+    int cnt = i;
+    rewind(input);
 
-    // for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
-    // {
-    //     if (strchr(buffer, '\n') != NULL)
-    //         *(strchr(buffer, '\n')) = '\0';
+    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
+    {
+        if (strchr(buffer, '\n') != NULL)
+            *(strchr(buffer, '\n')) = '\0';
 
-    //     dstring_clear(&item);
+        dstring_clear(&item);
 
-    //     dstring_add_const_str(&item, buffer);
+        dstring_add_const_str(&item, buffer);
 
-    //     if (i < (cnt / 2))
-    //     {
-    //         assert(search_stack(stack, &item, &error) != NULL);
-    //         assert(error == SYMTAB_OK);
-    //     }
-    //     else
-    //     {
-    //         assert(search_stack(stack, &item, &error) == NULL);
-    //         assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
-    //     }
-    // }
+        if (i < (cnt / 2)+1)
+        {
+            assert(search_stack(stack, &item, &error) != NULL);
+            assert(error == SYMTAB_OK);
+        }
+        else
+        {
+            assert(search_stack(stack, &item, &error) == NULL);
+            assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
+        }
+    }
 
     fclose(input);
 
