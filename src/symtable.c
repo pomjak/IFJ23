@@ -16,6 +16,21 @@ void report_error(unsigned int *error, const unsigned int err_type)
         *error = err_type;
 }
 
+symtab_t *create_local_symtab(unsigned int *error)
+{
+    symtab_t * new_local = malloc(sizeof(symtab_t));
+
+    if (!new_local)
+    {
+        report_error(error, ERR_INTERNAL);
+        return NULL;
+    }
+
+    symtable_init(new_local, error);
+
+    return new_local;
+}
+
 void symtable_init(symtab_t *symtab, unsigned int *error)
 {
     *error = SYMTAB_OK;

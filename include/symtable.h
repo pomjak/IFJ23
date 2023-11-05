@@ -47,7 +47,7 @@ typedef struct param
     dstring_t name;
     dstring_t label;
     Type type;
-    bool is_nillable;     // true if item can be nil
+    bool is_nillable; // true if item can be nil
     struct param *next;
 } param_t;
 
@@ -85,6 +85,14 @@ void report_error(unsigned int *error, const unsigned int_);
  * @param error     err flag
  */
 void symtable_init(symtab_t *symtab, unsigned int *error);
+
+/**
+ * @brief Create a local symtab object
+ * 
+ * @param error     error code
+ * @return symtab*  pointer to created local symtab
+ */
+symtab_t *create_local_symtab(unsigned int *error);
 
 /**
  * @brief hash function implemented as sdbm algo
@@ -236,7 +244,7 @@ bool get_mutability(symtab_t *symtab, dstring_t *id, unsigned int *error);
 
 /**
  * @brief Set the nillable of object
- * 
+ *
  * @param symtab            ptr to symtable
  * @param id                id of item
  * @param nillable          desired value to be set for nil
@@ -246,7 +254,7 @@ void set_nillable(symtab_t *symtab, dstring_t *id, bool is_nillable, unsigned in
 
 /**
  * @brief Get the nillable of item
- * 
+ *
  * @param symtab            ptr to symtable
  * @param id                id of item
  * @param error             err flag
@@ -386,10 +394,9 @@ void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_pa
  */
 dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);
 
-
 /**
  * @brief Set the param nil object
- * 
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
@@ -400,7 +407,7 @@ void set_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_para
 
 /**
  * @brief Get the param nil object
- * 
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
