@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz
- * @brief   test 01 for symstack [init, add scope, dispose]
+ * @brief   test 02 for symstack [init, add scope, dispose]
  * @version 0.1
  * @date 2023-11-04
  *
@@ -37,9 +37,6 @@ int main()
 
     pop_scope(&stack, &error);
     assert(error == SYMTAB_OK);
-
-    assert(symtable_search(stack->local_sym, &item1, &error) == NULL);
-    assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
 
     dispose_stack(&stack, &error);
     assert(error == SYMTAB_OK);

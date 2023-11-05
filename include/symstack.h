@@ -54,6 +54,8 @@ void dispose_stack(symstack_t *first, unsigned int *error);
  * @brief searches symbol over whole stack of symtabs
  * 
  * @param stack ptr to stack
- * @param error error code 
+ * @param id    id to search for 
+ * @param error error code
+ * @return ptr to found data 
  */
-void search_stack(symstack_t *stack, unsigned int *error);
+symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error);

@@ -64,7 +64,23 @@ void dispose_stack(symstack_t *first, unsigned int *error)
     first = NULL;
 }
 
-void search_stack(symstack_t *stack, unsigned int *error)
+symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error)
 {
-    
+    if (stack == NULL)
+    {
+        report_error(error, SYMTAB_NOT_INITIALIZED);
+        return NULL;
+    }
+
+    while (stack)
+    {
+        if (symtable_search(stack->local_sym, id, error) == NULL)
+        {
+            stack = stack->next;
+        }
+        else
+            break;
+    }
+
+    return symtable_search(stack->local_sym, id, error);
 }
