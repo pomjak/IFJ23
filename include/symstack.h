@@ -29,9 +29,31 @@ void init_symstack(symstack_t *first);
 /**
  * @brief adds local symtable for new scope
  * 
- * @param first     ptr to stack
- * @param error     error flag from symtab
+ * @param first ptr to stack
+ * @param error error flag from symtab
  */
 void add_scope(symstack_t *first, unsigned int *error);
 
+/**
+ * @brief removes first stacked local symtab
+ * 
+ * @param first ptr to stack
+ * @param error error code
+ */
+void pop_scope(symstack_t *first, unsigned int *error);
+
+/**
+ * @brief dispose of stack
+ * 
+ * @param first ptr to stack
+ * @param error error code 
+ */
 void dispose_stack(symstack_t *first, unsigned int *error);
+
+/**
+ * @brief searches symbol over whole stack of symtabs
+ * 
+ * @param stack ptr to stack
+ * @param error error code 
+ */
+void search_stack(symstack_t *stack, unsigned int *error);

@@ -33,6 +33,18 @@ void add_scope(symstack_t *first, unsigned int *error)
     *first = new;
 }
 
+void pop_scope(symstack_t *first, unsigned int *error)
+{
+    symstack_t temp;
+    temp = (*first)->next;
+
+    symtable_dispose((*first)->local_sym);
+    free((*first)->local_sym);
+
+    free(*first);
+    (*first) = temp;
+}
+
 void dispose_stack(symstack_t *first, unsigned int *error)
 {
     symstack_t temp;
@@ -45,9 +57,14 @@ void dispose_stack(symstack_t *first, unsigned int *error)
 
         symtable_dispose((*first)->local_sym);
         free((*first)->local_sym);
-        
+
         free(*first);
         (*first) = temp;
     }
     first = NULL;
+}
+
+void search_stack(symstack_t *stack, unsigned int *error)
+{
+    
 }
