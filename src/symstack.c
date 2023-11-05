@@ -19,7 +19,8 @@ void init_symstack(symstack_t *first)
 
 void add_scope(symstack_t *first, unsigned int *error)
 {
-
+    *error = SYMTAB_OK;
+    
     symstack_t new = malloc(sizeof(struct symstack_element));
 
     if (!new)
@@ -35,7 +36,9 @@ void add_scope(symstack_t *first, unsigned int *error)
 
 void pop_scope(symstack_t *first, unsigned int *error)
 {
-    if (*first)
+    *error = SYMTAB_OK;
+
+    if (*first != NULL)
     {
         symstack_t temp;
         temp = (*first)->next;
@@ -46,6 +49,8 @@ void pop_scope(symstack_t *first, unsigned int *error)
         free(*first);
         (*first) = temp;
     }
+    else 
+        report_error(error,SYMTAB_NOT_INITIALIZED);
 }
 
 void dispose_stack(symstack_t *first, unsigned int *error)
@@ -88,5 +93,9 @@ symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error
     }
     if(stack)
         return symtable_search(stack->local_sym, id, error);
-    else return NULL;
+    else 
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return NULL;
+    }
 }
