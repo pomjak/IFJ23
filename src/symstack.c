@@ -93,5 +93,9 @@ symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error
     }
     if(stack)
         return symtable_search(stack->local_sym, id, error);
-    else return NULL;
+    else 
+    {
+        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
+        return NULL;
+    }
 }
