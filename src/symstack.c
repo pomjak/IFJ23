@@ -19,7 +19,8 @@ void init_symstack(symstack_t *first)
 
 void add_scope(symstack_t *first, unsigned int *error)
 {
-
+    *error = SYMTAB_OK;
+    
     symstack_t new = malloc(sizeof(struct symstack_element));
 
     if (!new)
@@ -35,6 +36,8 @@ void add_scope(symstack_t *first, unsigned int *error)
 
 void pop_scope(symstack_t *first, unsigned int *error)
 {
+    *error = SYMTAB_OK;
+
     if (*first != NULL)
     {
         symstack_t temp;
