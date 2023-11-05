@@ -13,7 +13,7 @@
 
 void init_symstack(symstack_t *first)
 {
-    first = NULL;
+    *first = NULL;
     return;
 }
 

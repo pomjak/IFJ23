@@ -14,7 +14,7 @@
 
 int main()
 {
-    symstack_t local_table = NULL;
+    symstack_t local_table;
     unsigned int error;
     init_symstack(&local_table);
 

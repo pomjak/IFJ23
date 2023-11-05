@@ -14,7 +14,7 @@
 
 int main()
 {
-    symstack_t stack = NULL;
+    symstack_t stack;
     dstring_t item1, value1, item2, value2;
     unsigned int error;
 
