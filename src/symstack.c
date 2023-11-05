@@ -35,7 +35,7 @@ void add_scope(symstack_t *first, unsigned int *error)
 
 void pop_scope(symstack_t *first, unsigned int *error)
 {
-    if (*first)
+    if (*first != NULL)
     {
         symstack_t temp;
         temp = (*first)->next;
@@ -46,6 +46,8 @@ void pop_scope(symstack_t *first, unsigned int *error)
         free(*first);
         (*first) = temp;
     }
+    else 
+        report_error(error,SYMTAB_NOT_INITIALIZED);
 }
 
 void dispose_stack(symstack_t *first, unsigned int *error)
