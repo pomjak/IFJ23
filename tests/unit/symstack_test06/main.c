@@ -22,6 +22,9 @@ int main()
     dstring_init(&temp);
     dstring_add_const_str(&temp, "nope");
 
+    if(peek_stack(stack))
+        symtable_insert(stack->local_sym,&temp, &error);
+
     pop_scope(&stack, &error);
     assert(error == SYMTAB_NOT_INITIALIZED);
 
