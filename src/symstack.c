@@ -91,11 +91,17 @@ symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error
         else
             break;
     }
-    if(stack)
+
+    if(peek_stack(stack))
         return symtable_search(stack->local_sym, id, error);
     else 
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
         return NULL;
     }
+}
+
+bool peek_stack(symstack_t stack)
+{
+    return (stack != NULL);
 }
