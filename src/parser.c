@@ -123,38 +123,86 @@ unsigned int parse() {
 //  Rule definitions
 // ==================
 /**
- * @brief <prog> -> <stmt> <prog> | func ID ( <param_list> <func_ret_type> {
- * <func_body> <prog> | EOF
+ * @brief <prog> -> <stmt> <prog> |
+ *                  func ID ( <param_list> <func_ret_type> { <func_body> <prog> |
+ *                  EOF
  */
 static Rule prog(Parser* p) {
-    DEBUG_PRINT("Prog Rule");
+    DEBUG_PRINT("---Prog---");
     unsigned res;
     GET_TOKEN();
 
     switch (p->curr_tok.type) {
-        case TOKEN_EOF: return EXIT_SUCCESS;
-        case TOKEN_FUNC: break;
-        default: break;
+        case TOKEN_EOF: 
+            break;
+        case TOKEN_FUNC: 
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
+            /* TODO CHECK ID IN SYMTABLE */
+            
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_L_PAR);
+            GET_TOKEN();
+            NEXT_RULE(param_list);
+
+            GET_TOKEN();
+            NEXT_RULE(func_ret_type);
+            /* Don't have to get the next token here, after checking the return type, <nilable> is called and loads a new token either way */
+            ASSERT_TOK_TYPE(TOKEN_R_BKT);
+            GET_TOKEN();
+            NEXT_RULE(func_body);
+            /* Maybe GET_TOKEN here */
+            NEXT_RULE(prog); 
+
+            break;
+        default:
+            NEXT_RULE(stmt);
+
+            /* Maybe GET_TOKEN() here? */
+            NEXT_RULE(prog);
+            break;
     }
+    DEBUG_PRINT("---Prog Exit---")
+    return EXIT_SUCCESS;
 }
 
 /**
- * @brief <stmt> -> var <define> | let <define> | IF <expression_type> |
- * while EXP { <block_body> | if <cond_clause> { <block_body> else {
- * <block_body>
+ * @brief <stmt> -> var <define> |
+ *                  let <define> |
+ *                  ID <expression_type> |
+ *                  if <cond_clause> { <block_body> else { <block_body> |
+ *                  while EXP { <block_body> |
  */
 static Rule stmt(Parser* p) {
-    DEBUG_PRINT("Statement Rule");
+    DEBUG_PRINT("---Statement---");
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_VAR: break;
-        case TOKEN_LET: break;
-        case TOKEN_IDENTIFIER: break;
-        case TOKEN_WHILE: break;
-        case TOKEN_IF: break;
+        case TOKEN_VAR: // var <define>
+            GET_TOKEN();
+            NEXT_RULE(define);
+            break;
+        case TOKEN_LET: // let <define
+            GET_TOKEN();
+            NEXT_RULE(define);
+            break;
+        case TOKEN_IDENTIFIER: // ID<expression_type>
+            GET_TOKENI();
+            NEXT_RULE(expr_type);
+            break;
+        case TOKEN_WHILE: 
+            p->in_loop = true;
+            // TODO EXPRESSIONS
+            break;
+        case TOKEN_IF: 
+            p->in_cond = true;
+            GET_TOKEN();
+            NEXT_RULE(cond_clause);
+            p->in_cond = false; // condition should be fully parsed by the we're exiting the switch statement
+            break;
         default: print_error(ERR_SYNTAX, "Unexpected token, var/let/while/if/identifier expected"); return ERR_SYNTAX;
     }
+    DEBUG_PRINT("---Statement Exit---")
     return EXIT_SUCCESS;
 }
 
@@ -162,11 +210,18 @@ static Rule stmt(Parser* p) {
  * @brief <define> -> ID <var_def_cont>
  */
 static Rule define(Parser* p) {
-    DEBUG_PRINT("Define Rule");
+    DEBUG_PRINT("---Define---");
     unsigned res;
+    unsigned err;
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-    // symtable stuff
+    /* First look for the ID in local scopes */ 
+    p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+    if(!p->current_id) {
+        /* Look for the id in Global scope */
+        p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+    }
+
     NEXT_RULE(var_def_cont);
 
     return EXIT_SUCCESS;
@@ -176,14 +231,19 @@ static Rule define(Parser* p) {
  * @brief <var_def_cont> -> : <type> <opt_assign> | = EXP
  */
 static Rule var_def_cont(Parser* p) {
-    DEBUG_PRINT("VarDefCont Rule");
+    DEBUG_PRINT("---VarDefCont---");
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_COL: break;
+        case TOKEN_COL: 
+            GET_TOKEN();
+            NEXT_RULE(type);
+            break;
         case TOKEN_ASS: break;
         default: print_error(ERR_SYNTAX, "Unexpected token, : or = expected"); return ERR_SYNTAX;
     }
+    DEBUG_PRINT("---VarDefCont Exit---")
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -392,7 +452,7 @@ static Rule func_stmt(Parser* p) {
 }
 
 /**
- * @brief <func_ret_type> -> eps | -> <type>
+ * @brief <func_ret_type> =>  eps | -> <type>
  */
 static Rule func_ret_type(Parser* p) {
     DEBUG_PRINT("FuncRetType Rule");
@@ -406,6 +466,8 @@ static Rule func_ret_type(Parser* p) {
     } else {
         return EXIT_SUCCESS;
     }
+
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -454,6 +516,7 @@ static Rule type(Parser* p) {
             break;
         default: return ERR_SYNTAX;
     }
+    return EXIT_SUCCESS;
 }
 
 /**
