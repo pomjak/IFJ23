@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz
- * @brief   test 01 for symstack [init, add scope, dispose]
+ * @brief   test 01 for scope [init, add scope, dispose scopes]
  * @version 0.1
  * @date 2023-11-04
  *
@@ -9,19 +9,19 @@
  *
  */
 
-#include "symstack.h"
+#include "scope.h"
 #include <assert.h>
 
 int main()
 {
-    symstack_t local_table;
+    scope_t local_table;
     unsigned int error;
-    init_symstack(&local_table);
+    init_scope(&local_table);
 
     add_scope(&local_table, &error);
     assert(error == SYMTAB_OK);
 
-    dispose_stack(&local_table, &error);
+    dispose_scope(&local_table, &error);
     assert(error == SYMTAB_OK);
 
     return 0;

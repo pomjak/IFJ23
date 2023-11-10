@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz>
- * @brief   test 06 for symstack foolproof mode
+ * @brief   test 06 for scope foolproof mode
  * @version 0.1
  * @date 2023-11-04
  *
@@ -9,26 +9,26 @@
  *
  */
 
-#include "symstack.h"
+#include "scope.h"
 #include <assert.h>
 
 int main()
 {
-    symstack_t stack;
+    scope_t stack;
     unsigned int error;
     dstring_t temp;
 
-    init_symstack(&stack);
+    init_scope(&stack);
     dstring_init(&temp);
     dstring_add_const_str(&temp, "nope");
 
-    if(peek_stack(stack))
+    if(peek_scope(stack))
         symtable_insert(stack->local_sym,&temp, &error);
 
     pop_scope(&stack, &error);
     assert(error == SYMTAB_NOT_INITIALIZED);
 
-    search_stack(stack, &temp, &error);
+    search_scopes(stack, &temp, &error);
     assert(error == SYMTAB_NOT_INITIALIZED);
 
     for (int i = 0; i < 1024; i++)
@@ -38,10 +38,10 @@ int main()
         assert(error == SYMTAB_OK);
     }
 
-    dispose_stack(&stack, &error);
+    dispose_scope(&stack, &error);
     assert(error == SYMTAB_OK);
 
-    search_stack(stack, &temp, &error);
+    search_scopes(stack, &temp, &error);
     assert(error == SYMTAB_NOT_INITIALIZED);
 
     dstring_free(&temp);

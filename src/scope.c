@@ -1,5 +1,5 @@
 /**
- * @file symstack.c
+ * @file scope.c
  * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz>
  * @brief   Implementation of stack for local symbol tables
  * @version 0.1
@@ -9,19 +9,19 @@
  *
  */
 
-#include "symstack.h"
+#include "scope.h"
 
-void init_symstack(symstack_t *first)
+void init_scope(scope_t *first)
 {
     *first = NULL;
     return;
 }
 
-void add_scope(symstack_t *first, unsigned int *error)
+void add_scope(scope_t *first, unsigned int *error)
 {
     *error = SYMTAB_OK;
     
-    symstack_t new = malloc(sizeof(struct symstack_element));
+    scope_t new = malloc(sizeof(struct scope_element));
 
     if (!new)
     {
@@ -34,13 +34,13 @@ void add_scope(symstack_t *first, unsigned int *error)
     *first = new;
 }
 
-void pop_scope(symstack_t *first, unsigned int *error)
+void pop_scope(scope_t *first, unsigned int *error)
 {
     *error = SYMTAB_OK;
 
     if (*first != NULL)
     {
-        symstack_t temp;
+        scope_t temp;
         temp = (*first)->next;
 
         symtable_dispose((*first)->local_sym);
@@ -53,11 +53,11 @@ void pop_scope(symstack_t *first, unsigned int *error)
         report_error(error,SYMTAB_NOT_INITIALIZED);
 }
 
-void dispose_stack(symstack_t *first, unsigned int *error)
+void dispose_scope(scope_t *first, unsigned int *error)
 {
     *error = SYMTAB_OK;
     
-    symstack_t temp;
+    scope_t temp;
     if (*first == NULL)
         return;
 
@@ -74,7 +74,7 @@ void dispose_stack(symstack_t *first, unsigned int *error)
     first = NULL;
 }
 
-symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error)
+symtab_item_t *search_scopes(scope_t stack, dstring_t *id, unsigned int *error)
 {
     if (stack == NULL)
     {
@@ -92,7 +92,7 @@ symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error
             break;
     }
 
-    if(peek_stack(stack))
+    if(peek_scope(stack))
         return symtable_search(stack->local_sym, id, error);
     else 
     {
@@ -101,7 +101,7 @@ symtab_item_t *search_stack(symstack_t stack, dstring_t *id, unsigned int *error
     }
 }
 
-bool peek_stack(symstack_t stack)
+bool peek_scope(scope_t stack)
 {
     return (stack != NULL);
 }

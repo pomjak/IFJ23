@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz
- * @brief   test 02 for symstack [init, add scope, dispose]
+ * @brief   test 02 for scope [init, add scope, dispose]
  * @version 0.1
  * @date 2023-11-04
  *
@@ -9,12 +9,12 @@
  *
  */
 
-#include "symstack.h"
+#include "scope.h"
 #include <assert.h>
 
 int main()
 {
-    symstack_t stack;
+    scope_t stack;
     dstring_t item1, value1;
     unsigned int error;
 
@@ -24,7 +24,7 @@ int main()
     dstring_init(&value1);
     dstring_add_const_str(&item1, "value1");
 
-    init_symstack(&stack);
+    init_scope(&stack);
 
     add_scope(&stack, &error);
     assert(error == SYMTAB_OK);
@@ -38,7 +38,7 @@ int main()
     pop_scope(&stack, &error);
     assert(error == SYMTAB_OK);
 
-    dispose_stack(&stack, &error);
+    dispose_scope(&stack, &error);
     assert(error == SYMTAB_OK);
 
     dstring_free(&item1);
