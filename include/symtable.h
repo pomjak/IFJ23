@@ -1,6 +1,6 @@
 /**
  * @file symtable.h
- * @author Pomsar Jakub xpomsa00
+ * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz>
  * @brief Implementation of symtable (version hashtable with open addressing)
  * @version 0.1
  * @date 2023-10-13
@@ -47,7 +47,7 @@ typedef struct param
     dstring_t name;
     dstring_t label;
     Type type;
-    bool is_nillable;     // true if item can be nil
+    bool is_nillable; // true if item can be nil
     struct param *next;
 } param_t;
 
@@ -85,6 +85,14 @@ void report_error(unsigned int *error, const unsigned int_);
  * @param error     err flag
  */
 void symtable_init(symtab_t *symtab, unsigned int *error);
+
+/**
+ * @brief Create a local symtab object
+ * 
+ * @param error     error code
+ * @return symtab*  pointer to created local symtab
+ */
+symtab_t *create_local_symtab(unsigned int *error);
 
 /**
  * @brief hash function implemented as sdbm algo
@@ -169,7 +177,6 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error);
  * essentially making it appear as though the item has been deleted.
  * @param symtab    targeted symtab
  * @param target    target to be deleted(set inactive)
- * @return unsigned int  0 for successful deactivating, 1 otherwise
  */
 void symtable_delete(symtab_t *symtab, dstring_t *target, unsigned int *error);
 
@@ -237,7 +244,7 @@ bool get_mutability(symtab_t *symtab, dstring_t *id, unsigned int *error);
 
 /**
  * @brief Set the nillable of object
- * 
+ *
  * @param symtab            ptr to symtable
  * @param id                id of item
  * @param nillable          desired value to be set for nil
@@ -247,7 +254,7 @@ void set_nillable(symtab_t *symtab, dstring_t *id, bool is_nillable, unsigned in
 
 /**
  * @brief Get the nillable of item
- * 
+ *
  * @param symtab            ptr to symtable
  * @param id                id of item
  * @param error             err flag
@@ -387,10 +394,9 @@ void set_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_pa
  */
 dstring_t *get_param_label(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);
 
-
 /**
  * @brief Set the param nil object
- * 
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
@@ -401,7 +407,7 @@ void set_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_para
 
 /**
  * @brief Get the param nil object
- * 
+ *
  * @param symtab            ptr to symtable
  * @param func_id           id of function with params
  * @param name_of_param     name of param
