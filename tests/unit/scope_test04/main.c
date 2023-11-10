@@ -9,18 +9,18 @@
  *
  */
 
-#include "symstack.h"
+#include "scope.h"
 #include <assert.h>
 
 int main()
 {
-    symstack_t stack;
+    scope_t stack;
     dstring_t item, value1;
     unsigned int error;
 
     FILE *input = fopen("input.txt", "r");
 
-    init_symstack(&stack);
+    init_scope(&stack);
 
     dstring_init(&item);
 
@@ -41,7 +41,7 @@ int main()
         symtable_insert((*stack).local_sym, &item, &error);
         assert(error == SYMTAB_OK);
 
-        search_stack(stack, &item, &error)->type = i % 6;
+        search_scopes(stack, &item, &error)->type = i % 6;
         assert(error == SYMTAB_OK);
     }
 
@@ -56,10 +56,10 @@ int main()
 
         dstring_add_const_str(&item, buffer);
 
-        assert(search_stack(stack, &item, &error) != NULL);
+        assert(search_scopes(stack, &item, &error) != NULL);
         assert(error == SYMTAB_OK);
 
-        assert(search_stack(stack, &item, &error)->type == i % 6);
+        assert(search_scopes(stack, &item, &error)->type == i % 6);
         assert(error == SYMTAB_OK);
     }
 
@@ -94,12 +94,12 @@ int main()
 
         if (i < (cnt / 2)+1)
         {
-            assert(search_stack(stack, &item, &error) != NULL);
+            assert(search_scopes(stack, &item, &error) != NULL);
             assert(error == SYMTAB_OK);
         }
         else
         {
-            assert(search_stack(stack, &item, &error) == NULL);
+            assert(search_scopes(stack, &item, &error) == NULL);
             assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
         }
     }
@@ -108,7 +108,7 @@ int main()
 
     dstring_free(&item);
 
-    dispose_stack(&stack, &error);
+    dispose_scope(&stack, &error);
     assert(error == SYMTAB_OK);
 
     return 0;

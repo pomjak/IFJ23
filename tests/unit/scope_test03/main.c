@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Pomsar Jakub <xpomsa00@stud.fit.vutbr.cz
- * @brief   test 05 for symstack []
+ * @brief   test 03 for scope [init, add scope,search_scopes, dispose]
  * @version 0.1
  * @date 2023-11-04
  *
@@ -9,12 +9,12 @@
  *
  */
 
-#include "symstack.h"
+#include "scope.h"
 #include <assert.h>
 
 int main()
 {
-    symstack_t stack;
+    scope_t stack;
     dstring_t item1, value1, item2, value2;
     unsigned int error;
 
@@ -32,7 +32,7 @@ int main()
     dstring_init(&value2);
     dstring_add_const_str(&value2, "value2");
 
-    init_symstack(&stack);
+    init_scope(&stack);
 
     /*-----------------------------------------*/
 
@@ -52,25 +52,16 @@ int main()
 
     /*-----------------------------------------*/
 
-    assert(search_stack(stack, &item2, &error) != NULL);
+    assert(search_scopes(stack, &item2, &error) != NULL);
     assert(error == SYMTAB_OK);
 
-    assert(search_stack(stack, &item1, &error) != NULL);
-    assert(error == SYMTAB_OK);
-
-    /*-----------------------------------------*/
-
-    pop_scope(&stack,&error);
+    assert(search_scopes(stack, &item1, &error) != NULL);
     assert(error == SYMTAB_OK);
 
     /*-----------------------------------------*/
 
-    assert(search_stack(stack, &item2, &error) == NULL);
-    assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
 
-    /*-----------------------------------------*/
-
-    dispose_stack(&stack, &error);
+    dispose_scope(&stack, &error);
     assert(error == SYMTAB_OK);
 
     dstring_free(&item1);
