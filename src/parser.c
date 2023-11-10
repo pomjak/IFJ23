@@ -90,13 +90,17 @@ unsigned int parse() {
   unsigned ret_code;
   Parser parse_data;
 
+  // Initialize Parser structure
   if (parser_init(&parse_data)) return ERR_INTERNAL;
+  // Add builtin functions to the global symtable
   if (add_builtins(&parse_data)) return ERR_INTERNAL;
 
-  if (ret_code = prog(&parse_data)) return ret_code;
+  // Start recursive descend
+  ret_code = prog(&parse_data);
 
   parser_dispose(&parse_data);
-  return EXIT_SUCCESS;
+  
+  return ret_code;
 }
 
 // ==================
