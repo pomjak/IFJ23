@@ -49,6 +49,7 @@ void parser_dispose(Parser* p) {
  * @brief Fill global symtable with builtin functions
  *
  * @param p Parser object
+ * @return true on success, otherwise false
  */
 static bool add_builtins(Parser* p) {
     unsigned int st_err;
@@ -99,24 +100,35 @@ static bool add_builtins(Parser* p) {
 }
 
 unsigned int parse() {
-    unsigned ret_code;
-    Parser parse_data;
+    unsigned res;
+    Parser p;
 
     // Initialize Parser structure
-    if (parser_init(&parse_data)) {
+    if (!parser_init(&p)) {
+        print_error(ERR_INTERNAL, "Error occured while initializing parser data");
         return ERR_INTERNAL;
     }
     // Add builtin functions to the global symtable
-    if (add_builtins(&parse_data)) {
+    if (!add_builtins(&p)) {
+        parser_dispose(&p);
+        print_error(ERR_INTERNAL, "Error occured while adding builtin functions");
         return ERR_INTERNAL;
     }
 
-    // Start recursive descend
-    ret_code = prog(&parse_data);
+    /* Get the first token */
+    if (res = get_token(&p.curr_tok)) {
+        parser_dispose(&p);
+        return res;
+    }
 
-    parser_dispose(&parse_data);
+    /* Start recursive descend */
+    if (res = prog(&p)) {
+        parser_dispose(&p);
+        return res;
+    }
 
-    return ret_code;
+    parser_dispose(&p);
+    return EXIT_SUCCESS;
 }
 
 // ==================
@@ -130,11 +142,11 @@ unsigned int parse() {
 static Rule prog(Parser* p) {
     DEBUG_PRINT("---Prog---");
     unsigned res;
-    GET_TOKEN();
 
     switch (p->curr_tok.type) {
         case TOKEN_EOF: break;
         case TOKEN_FUNC:
+            p->in_declaration = true;
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
             /* TODO CHECK ID IN SYMTABLE */
@@ -150,7 +162,8 @@ static Rule prog(Parser* p) {
             ASSERT_TOK_TYPE(TOKEN_R_BKT);
             GET_TOKEN();
             NEXT_RULE(func_body);
-            /* Maybe GET_TOKEN here */
+            
+            p->in_declaration = false;
             NEXT_RULE(prog);
             break;
         default:
