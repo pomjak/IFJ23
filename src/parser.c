@@ -157,7 +157,6 @@ static Rule prog(Parser* p) {
         default:
             NEXT_RULE(stmt);
 
-            /* Maybe GET_TOKEN() here? */
             NEXT_RULE(prog);
             break;
     }
@@ -305,9 +304,11 @@ static Rule arg_list(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_R_PAR) {
         return EXIT_SUCCESS;
-    } else {
-        NEXT_RULE(arg);
     }
+    NEXT_RULE(arg);
+    GET_TOKEN();
+    NEXT_RULE(arg_next); 
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -323,7 +324,7 @@ static Rule arg_next(Parser* p) {
             NEXT_RULE(arg);
             break;
         case TOKEN_R_PAR: return EXIT_SUCCESS;
-        default: print_error(ERR_SYNTAX, "Unexpected token, , or ) expected"); return ERR_SYNTAX;
+        default: print_error(ERR_SYNTAX, "Unexpected token, comma or ) expected"); return ERR_SYNTAX;
     }
 }
 
@@ -341,7 +342,7 @@ static Rule arg(Parser* p) {
     } else {
         NEXT_RULE(literal);
     }
-}
+};
 
 /**
  * @brief <param_list> -> <param> <param_next> | )
@@ -352,9 +353,11 @@ static Rule param_list(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_R_PAR) {
         return EXIT_SUCCESS;
-    } else {
-        NEXT_RULE(param);
     }
+    NEXT_RULE(param);
+    GET_TOKEN();
+    NEXT_RULE(param_next);
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -365,13 +368,16 @@ static Rule param_next(Parser* p) {
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_R_PAR: return EXIT_SUCCESS;
+        case TOKEN_R_PAR: break;
         case TOKEN_COMMA:
             GET_TOKEN();
             NEXT_RULE(param);
+            GET_TOKEN();
+            NEXT_RULE(param_next);
             break;
         default: print_error(ERR_SYNTAX, "Unexpected Token, ) or , expected"); return ERR_SYNTAX;
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -382,9 +388,12 @@ static Rule param(Parser* p) {
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_UND_SCR: break;
-        case TOKEN_IDENTIFIER: break;
-        default: print_error(ERR_SYNTAX, "Unexpected token, identifier (or _) expected"); return ERR_SYNTAX;
+        case TOKEN_UND_SCR: 
+        case TOKEN_IDENTIFIER:
+            break;
+        default: 
+            print_error(ERR_SYNTAX, "Unexpected token, identifier or _ expected");
+            return ERR_SYNTAX;
     }
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
@@ -401,15 +410,15 @@ static Rule param(Parser* p) {
 /**
  * @brief <blk_body> -> <stmt> <blk_body> | }
  */
-static Rule block_body(Parser* p) {Rule
+static Rule block_body(Parser* p) {
     unsigned res;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
         return EXIT_SUCCESS;
     } else {
         NEXT_RULE(stmt);
-
-        // next rule block_body again
+        GET_TOKEN();
+        NEXT_RULE(block_body);
     }
 }
 
@@ -424,29 +433,65 @@ static Rule func_body(Parser* p) {
         return EXIT_SUCCESS;
     } else {
         NEXT_RULE(func_stmt);
-
-        // next rule func_body again
+        GET_TOKEN();
+        NEXT_RULE(func_body);
     }
 }
 
 /**
- * @brief <func_stmt> -> var <def> | let <def> | ID <expression-type> | while
- * EXP { <func_body> | if <cond_clause> { <func_body> else { <func_body> |
- * return <opt_ret>
+ * @brief <func_stmt> -> var <def> |
+ *                       let <def> |
+ *                       ID <expression-type> | 
+ *                       while EXP { <func_body> |
+ *                       if <cond_clause> { <func_body> else { <func_body> |
+ *                       return <opt_ret>
  */
 static Rule func_stmt(Parser* p) {
     DEBUG_PRINT("---FuncStatement---");
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_VAR: break;
-        case TOKEN_LET: break;
-        case TOKEN_IDENTIFIER: break;
-        case TOKEN_WHILE: break;
-        case TOKEN_IF: break;
-        case TOKEN_RETURN: break;
+        case TOKEN_VAR: 
+        case TOKEN_LET:
+            GET_TOKEN();
+            NEXT_RULE(define);
+            break;
+        case TOKEN_IDENTIFIER:
+            GET_TOKEN();
+            NEXT_RULE(expr_type);
+            break;
+        case TOKEN_WHILE:
+            /* TODO EXPRESSION */
+
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_L_BKT);
+            GET_TOKEN();
+            NEXT_RULE(func_body);
+            break;
+        case TOKEN_IF: 
+            GET_TOKEN();
+            NEXT_RULE(cond_clause); 
+
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_L_BKT);
+            
+            GET_TOKEN();
+            NEXT_RULE(func_body);
+            
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_ELSE);
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_L_BKT);
+            GET_TOKEN();
+            NEXT_RULE(func_body);
+            break;
+        case TOKEN_RETURN:
+            GET_TOKEN();
+            NEXT_RULE(opt_ret);
+            break;
         default: return ERR_SYNTAX;
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -464,7 +509,6 @@ static Rule func_ret_type(Parser* p) {
     } else {
         return EXIT_SUCCESS;
     }
-
     return EXIT_SUCCESS;
 }
 
@@ -475,7 +519,7 @@ static Rule opt_ret(Parser* p) {
     DEBUG_PRINT("---OptRet---");
     unsigned res;
     return EXIT_SUCCESS;
-} // TODO
+} /* TODO EXPRESSIONS */
 
 /**
  * @brief <opt_type> ->  : <type> | eps
@@ -526,10 +570,8 @@ static Rule nilable(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_NIL_CHECK) {
         GET_TOKEN();
-        return EXIT_SUCCESS;
-    } else {
-        return EXIT_SUCCESS;
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -542,9 +584,8 @@ static Rule opt_arg(Parser* p) {
     if (p->curr_tok.type == TOKEN_COL) {
         GET_TOKEN();
         NEXT_RULE(term);
-    } else {
-        return EXIT_SUCCESS;
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -555,8 +596,9 @@ static Rule term(Parser* p) {
     unsigned res;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
-        // sth
-    } else {
+        /* Check id in symtable */
+    } 
+    else {
         NEXT_RULE(literal);
     }
     return EXIT_SUCCESS;
@@ -570,7 +612,9 @@ static Rule literal(Parser* p) {
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_INT: break;
+        case TOKEN_INT:
+            /* generate term value */
+            break;
         case TOKEN_DBL: break;
         case TOKEN_STRING: break;
         default: return ERR_SYNTAX;
