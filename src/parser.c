@@ -133,13 +133,12 @@ static Rule prog(Parser* p) {
     GET_TOKEN();
 
     switch (p->curr_tok.type) {
-        case TOKEN_EOF: 
-            break;
-        case TOKEN_FUNC: 
+        case TOKEN_EOF: break;
+        case TOKEN_FUNC:
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
             /* TODO CHECK ID IN SYMTABLE */
-            
+
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_L_PAR);
             GET_TOKEN();
@@ -152,7 +151,7 @@ static Rule prog(Parser* p) {
             GET_TOKEN();
             NEXT_RULE(func_body);
             /* Maybe GET_TOKEN here */
-            NEXT_RULE(prog); 
+            NEXT_RULE(prog);
             break;
         default:
             NEXT_RULE(stmt);
@@ -173,29 +172,60 @@ static Rule prog(Parser* p) {
 static Rule stmt(Parser* p) {
     DEBUG_PRINT("---Statement---");
     unsigned res;
+    unsigned err;
 
     switch (p->curr_tok.type) {
-        case TOKEN_VAR: // var <define>
+        case TOKEN_VAR: /* var <define> */
             GET_TOKEN();
             NEXT_RULE(define);
+            p->current_id->is_mutable = true;
             break;
-        case TOKEN_LET: // let <define
+        case TOKEN_LET: /* let <define> */
             GET_TOKEN();
             NEXT_RULE(define);
+            p->current_id->is_mutable = false;
             break;
-        case TOKEN_IDENTIFIER: // ID<expression_type>
-            GET_TOKENI();
+        case TOKEN_IDENTIFIER: /* ID<expression_type> */
+
+            if (peek_scope(p->local_symtab)) {
+                p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+            } else {
+                p->current_id = NULL;
+            }
+            /* item wasn't found in any of the local scopes so we search global symtable */
+            if (!p->current_id) {
+                p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+            }
+            GET_TOKEN();
             NEXT_RULE(expr_type);
             break;
-        case TOKEN_WHILE: 
+        case TOKEN_WHILE: /* while EXP { <block_body> */
             p->in_loop = true;
-            // TODO EXPRESSIONS
+
+            /* TODO EXPRESSION PROCESSING HERE */
+
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_R_BKT);
+            GET_TOKEN();
+            NEXT_RULE(block_body);
+            p->in_loop = false;
             break;
-        case TOKEN_IF: 
+        case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
             p->in_cond = true;
             GET_TOKEN();
             NEXT_RULE(cond_clause);
-            p->in_cond = false; // condition should be fully parsed by the we're exiting the switch statement
+
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_L_BKT);
+            GET_TOKEN();
+            NEXT_RULE(block_body);
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_ELSE);
+            GET_TOKEN();
+            ASSERT_TOK_TYPE(TOKEN_L_BKT);
+            GET_TOKEN();
+            NEXT_RULE(block_body);
+            p->in_cond = false; // condition should be fully parsed by the time we're exiting the switch statement
             break;
         default: print_error(ERR_SYNTAX, "Unexpected token, var/let/while/if/identifier expected"); return ERR_SYNTAX;
     }
@@ -211,13 +241,28 @@ static Rule define(Parser* p) {
     unsigned err;
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-    /* First look for the ID in local scopes */ 
-    p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
-    if(!p->current_id) {
-        /* Look for the id in Global scope */
+    if (p->in_cond || p->in_loop || p->in_function) {
+        /* search local */
+        p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+        if (p->current_id) {
+            return ERR_UNDEFINED_FUNCTION;
+        }
+        /* Add symbol to local symtable */
+        symtable_insert(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
+        /* TODO switch for symtable error */
+        p->current_id = symtable_search(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
+        /* TODO ERR CHECK */
+    } else {
+        p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+        if (p->current_id) {
+            return ERR_UNDEFINED_FUNCTION;
+        }
+        symtable_insert(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
+        /* TOTO symtable error check */
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
 
+    GET_TOKEN();
     NEXT_RULE(var_def_cont);
 
     return EXIT_SUCCESS;
@@ -231,7 +276,7 @@ static Rule var_def_cont(Parser* p) {
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_COL: 
+        case TOKEN_COL:
             GET_TOKEN();
             NEXT_RULE(type);
             break;
@@ -265,10 +310,28 @@ static Rule expr_type(Parser* p) {
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_ASS: 
+            /* If the previously loaded identifier was't found in any symtable we have to determenine whether to return ERR_UNDEFINED_VARIABLE or 
+                ERR_UNDEFINED_FUNCTION in this rule */
+        case TOKEN_ASS:
+            /* If assignment is the next step after loading the identifier, the ID was a variable */
             DEBUG_PRINT("<expr_type> EXPRESSION");
-            break;
+            if (!p->current_id) {
+                return ERR_UNDEFINED_VARIABLE;
+            }
+            switch (p->current_id->type) {
+                case integer:
+                case double_:
+                case string: break;
+                default: return ERR_UNDEFINED_VARIABLE; break;
+            }
         case TOKEN_L_PAR:
+            /* If the loaded ID is followed by opening parentheses the ID should have been a function */
+            if (!p->current_id) {
+                return ERR_UNDEFINED_FUNCTION;
+            }
+            if (p->current_id->type != function) {
+                return ERR_UNDEFINED_FUNCTION;
+            }
             GET_TOKEN();
             NEXT_RULE(arg_list);
             break;
@@ -307,7 +370,7 @@ static Rule arg_list(Parser* p) {
     }
     NEXT_RULE(arg);
     GET_TOKEN();
-    NEXT_RULE(arg_next); 
+    NEXT_RULE(arg_next);
     return EXIT_SUCCESS;
 }
 
@@ -388,12 +451,9 @@ static Rule param(Parser* p) {
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_UND_SCR: 
-        case TOKEN_IDENTIFIER:
-            break;
-        default: 
-            print_error(ERR_SYNTAX, "Unexpected token, identifier or _ expected");
-            return ERR_SYNTAX;
+        case TOKEN_UND_SCR:
+        case TOKEN_IDENTIFIER: break;
+        default: print_error(ERR_SYNTAX, "Unexpected token, identifier or _ expected"); return ERR_SYNTAX;
     }
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
@@ -451,7 +511,7 @@ static Rule func_stmt(Parser* p) {
     unsigned res;
 
     switch (p->curr_tok.type) {
-        case TOKEN_VAR: 
+        case TOKEN_VAR:
         case TOKEN_LET:
             GET_TOKEN();
             NEXT_RULE(define);
@@ -468,16 +528,16 @@ static Rule func_stmt(Parser* p) {
             GET_TOKEN();
             NEXT_RULE(func_body);
             break;
-        case TOKEN_IF: 
+        case TOKEN_IF:
             GET_TOKEN();
-            NEXT_RULE(cond_clause); 
+            NEXT_RULE(cond_clause);
 
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_L_BKT);
-            
+
             GET_TOKEN();
             NEXT_RULE(func_body);
-            
+
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_ELSE);
             GET_TOKEN();
@@ -545,14 +605,17 @@ static Rule type(Parser* p) {
 
     switch (p->curr_tok.type) {
         case TOKEN_DT_INT:
+            p->current_id->type = integer;
             GET_TOKEN();
             NEXT_RULE(nilable);
             break;
         case TOKEN_DT_DOUBLE:
+            p->current_id->type = double_;
             GET_TOKEN();
             NEXT_RULE(nilable);
             break;
         case TOKEN_DT_STRING:
+            p->current_id->type = string;
             GET_TOKEN();
             NEXT_RULE(nilable);
             break;
@@ -569,6 +632,7 @@ static Rule nilable(Parser* p) {
     unsigned res;
 
     if (p->curr_tok.type == TOKEN_NIL_CHECK) {
+        p->current_id->is_nillable = true;
         GET_TOKEN();
     }
     return EXIT_SUCCESS;
@@ -597,8 +661,7 @@ static Rule term(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
         /* Check id in symtable */
-    } 
-    else {
+    } else {
         NEXT_RULE(literal);
     }
     return EXIT_SUCCESS;
