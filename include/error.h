@@ -14,6 +14,7 @@
 #define ERR_LEXICAL 1
 #define ERR_SYNTAX 2
 #define ERR_UNDEFINED_FUNCTION 3
+#define ERR_VAR_REDEFINE 3
 #define ERR_FUNCTION_PARAMETER 4  //wrong function parameter type, number of prameter, wrong return type
 #define ERR_UNDEFINED_VARIABLE 5
 #define ERR_FUNCTION_RETURN 6 // missing/useless  expression
