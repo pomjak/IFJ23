@@ -43,9 +43,9 @@ typedef struct parser_t {
     dstring_clear(&builtin_id);                                                                                        \
     dstring_add_const_str(&builtin_id, _func_name);                                                                    \
     symtable_insert(&p->global_symtab, &builtin_id, &st_err);                                                          \
-    set_type(&p->global_symtab, &builtin_id, function, &st_err);                                                        \
-    set_return_type(&p->global_symtab, &builtin_id, _ret_type, &st_err);                                                \
-    set_nillable(&p->global_symtab, &builtin_id, _nilable, &st_err);                                                    \
+    set_type(&p->global_symtab, &builtin_id, function, &st_err);                                                       \
+    set_return_type(&p->global_symtab, &builtin_id, _ret_type, &st_err);                                               \
+    set_nillable(&p->global_symtab, &builtin_id, _nilable, &st_err);                                                   \
     set_func_definition(&p->global_symtab, &builtin_id, true, &st_err)
 
 #define ADD_BUILTIN_PARAM(_label, _param_name, _param_type, _nilable)                                                  \
@@ -78,6 +78,31 @@ typedef struct parser_t {
     }
 
 typedef unsigned int Rule;
+
+Rule prog(Parser* p);
+Rule stmt(Parser* p);
+Rule define(Parser* p);
+Rule var_def_cont(Parser* p);
+Rule opt_assign(Parser* p);
+Rule expr_type(Parser* p);
+Rule cond_clause(Parser* p);
+Rule arg_list(Parser* p);
+Rule arg_next(Parser* p);
+Rule arg(Parser* p);
+Rule param_list(Parser* p);
+Rule param_next(Parser* p);
+Rule param(Parser* p);
+Rule block_body(Parser* p);
+Rule func_body(Parser* p);
+Rule func_stmt(Parser* p);
+Rule func_ret_type(Parser* p);
+Rule opt_ret(Parser* p);
+Rule opt_type(Parser* p);
+Rule type(Parser* p);
+Rule nilable(Parser* p);
+Rule opt_arg(Parser* p);
+Rule term(Parser* p);
+Rule literal(Parser* p);
 
 /**
  * @brief Initializes data needed by the parser

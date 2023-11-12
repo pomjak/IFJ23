@@ -56,7 +56,7 @@ void parser_dispose(Parser* p) {
  * @param p Parser object
  * @return true on success, otherwise false
  */
-static bool add_builtins(Parser* p) {
+bool add_builtins(Parser* p) {
     unsigned int st_err;
     dstring_t builtin_id;
     dstring_t param_name;
@@ -104,7 +104,6 @@ static bool add_builtins(Parser* p) {
     return true;
 }
 
-
 // ==================
 //  Rule definitions
 // ==================
@@ -113,7 +112,7 @@ static bool add_builtins(Parser* p) {
  *                  func ID ( <param_list> <func_ret_type> { <func_body> <prog> |
  *                  EOF
  */
-static Rule prog(Parser* p) {
+Rule prog(Parser* p) {
     DEBUG_PRINT("---Prog---");
     unsigned res, err;
 
@@ -162,7 +161,7 @@ static Rule prog(Parser* p) {
  *                  if <cond_clause> { <block_body> else { <block_body> |
  *                  while EXP { <block_body> |
  */
-static Rule stmt(Parser* p) {
+Rule stmt(Parser* p) {
     DEBUG_PRINT("---Statement---");
     unsigned res, err;
 
@@ -226,7 +225,7 @@ static Rule stmt(Parser* p) {
 /**
  * @brief <define> -> ID <var_def_cont>
  */
-static Rule define(Parser* p) {
+Rule define(Parser* p) {
     DEBUG_PRINT("---Define---");
     unsigned res, err;
 
@@ -261,7 +260,7 @@ static Rule define(Parser* p) {
 /**
  * @brief <var_def_cont> -> : <type> <opt_assign> | = EXP
  */
-static Rule var_def_cont(Parser* p) {
+Rule var_def_cont(Parser* p) {
     DEBUG_PRINT("---VarDefCont---");
     unsigned res, err;
 
@@ -281,7 +280,7 @@ static Rule var_def_cont(Parser* p) {
 /**
  * @brief <opt_assign> -> = EXP | eps
  */
-static Rule opt_assign(Parser* p) {
+Rule opt_assign(Parser* p) {
     DEBUG_PRINT("---OptAssign---");
     unsigned res, err;
 
@@ -297,7 +296,7 @@ static Rule opt_assign(Parser* p) {
 /**
  * @brief <expr_type> -> = EXP | ( <arg_list>
  */
-static Rule expr_type(Parser* p) {
+Rule expr_type(Parser* p) {
     DEBUG_PRINT("---ExpressionType---");
     unsigned res, err;
 
@@ -336,7 +335,7 @@ static Rule expr_type(Parser* p) {
 /**
  * @brief <cond_clause> -> EXP | let ID
  */
-static Rule cond_clause(Parser* p) {
+Rule cond_clause(Parser* p) {
     DEBUG_PRINT("---CondClause---");
     unsigned res, err;
 
@@ -372,7 +371,7 @@ static Rule cond_clause(Parser* p) {
 /**
  * @brief <arg_list> -> <arg> <arg_next> | )
  */
-static Rule arg_list(Parser* p) {
+Rule arg_list(Parser* p) {
     DEBUG_PRINT("---ArgList---");
     unsigned res, err;
 
@@ -388,7 +387,7 @@ static Rule arg_list(Parser* p) {
 /**
  * @brief <arg_next> -> , <arg> <arg_next> | )
  */
-static Rule arg_next(Parser* p) {
+Rule arg_next(Parser* p) {
     DEBUG_PRINT("---ArgNext---")
     unsigned res, err;
 
@@ -407,7 +406,7 @@ static Rule arg_next(Parser* p) {
 /**
  * @brief <arg> -> "ID" <optarg> | <literal>
  */
-static Rule arg(Parser* p) {
+Rule arg(Parser* p) {
     DEBUG_PRINT("---Arg---");
     unsigned res, err;
 
@@ -423,7 +422,7 @@ static Rule arg(Parser* p) {
 /**
  * @brief <param_list> -> <param> <param_next> | )
  */
-static Rule param_list(Parser* p) {
+Rule param_list(Parser* p) {
     DEBUG_PRINT("---ParamList---");
     unsigned res, err;
     p->in_param = true;
@@ -440,7 +439,7 @@ static Rule param_list(Parser* p) {
 /**
  * @brief <param_next> -> , <param> <param_next> | )
  */
-static Rule param_next(Parser* p) {
+Rule param_next(Parser* p) {
     DEBUG_PRINT("---ParamNext---");
     unsigned res, err;
 
@@ -460,7 +459,7 @@ static Rule param_next(Parser* p) {
 /**
  * @brief <param> ->  "_" "ID" ":" <type> | "ID" "ID" ":" <type>
  */
-static Rule param(Parser* p) {
+Rule param(Parser* p) {
     DEBUG_PRINT("---Param---");
     unsigned res, err;
 
@@ -497,7 +496,7 @@ static Rule param(Parser* p) {
 /**
  * @brief <blk_body> -> <stmt> <blk_body> | }
  */
-static Rule block_body(Parser* p) {
+Rule block_body(Parser* p) {
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
@@ -512,7 +511,7 @@ static Rule block_body(Parser* p) {
 /**
  * @brief <func_body> -> <func_stmt> <func_body> | }
  */
-static Rule func_body(Parser* p) {
+Rule func_body(Parser* p) {
     DEBUG_PRINT("---FuncBody---");
     unsigned res, err;
 
@@ -534,7 +533,7 @@ static Rule func_body(Parser* p) {
  *                       if <cond_clause> { <func_body> else { <func_body> |
  *                       return <opt_ret>
  */
-static Rule func_stmt(Parser* p) {
+Rule func_stmt(Parser* p) {
     DEBUG_PRINT("---FuncStatement---");
     unsigned res, err;
 
@@ -605,7 +604,7 @@ static Rule func_stmt(Parser* p) {
 /**
  * @brief <func_ret_type> =>  eps | -> <type>
  */
-static Rule func_ret_type(Parser* p) {
+Rule func_ret_type(Parser* p) {
     DEBUG_PRINT("---FuncRetType---");
     unsigned res, err;
 
@@ -621,7 +620,7 @@ static Rule func_ret_type(Parser* p) {
 /**
  * @brief <opt_ret> -> EXP | eps
  */
-static Rule opt_ret(Parser* p) {
+Rule opt_ret(Parser* p) {
     DEBUG_PRINT("---OptRet---");
     unsigned res, err;
     return EXIT_SUCCESS;
@@ -630,7 +629,7 @@ static Rule opt_ret(Parser* p) {
 /**
  * @brief <opt_type> ->  : <type> | eps
  */
-static Rule opt_type(Parser* p) {
+Rule opt_type(Parser* p) {
     DEBUG_PRINT("---OptType---");
     unsigned res, err;
 
@@ -645,7 +644,7 @@ static Rule opt_type(Parser* p) {
 /**
  * @brief <type> -> Int<nilable> | String<nilable> | Double<nilable>
  */
-static Rule type(Parser* p) {
+Rule type(Parser* p) {
     DEBUG_PRINT("---Type---");
     unsigned res, err;
 
@@ -699,7 +698,7 @@ static Rule type(Parser* p) {
 /**
  * @brief <nilable> -> ? | eps
  */
-static Rule nilable(Parser* p) {
+Rule nilable(Parser* p) {
     DEBUG_PRINT("---Nilable---");
     unsigned res, err;
 
@@ -717,7 +716,7 @@ static Rule nilable(Parser* p) {
 /**
  * @brief <opt_arg> -> : <term> | eps
  */
-static Rule opt_arg(Parser* p) {
+Rule opt_arg(Parser* p) {
     DEBUG_PRINT("---OptArg---");
     unsigned res, err;
 
@@ -731,7 +730,7 @@ static Rule opt_arg(Parser* p) {
 /**
  * @brief <term> -> ID | literal
  */
-static Rule term(Parser* p) {
+Rule term(Parser* p) {
     DEBUG_PRINT("---Term---");
     unsigned res, err;
 
@@ -746,7 +745,7 @@ static Rule term(Parser* p) {
 /**
  * @brief <literal> -> INT_LIT | STR_LIT | DBL_LIT
  */
-static Rule literal(Parser* p) {
+Rule literal(Parser* p) {
     DEBUG_PRINT("---Literal---");
     unsigned res, err;
 
