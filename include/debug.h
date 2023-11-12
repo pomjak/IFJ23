@@ -10,7 +10,7 @@
 
 #define UNUSED(x) (void)(x)
 
-#if defined(DEBUG) && DEBUGL > 2
+#if defined(RULEDEBUG)
     #define RULE_PRINT(fmt, ...) fprintf(stderr, fmt "\n", ##__VA_ARGS__)
 #else
     #define RULE_PRINT(fmt, ...)
