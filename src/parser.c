@@ -1,6 +1,7 @@
 /**
  * @file parser.c
  * @author Simon Cagala (xcagal00@stud.fit.vutbr.cz)
+ * @author Jakub Pomsar (xpomsa00@stud.fit.vutbr.cz)
  * @brief
  * @date 2023-11-09
  */
@@ -372,8 +373,26 @@ static Rule cond_clause(Parser* p) {
     if (p->curr_tok.type == TOKEN_LET) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-        // mby symtable stuff?
-        return EXIT_SUCCESS;
+
+        if (peek_scope(p->local_symtab)) {
+            p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+        } else {
+            p->current_id = NULL;
+        }
+        /* item wasn't found in any of the local scopes so we search global symtable */
+        if (!p->current_id) {
+            p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+        }
+        if (!p->current_id) {
+            return ERR_UNDEFINED_VARIABLE;
+        }
+
+        symtable_insert(p->local_symtab->local_sym, &p->current_id->name, &err);
+
+        set_nillable(p->local_symtab->local_sym, &p->current_id->name, false, &err);
+        set_type(p->local_symtab->local_sym, &p->current_id->name, p->current_id->type, &err);
+        set_mutability(p->local_symtab->local_sym, &p->current_id->name, false, &err);
+
     } else {
         // expressions
         return EXIT_SUCCESS;
@@ -528,6 +547,7 @@ static Rule func_body(Parser* p) {
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
+        pop_scope(p->local_symtab, &err);
         return EXIT_SUCCESS;
     } else {
         NEXT_RULE(func_stmt);
@@ -550,11 +570,25 @@ static Rule func_stmt(Parser* p) {
 
     switch (p->curr_tok.type) {
         case TOKEN_VAR:
+            GET_TOKEN();
+            NEXT_RULE(define);
+            p->current_id->is_mutable = true;
+            break;
         case TOKEN_LET:
             GET_TOKEN();
             NEXT_RULE(define);
+            p->current_id->is_mutable = false;
             break;
         case TOKEN_IDENTIFIER:
+            if (peek_scope(p->local_symtab)) {
+                p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+            } else {
+                p->current_id = NULL;
+            }
+            /* item wasn't found in any of the local scopes so we search global symtable */
+            if (!p->current_id) {
+                p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+            }
             GET_TOKEN();
             NEXT_RULE(expr_type);
             break;
@@ -567,6 +601,9 @@ static Rule func_stmt(Parser* p) {
             NEXT_RULE(func_body);
             break;
         case TOKEN_IF:
+            p->in_cond = true;
+            add_scope(p->local_symtab, &err);
+
             GET_TOKEN();
             NEXT_RULE(cond_clause);
 
@@ -578,10 +615,13 @@ static Rule func_stmt(Parser* p) {
 
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_ELSE);
+            // ?? check if if was declared with LET ID ??
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_L_BKT);
             GET_TOKEN();
+            add_scope(p->local_symtab, &err);
             NEXT_RULE(func_body);
+            p->in_cond = false;
             break;
         case TOKEN_RETURN:
             GET_TOKEN();
