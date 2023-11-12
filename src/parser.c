@@ -39,6 +39,7 @@ bool parser_init(Parser* p) {
     p->in_declaration = false;
     p->in_function = false;
     p->in_loop = false;
+    p->in_param = false;
 }
 
 void parser_dispose(Parser* p) {
@@ -166,7 +167,7 @@ static Rule prog(Parser* p) {
             GET_TOKEN();
             NEXT_RULE(func_ret_type);
             /* Don't have to get the next token here, after checking the return type, <nilable> is called and loads a new token either way */
-            ASSERT_TOK_TYPE(TOKEN_R_BKT);
+            ASSERT_TOK_TYPE(TOKEN_L_BKT);
             GET_TOKEN();
             NEXT_RULE(func_body);
 
@@ -206,7 +207,6 @@ static Rule stmt(Parser* p) {
             p->current_id->is_mutable = false;
             break;
         case TOKEN_IDENTIFIER: /* ID<expression_type> */
-
             if (peek_scope(p->local_symtab)) {
                 p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
             } else {
@@ -299,7 +299,9 @@ static Rule var_def_cont(Parser* p) {
             GET_TOKEN();
             NEXT_RULE(type);
             break;
-        case TOKEN_ASS: break;
+        case TOKEN_ASS:
+            //  EXP
+            break;
         default: print_error(ERR_SYNTAX, "Unexpected token, : or = expected"); return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
@@ -329,7 +331,8 @@ static Rule expr_type(Parser* p) {
     unsigned res, err;
 
     switch (p->curr_tok.type) {
-            /* If the previously loaded identifier was't found in any symtable we have to determenine whether to return ERR_UNDEFINED_VARIABLE or 
+            /* If the previously loaded identifier was't found in any symtable we have to 
+            determenine whether to return ERR_UNDEFINED_VARIABLE or 
                 ERR_UNDEFINED_FUNCTION in this rule */
         case TOKEN_ASS:
             /* If assignment is the next step after loading the identifier, the ID was a variable */
@@ -404,6 +407,8 @@ static Rule arg_next(Parser* p) {
         case TOKEN_COMMA:
             GET_TOKEN();
             NEXT_RULE(arg);
+            GET_TOKEN();
+            NEXT_RULE(arg_next);
             break;
         case TOKEN_R_PAR: return EXIT_SUCCESS;
         default: print_error(ERR_SYNTAX, "Unexpected token, comma or ) expected"); return ERR_SYNTAX;
@@ -432,8 +437,9 @@ static Rule arg(Parser* p) {
 static Rule param_list(Parser* p) {
     DEBUG_PRINT("---ParamList---");
     unsigned res, err;
-
+    p->in_param = true;
     if (p->curr_tok.type == TOKEN_R_PAR) {
+        p->in_param = false;
         return EXIT_SUCCESS;
     }
     NEXT_RULE(param);
@@ -450,7 +456,7 @@ static Rule param_next(Parser* p) {
     unsigned res, err;
 
     switch (p->curr_tok.type) {
-        case TOKEN_R_PAR: break;
+        case TOKEN_R_PAR: p->in_param = false; break;
         case TOKEN_COMMA:
             GET_TOKEN();
             NEXT_RULE(param);
@@ -471,17 +477,25 @@ static Rule param(Parser* p) {
 
     switch (p->curr_tok.type) {
         case TOKEN_UND_SCR:
+            dstring_clear(&p->tmp);
+            dstring_add_const_str(&p->tmp, "_");
+            break;
         case TOKEN_IDENTIFIER:
             /* Store the label into Parser.tmp so we can add it after adding the whole parameter to symtable */
             dstring_clear(&p->tmp);
             dstring_copy(&p->curr_tok.value.string_val, &p->tmp);
+
             break;
         default: print_error(ERR_SYNTAX, "Unexpected token, identifier or _ expected"); return ERR_SYNTAX;
     }
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     NEW_PARAM();
+
     set_param_label(&p->global_symtab, &p->current_id->name, &p->curr_tok.value.string_val, &p->tmp, &err);
+    dstring_clear(&p->tmp);
+    dstring_copy(&p->curr_tok.value.string_val, &p->tmp);
+
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
 
@@ -590,8 +604,6 @@ static Rule func_ret_type(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_GT);
         GET_TOKEN();
         NEXT_RULE(type);
-    } else {
-        return EXIT_SUCCESS;
     }
     return EXIT_SUCCESS;
 }
@@ -629,17 +641,43 @@ static Rule type(Parser* p) {
 
     switch (p->curr_tok.type) {
         case TOKEN_DT_INT:
-            p->current_id->type = integer;
+            if (p->in_declaration) {
+                if (p->in_param) {
+                    set_param_type(&p->global_symtab, &p->current_id->name, &p->tmp, integer, &err);
+                } else {
+                    set_return_type(&p->global_symtab, &p->current_id->name, integer, &err);
+                }
+            } else {
+                p->current_id->type = integer;
+            }
             GET_TOKEN();
             NEXT_RULE(nilable);
             break;
+
         case TOKEN_DT_DOUBLE:
-            p->current_id->type = double_;
+            if (p->in_declaration) {
+                if (p->in_param) {
+                    set_param_type(&p->global_symtab, &p->current_id->name, &p->tmp, double_, &err);
+                } else {
+                    set_return_type(&p->global_symtab, &p->current_id->name, double_, &err);
+                }
+            } else {
+                p->current_id->type = double_;
+            }
             GET_TOKEN();
             NEXT_RULE(nilable);
             break;
+
         case TOKEN_DT_STRING:
-            p->current_id->type = string;
+            if (p->in_declaration) {
+                if (p->in_param) {
+                    set_param_type(&p->global_symtab, &p->current_id->name, &p->tmp, string, &err);
+                } else {
+                    set_return_type(&p->global_symtab, &p->current_id->name, string, &err);
+                }
+            } else {
+                p->current_id->type = string;
+            }
             GET_TOKEN();
             NEXT_RULE(nilable);
             break;
@@ -656,7 +694,11 @@ static Rule nilable(Parser* p) {
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_NIL_CHECK) {
-        p->current_id->is_nillable = true;
+        if (p->in_declaration && p->in_param) {
+            set_param_nil(&p->global_symtab, &p->current_id->name, &p->tmp, true, &err);
+        } else {
+            p->current_id->is_nillable = true;
+        }
         GET_TOKEN();
     }
     return EXIT_SUCCESS;
