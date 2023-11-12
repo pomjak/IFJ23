@@ -10,6 +10,12 @@
 
 #define UNUSED(x) (void)(x)
 
+#if defined(DEBUG) && DEBUGL > 2
+    #define RULE_PRINT(fmt, ...) fprint(stderr, fmt "\n", ##__VA_ARGS__)
+#else
+    #define RULE_PRINT(fmt, ...)
+#endif 
+
 #if defined(DEBUG) && DEBUGL > 1 
     #define DEBUG_PRINT(fmt, ...) fprintf(stderr, "[DEBUG] %s:%d:%s(): " fmt "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 #else
