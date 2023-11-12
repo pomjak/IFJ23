@@ -46,13 +46,13 @@ typedef struct parser_t {
     set_nillable(&p->global_symtab, &builtin_id, _nilable, st_err);                                                    \
     set_func_definition(&p->global_symtab, &builtin_id, true, st_err)
 
-#define ADD_BUILTIN_PARAM(_func_id, _label, _param_name, _param_type, _nilable)                                        \
+#define ADD_BUILTIN_PARAM(_label, _param_name, _param_type, _nilable)                                                  \
     dstring_clear(&label_name);                                                                                        \
     dstring_clear(&param_name);                                                                                        \
     dstring_add_const_str(&label_name, _label);                                                                        \
     dstring_add_const_str(&param_name, _param_name);                                                                   \
-    add_param(&p->global_symtab, _func_id, &param_name, &st_err);                                                      \
-    set_param_label(&p->global_symtab, _func_id, &param_name, &label_name, &st_err);                                   \
+    add_param(&p->global_symtab, &builtin_id, &param_name, &st_err);                                                   \
+    set_param_label(&p->global_symtab, &builtin_id, &param_name, &label_name, &st_err);                                \
     set_param_type(&p->global_symtab, &builtin_id, &param_name, _param_type, &st_err);                                 \
     set_param_nil(&p->global_symtab, &builtin_id, &param_name, _nilable, &st_err)
 
