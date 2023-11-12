@@ -18,6 +18,7 @@
  * Structure containing the current state of the parser
  */
 typedef struct parser_t {
+    dstring_t tmp;             // Temporary helper string
     bool in_function;          // Parser is inside a function call
     bool in_declaration;       // Parser is inside a function declaration
     bool in_cond;              // Parser is inside a condition statement
@@ -97,5 +98,14 @@ void parser_dispose(Parser* p);
  * @return uint ret_code
  */
 unsigned int parse();
+
+/**
+ * @brief Checks whether currently processed ID is a function ID 
+ * 
+ * @param p 
+ * @return true if function 
+ * @return false otherwise
+ */
+bool is_function(Parser* p);
 
 #endif

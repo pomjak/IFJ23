@@ -30,6 +30,8 @@ bool parser_init(Parser* p) {
     // Scope (stack of local symbol tables) initialization
     init_scope(p->local_symtab);
 
+    dstring_init(&p->tmp);
+
     p->current_id = NULL;
     p->left_id = NULL;
     p->right_id = NULL;
@@ -41,6 +43,7 @@ bool parser_init(Parser* p) {
 
 void parser_dispose(Parser* p) {
     unsigned err;
+    dstring_free(&p->tmp);
     symtable_dispose(&p->global_symtab);
     dispose_scope(p->local_symtab, &err);
 }
@@ -120,7 +123,6 @@ unsigned int parse() {
         parser_dispose(&p);
         return res;
     }
-
     /* Start recursive descend */
     if (res = prog(&p)) {
         parser_dispose(&p);
@@ -141,7 +143,7 @@ unsigned int parse() {
  */
 static Rule prog(Parser* p) {
     DEBUG_PRINT("---Prog---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_EOF: break;
@@ -149,8 +151,13 @@ static Rule prog(Parser* p) {
             p->in_declaration = true;
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-            /* TODO CHECK ID IN SYMTABLE */
 
+            symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+            if (err == SYMTAB_ERR_ITEM_ALREADY_STORED) {
+                print_error(ERR_SEMANTIC, "Function %s already declared", p->curr_tok.value.string_val.str);
+                return ERR_SEMANTIC;
+            }
+            p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_L_PAR);
             GET_TOKEN();
@@ -162,13 +169,14 @@ static Rule prog(Parser* p) {
             ASSERT_TOK_TYPE(TOKEN_R_BKT);
             GET_TOKEN();
             NEXT_RULE(func_body);
-            
+
             p->in_declaration = false;
+            GET_TOKEN();
             NEXT_RULE(prog);
             break;
         default:
             NEXT_RULE(stmt);
-
+            GET_TOKEN();
             NEXT_RULE(prog);
             break;
     }
@@ -184,8 +192,7 @@ static Rule prog(Parser* p) {
  */
 static Rule stmt(Parser* p) {
     DEBUG_PRINT("---Statement---");
-    unsigned res;
-    unsigned err;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_VAR: /* var <define> */
@@ -250,8 +257,7 @@ static Rule stmt(Parser* p) {
  */
 static Rule define(Parser* p) {
     DEBUG_PRINT("---Define---");
-    unsigned res;
-    unsigned err;
+    unsigned res, err;
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     if (p->in_cond || p->in_loop || p->in_function) {
@@ -286,7 +292,7 @@ static Rule define(Parser* p) {
  */
 static Rule var_def_cont(Parser* p) {
     DEBUG_PRINT("---VarDefCont---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_COL:
@@ -304,7 +310,7 @@ static Rule var_def_cont(Parser* p) {
  */
 static Rule opt_assign(Parser* p) {
     DEBUG_PRINT("---OptAssign---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_ASS) {
         // TODO expressions
@@ -320,7 +326,7 @@ static Rule opt_assign(Parser* p) {
  */
 static Rule expr_type(Parser* p) {
     DEBUG_PRINT("---ExpressionType---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
             /* If the previously loaded identifier was't found in any symtable we have to determenine whether to return ERR_UNDEFINED_VARIABLE or 
@@ -358,7 +364,7 @@ static Rule expr_type(Parser* p) {
  */
 static Rule cond_clause(Parser* p) {
     DEBUG_PRINT("---CondClause---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_LET) {
         GET_TOKEN();
@@ -376,7 +382,7 @@ static Rule cond_clause(Parser* p) {
  */
 static Rule arg_list(Parser* p) {
     DEBUG_PRINT("---ArgList---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_PAR) {
         return EXIT_SUCCESS;
@@ -392,7 +398,7 @@ static Rule arg_list(Parser* p) {
  */
 static Rule arg_next(Parser* p) {
     DEBUG_PRINT("---ArgNext---")
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_COMMA:
@@ -409,7 +415,7 @@ static Rule arg_next(Parser* p) {
  */
 static Rule arg(Parser* p) {
     DEBUG_PRINT("---Arg---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
         // symtable stuff?
@@ -425,7 +431,7 @@ static Rule arg(Parser* p) {
  */
 static Rule param_list(Parser* p) {
     DEBUG_PRINT("---ParamList---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_PAR) {
         return EXIT_SUCCESS;
@@ -441,7 +447,7 @@ static Rule param_list(Parser* p) {
  */
 static Rule param_next(Parser* p) {
     DEBUG_PRINT("---ParamNext---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_R_PAR: break;
@@ -461,16 +467,21 @@ static Rule param_next(Parser* p) {
  */
 static Rule param(Parser* p) {
     DEBUG_PRINT("---Param---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_UND_SCR:
-        case TOKEN_IDENTIFIER: break;
+        case TOKEN_IDENTIFIER:
+            /* Store the label into Parser.tmp so we can add it after adding the whole parameter to symtable */
+            dstring_clear(&p->tmp);
+            dstring_copy(&p->curr_tok.value.string_val, &p->tmp);
+            break;
         default: print_error(ERR_SYNTAX, "Unexpected token, identifier or _ expected"); return ERR_SYNTAX;
     }
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-    // symtable ID stuff
+    NEW_PARAM();
+    set_param_label(&p->global_symtab, &p->current_id->name, &p->curr_tok.value.string_val, &p->tmp, &err);
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
 
@@ -484,7 +495,7 @@ static Rule param(Parser* p) {
  * @brief <blk_body> -> <stmt> <blk_body> | }
  */
 static Rule block_body(Parser* p) {
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
         return EXIT_SUCCESS;
@@ -500,7 +511,7 @@ static Rule block_body(Parser* p) {
  */
 static Rule func_body(Parser* p) {
     DEBUG_PRINT("---FuncBody---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
         return EXIT_SUCCESS;
@@ -521,7 +532,7 @@ static Rule func_body(Parser* p) {
  */
 static Rule func_stmt(Parser* p) {
     DEBUG_PRINT("---FuncStatement---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_VAR:
@@ -572,7 +583,7 @@ static Rule func_stmt(Parser* p) {
  */
 static Rule func_ret_type(Parser* p) {
     DEBUG_PRINT("---FuncRetType---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_SUB) {
         GET_TOKEN();
@@ -590,7 +601,7 @@ static Rule func_ret_type(Parser* p) {
  */
 static Rule opt_ret(Parser* p) {
     DEBUG_PRINT("---OptRet---");
-    unsigned res;
+    unsigned res, err;
     return EXIT_SUCCESS;
 } /* TODO EXPRESSIONS */
 
@@ -599,7 +610,7 @@ static Rule opt_ret(Parser* p) {
  */
 static Rule opt_type(Parser* p) {
     DEBUG_PRINT("---OptType---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
         GET_TOKEN();
@@ -614,7 +625,7 @@ static Rule opt_type(Parser* p) {
  */
 static Rule type(Parser* p) {
     DEBUG_PRINT("---Type---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_DT_INT:
@@ -642,7 +653,7 @@ static Rule type(Parser* p) {
  */
 static Rule nilable(Parser* p) {
     DEBUG_PRINT("---Nilable---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_NIL_CHECK) {
         p->current_id->is_nillable = true;
@@ -656,7 +667,7 @@ static Rule nilable(Parser* p) {
  */
 static Rule opt_arg(Parser* p) {
     DEBUG_PRINT("---OptArg---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
         GET_TOKEN();
@@ -670,7 +681,7 @@ static Rule opt_arg(Parser* p) {
  */
 static Rule term(Parser* p) {
     DEBUG_PRINT("---Term---");
-    unsigned res;
+    unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
         /* Check id in symtable */
@@ -685,7 +696,7 @@ static Rule term(Parser* p) {
  */
 static Rule literal(Parser* p) {
     DEBUG_PRINT("---Literal---");
-    unsigned res;
+    unsigned res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_INT:
@@ -697,3 +708,5 @@ static Rule literal(Parser* p) {
     }
     return EXIT_SUCCESS;
 }
+
+bool is_function(Parser* p) { return p->current_id->type == function; }
