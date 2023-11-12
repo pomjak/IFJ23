@@ -14,6 +14,8 @@
 #include "scope.h"
 #include "symtable.h"
 
+
+
 /**
  * Structure containing the current state of the parser
  */

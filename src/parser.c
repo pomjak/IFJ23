@@ -41,6 +41,7 @@ bool parser_init(Parser* p) {
     p->in_function = false;
     p->in_loop = false;
     p->in_param = false;
+    return true;
 }
 
 void parser_dispose(Parser* p) {
@@ -113,7 +114,7 @@ bool add_builtins(Parser* p) {
  *                  EOF
  */
 Rule prog(Parser* p) {
-    DEBUG_PRINT("---Prog---");
+    RULE_PRINT("prog");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -162,7 +163,7 @@ Rule prog(Parser* p) {
  *                  while EXP { <block_body> |
  */
 Rule stmt(Parser* p) {
-    DEBUG_PRINT("---Statement---");
+    RULE_PRINT("stmt");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -226,7 +227,7 @@ Rule stmt(Parser* p) {
  * @brief <define> -> ID <var_def_cont>
  */
 Rule define(Parser* p) {
-    DEBUG_PRINT("---Define---");
+    RULE_PRINT("define");
     unsigned res, err;
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
@@ -261,7 +262,7 @@ Rule define(Parser* p) {
  * @brief <var_def_cont> -> : <type> <opt_assign> | = EXP
  */
 Rule var_def_cont(Parser* p) {
-    DEBUG_PRINT("---VarDefCont---");
+    RULE_PRINT("var_def_cont");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -281,7 +282,7 @@ Rule var_def_cont(Parser* p) {
  * @brief <opt_assign> -> = EXP | eps
  */
 Rule opt_assign(Parser* p) {
-    DEBUG_PRINT("---OptAssign---");
+    RULE_PRINT("opt_assign");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_ASS) {
@@ -297,7 +298,7 @@ Rule opt_assign(Parser* p) {
  * @brief <expr_type> -> = EXP | ( <arg_list>
  */
 Rule expr_type(Parser* p) {
-    DEBUG_PRINT("---ExpressionType---");
+    RULE_PRINT("expr_type");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -306,7 +307,6 @@ Rule expr_type(Parser* p) {
                 ERR_UNDEFINED_FUNCTION in this rule */
         case TOKEN_ASS:
             /* If assignment is the next step after loading the identifier, the ID was a variable */
-            DEBUG_PRINT("<expr_type> EXPRESSION");
             if (!p->current_id) {
                 return ERR_UNDEFINED_VARIABLE;
             }
@@ -336,7 +336,7 @@ Rule expr_type(Parser* p) {
  * @brief <cond_clause> -> EXP | let ID
  */
 Rule cond_clause(Parser* p) {
-    DEBUG_PRINT("---CondClause---");
+    RULE_PRINT("cond_clause");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_LET) {
@@ -372,7 +372,7 @@ Rule cond_clause(Parser* p) {
  * @brief <arg_list> -> <arg> <arg_next> | )
  */
 Rule arg_list(Parser* p) {
-    DEBUG_PRINT("---ArgList---");
+    RULE_PRINT("arg_list");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_PAR) {
@@ -388,7 +388,7 @@ Rule arg_list(Parser* p) {
  * @brief <arg_next> -> , <arg> <arg_next> | )
  */
 Rule arg_next(Parser* p) {
-    DEBUG_PRINT("---ArgNext---")
+    RULE_PRINT("arg_next");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -407,7 +407,7 @@ Rule arg_next(Parser* p) {
  * @brief <arg> -> "ID" <optarg> | <literal>
  */
 Rule arg(Parser* p) {
-    DEBUG_PRINT("---Arg---");
+    RULE_PRINT("arg");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
@@ -423,7 +423,7 @@ Rule arg(Parser* p) {
  * @brief <param_list> -> <param> <param_next> | )
  */
 Rule param_list(Parser* p) {
-    DEBUG_PRINT("---ParamList---");
+    RULE_PRINT("param_list");
     unsigned res, err;
     p->in_param = true;
     if (p->curr_tok.type == TOKEN_R_PAR) {
@@ -440,7 +440,7 @@ Rule param_list(Parser* p) {
  * @brief <param_next> -> , <param> <param_next> | )
  */
 Rule param_next(Parser* p) {
-    DEBUG_PRINT("---ParamNext---");
+    RULE_PRINT("param_next");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -460,7 +460,7 @@ Rule param_next(Parser* p) {
  * @brief <param> ->  "_" "ID" ":" <type> | "ID" "ID" ":" <type>
  */
 Rule param(Parser* p) {
-    DEBUG_PRINT("---Param---");
+    RULE_PRINT("param");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -497,6 +497,7 @@ Rule param(Parser* p) {
  * @brief <blk_body> -> <stmt> <blk_body> | }
  */
 Rule block_body(Parser* p) {
+    RULE_PRINT("blocK_body");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
@@ -512,11 +513,11 @@ Rule block_body(Parser* p) {
  * @brief <func_body> -> <func_stmt> <func_body> | }
  */
 Rule func_body(Parser* p) {
-    DEBUG_PRINT("---FuncBody---");
+    RULE_PRINT("func_body");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
-        pop_scope(p->local_symtab, &err);
+        pop_scope(&p->local_symtab, &err);
         return EXIT_SUCCESS;
     } else {
         NEXT_RULE(func_stmt);
@@ -534,7 +535,7 @@ Rule func_body(Parser* p) {
  *                       return <opt_ret>
  */
 Rule func_stmt(Parser* p) {
-    DEBUG_PRINT("---FuncStatement---");
+    RULE_PRINT("func_stmt");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -571,7 +572,7 @@ Rule func_stmt(Parser* p) {
             break;
         case TOKEN_IF:
             p->in_cond = true;
-            add_scope(p->local_symtab, &err);
+            add_scope(&p->local_symtab, &err);
 
             GET_TOKEN();
             NEXT_RULE(cond_clause);
@@ -588,7 +589,7 @@ Rule func_stmt(Parser* p) {
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_L_BKT);
             GET_TOKEN();
-            add_scope(p->local_symtab, &err);
+            add_scope(&p->local_symtab, &err);
             NEXT_RULE(func_body);
             p->in_cond = false;
             break;
@@ -605,7 +606,7 @@ Rule func_stmt(Parser* p) {
  * @brief <func_ret_type> =>  eps | -> <type>
  */
 Rule func_ret_type(Parser* p) {
-    DEBUG_PRINT("---FuncRetType---");
+    RULE_PRINT("func_ret_type");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_SUB) {
@@ -621,7 +622,7 @@ Rule func_ret_type(Parser* p) {
  * @brief <opt_ret> -> EXP | eps
  */
 Rule opt_ret(Parser* p) {
-    DEBUG_PRINT("---OptRet---");
+    RULE_PRINT("opt_ret");
     unsigned res, err;
     return EXIT_SUCCESS;
 } /* TODO EXPRESSIONS */
@@ -630,7 +631,7 @@ Rule opt_ret(Parser* p) {
  * @brief <opt_type> ->  : <type> | eps
  */
 Rule opt_type(Parser* p) {
-    DEBUG_PRINT("---OptType---");
+    RULE_PRINT("opt_type");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
@@ -645,7 +646,7 @@ Rule opt_type(Parser* p) {
  * @brief <type> -> Int<nilable> | String<nilable> | Double<nilable>
  */
 Rule type(Parser* p) {
-    DEBUG_PRINT("---Type---");
+    RULE_PRINT("type");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
@@ -699,7 +700,7 @@ Rule type(Parser* p) {
  * @brief <nilable> -> ? | eps
  */
 Rule nilable(Parser* p) {
-    DEBUG_PRINT("---Nilable---");
+    RULE_PRINT("nilable");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_NIL_CHECK) {
@@ -717,7 +718,7 @@ Rule nilable(Parser* p) {
  * @brief <opt_arg> -> : <term> | eps
  */
 Rule opt_arg(Parser* p) {
-    DEBUG_PRINT("---OptArg---");
+    RULE_PRINT("opt_arg");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
@@ -731,7 +732,7 @@ Rule opt_arg(Parser* p) {
  * @brief <term> -> ID | literal
  */
 Rule term(Parser* p) {
-    DEBUG_PRINT("---Term---");
+    RULE_PRINT("term");
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
@@ -746,7 +747,7 @@ Rule term(Parser* p) {
  * @brief <literal> -> INT_LIT | STR_LIT | DBL_LIT
  */
 Rule literal(Parser* p) {
-    DEBUG_PRINT("---Literal---");
+    RULE_PRINT("literal");
     unsigned res, err;
 
     switch (p->curr_tok.type) {
