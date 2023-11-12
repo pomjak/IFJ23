@@ -58,14 +58,19 @@ typedef struct parser_t {
 
 // -------------------------------------------------------------------------------------
 
-#define NEW_PARAM(_func, _param)                                                                                       \
-    add_param(&p->global_symtab, _func, _param, &err);                                                                 \
+/* Adding new parameters should only be accesible from function declaration rule, thus the scope should always be global, 
+   and the function we want to add parameters to should be stored in Parser.current_id, the name of the parameter should be
+   the last loaded token (identifier), thus Parser.curr_tok.value.string_val is the name of the param  
+*/
+
+#define NEW_PARAM()                                                                                                    \
+    add_param(&p->global_symtab, &p->current_id->name, &p->curr_tok.value.string_val, &err);                           \
     switch (err) {                                                                                                     \
         case SYMTAB_ERR_ITEM_NOT_FOUND:                                                                                \
-            print_error(ERR_UNDEFINED_FUNCTION, "Identifier %s not defined", _func->name.str);                         \
+            print_error(ERR_UNDEFINED_FUNCTION, "Identifier %s not defined", &p->current_id->name.str);                \
             return ERR_UNDEFINED_FUNCTION;                                                                             \
         case SYMTAB_ERR_ITEM_NOT_FUNCTION:                                                                             \
-            print_error(ERR_SEMANTIC, "Identifier %s is not a function", _func->name.str);                             \
+            print_error(ERR_SEMANTIC, "Identifier %s is not a function", &p->current_id->name.str);                    \
             return ERR_SEMANTIC;                                                                                       \
         default: break;                                                                                                \
     }
