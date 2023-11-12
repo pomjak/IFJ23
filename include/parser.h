@@ -43,10 +43,10 @@ typedef struct parser_t {
     dstring_clear(&builtin_id);                                                                                        \
     dstring_add_const_str(&builtin_id, _func_name);                                                                    \
     symtable_insert(&p->global_symtab, &builtin_id, &st_err);                                                          \
-    set_type(&p->global_symtab, &builtin_id, function, st_err);                                                        \
-    set_return_type(&p->global_symtab, &builtin_id, _ret_type, st_err);                                                \
-    set_nillable(&p->global_symtab, &builtin_id, _nilable, st_err);                                                    \
-    set_func_definition(&p->global_symtab, &builtin_id, true, st_err)
+    set_type(&p->global_symtab, &builtin_id, function, &st_err);                                                        \
+    set_return_type(&p->global_symtab, &builtin_id, _ret_type, &st_err);                                                \
+    set_nillable(&p->global_symtab, &builtin_id, _nilable, &st_err);                                                    \
+    set_func_definition(&p->global_symtab, &builtin_id, true, &st_err)
 
 #define ADD_BUILTIN_PARAM(_label, _param_name, _param_type, _nilable)                                                  \
     dstring_clear(&label_name);                                                                                        \

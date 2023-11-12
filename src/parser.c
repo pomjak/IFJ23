@@ -29,7 +29,7 @@ bool parser_init(Parser* p) {
     }
 
     // Scope (stack of local symbol tables) initialization
-    init_scope(p->local_symtab);
+    init_scope(&p->local_symtab);
 
     dstring_init(&p->tmp);
 
@@ -47,7 +47,7 @@ void parser_dispose(Parser* p) {
     unsigned err;
     dstring_free(&p->tmp);
     symtable_dispose(&p->global_symtab);
-    dispose_scope(p->local_symtab, &err);
+    dispose_scope(&p->local_symtab, &err);
 }
 
 /**
@@ -104,36 +104,6 @@ static bool add_builtins(Parser* p) {
     return true;
 }
 
-unsigned int parse() {
-    unsigned res;
-    Parser p;
-
-    // Initialize Parser structure
-    if (!parser_init(&p)) {
-        print_error(ERR_INTERNAL, "Error occured while initializing parser data");
-        return ERR_INTERNAL;
-    }
-    // Add builtin functions to the global symtable
-    if (!add_builtins(&p)) {
-        parser_dispose(&p);
-        print_error(ERR_INTERNAL, "Error occured while adding builtin functions");
-        return ERR_INTERNAL;
-    }
-
-    /* Get the first token */
-    if (res = get_token(&p.curr_tok)) {
-        parser_dispose(&p);
-        return res;
-    }
-    /* Start recursive descend */
-    if (res = prog(&p)) {
-        parser_dispose(&p);
-        return res;
-    }
-
-    parser_dispose(&p);
-    return EXIT_SUCCESS;
-}
 
 // ==================
 //  Rule definitions
@@ -792,3 +762,34 @@ static Rule literal(Parser* p) {
 }
 
 bool is_function(Parser* p) { return p->current_id->type == function; }
+
+unsigned int parse() {
+    unsigned res;
+    Parser p;
+
+    // Initialize Parser structure
+    if (!parser_init(&p)) {
+        print_error(ERR_INTERNAL, "Error occured while initializing parser data");
+        return ERR_INTERNAL;
+    }
+    // Add builtin functions to the global symtable
+    if (!add_builtins(&p)) {
+        parser_dispose(&p);
+        print_error(ERR_INTERNAL, "Error occured while adding builtin functions");
+        return ERR_INTERNAL;
+    }
+
+    /* Get the first token */
+    if (res = get_token(&p.curr_tok)) {
+        parser_dispose(&p);
+        return res;
+    }
+    /* Start recursive descend */
+    if (res = prog(&p)) {
+        parser_dispose(&p);
+        return res;
+    }
+
+    parser_dispose(&p);
+    return EXIT_SUCCESS;
+}
