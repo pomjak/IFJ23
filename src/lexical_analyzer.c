@@ -1,7 +1,7 @@
 /**
  * @name IFJ23
- * @file lexical_analyzer.h
- * @brief Lexical analyzer header
+ * @file lexical_analyzer.c
+ * @brief Lexical analyzer
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
  * @date 08.10.2023
  **/
