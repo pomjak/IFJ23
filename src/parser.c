@@ -7,108 +7,8 @@
  */
 #include "parser.h"
 
-#define GET_TOKEN()                                                                                                    \
-    if ((res = get_token(&p->curr_tok)) != ERR_NO_ERR)                                                                 \
-    return res
+/* ===================| RULE DEFINITIONS |================= */
 
-#define ASSERT_TOK_TYPE(_type)                                                                                         \
-    if (p->curr_tok.type != _type)                                                                                     \
-    return ERR_SYNTAX
-
-#define NEXT_RULE(_rule)                                                                                               \
-    if ((res = _rule(p)) != ERR_NO_ERR)                                                                                \
-    return res
-
-bool parser_init(Parser* p) {
-    unsigned symtab_err;
-
-    // Global symbol table initialization
-    symtable_init(&p->global_symtab, &symtab_err);
-    if (symtab_err) {
-        return false;
-    }
-
-    // Scope (stack of local symbol tables) initialization
-    init_scope(&p->local_symtab);
-
-    dstring_init(&p->tmp);
-
-    p->current_id = NULL;
-    p->last_func_id = NULL;
-    // p->left_id = NULL;
-    // p->right_id = NULL;
-    p->in_cond = false;
-    p->in_declaration = false;
-    p->in_function = false;
-    p->in_loop = false;
-    p->in_param = false;
-    return true;
-}
-
-void parser_dispose(Parser* p) {
-    unsigned err;
-    dstring_free(&p->tmp);
-    symtable_dispose(&p->global_symtab);
-    dispose_scope(&p->local_symtab, &err);
-}
-
-/**
- * @brief Fill global symtable with builtin functions
- *
- * @param p Parser object
- * @return true on success, otherwise false
- */
-bool add_builtins(Parser* p) {
-    unsigned int st_err;
-    dstring_t builtin_id;
-    dstring_t param_name;
-    dstring_t label_name;
-    dstring_init(&builtin_id);
-    dstring_init(&param_name);
-    dstring_init(&label_name);
-
-    // readString() -> String?
-    SET_BUILTIN("readString", string, true);
-    // readInt() -> Int?
-    SET_BUILTIN("readInt", integer, true);
-    // readDouble() -> Double?
-    SET_BUILTIN("readDouble", double_, true);
-    // write() // TODO params maybe
-    SET_BUILTIN("write", nil, false);
-    // Int2Double(_ term : Int) -> Double
-    SET_BUILTIN("Int2Double", double_, false);
-    ADD_BUILTIN_PARAM("_", "term", integer, false);
-    // Double2Int(_ term: Double) -> Int
-    SET_BUILTIN("Double2Int", integer, false);
-    ADD_BUILTIN_PARAM("_", "term", double_, false);
-    // length(_ s: String) -> Int
-    SET_BUILTIN("length", integer, false);
-    ADD_BUILTIN_PARAM("_", "s", string, false);
-    // substring(of s: String, startingAt i : Int, endingBefore j : Int) ->
-    // String?
-    SET_BUILTIN("substring", string, true);
-    ADD_BUILTIN_PARAM("of", "s", string, false);
-    ADD_BUILTIN_PARAM("startingAt", "i", integer, false);
-    ADD_BUILTIN_PARAM("endingBefore", "j", integer, false);
-    // ord(_ c: String) -> Int
-    SET_BUILTIN("ord", integer, false);
-    ADD_BUILTIN_PARAM("_", "c", string, false);
-    // chr(_ i: Int) -> String
-    SET_BUILTIN("chr", string, false);
-    ADD_BUILTIN_PARAM("_", "i", integer, false);
-
-    dstring_free(&builtin_id);
-    dstring_free(&param_name);
-    dstring_free(&label_name);
-    if (st_err) {
-        return false;
-    }
-    return true;
-}
-
-// ==================
-//  Rule definitions
-// ==================
 /**
  * @brief <prog> -> <stmt> <prog> |
  *                  func ID ( <param_list> <func_ret_type> { <func_body> <prog> |
@@ -116,7 +16,7 @@ bool add_builtins(Parser* p) {
  */
 Rule prog(Parser* p) {
     RULE_PRINT("prog");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_EOF: break;
@@ -166,7 +66,7 @@ Rule prog(Parser* p) {
  */
 Rule stmt(Parser* p) {
     RULE_PRINT("stmt");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_VAR: /* var <define> */
@@ -230,7 +130,7 @@ Rule stmt(Parser* p) {
  */
 Rule define(Parser* p) {
     RULE_PRINT("define");
-    unsigned res, err;
+    uint32_t res, err;
     DEBUG_PRINT("%s", p->curr_tok.value.string_val.str);
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
@@ -273,7 +173,7 @@ Rule define(Parser* p) {
  */
 Rule var_def_cont(Parser* p) {
     RULE_PRINT("var_def_cont");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_COL:
@@ -294,7 +194,7 @@ Rule var_def_cont(Parser* p) {
  */
 Rule opt_assign(Parser* p) {
     RULE_PRINT("opt_assign");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_ASS) {
         // TODO expressions
@@ -310,7 +210,7 @@ Rule opt_assign(Parser* p) {
  */
 Rule expr_type(Parser* p) {
     RULE_PRINT("expr_type");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
             /* If the previously loaded identifier was't found in any symtable we have to 
@@ -348,7 +248,7 @@ Rule expr_type(Parser* p) {
  */
 Rule cond_clause(Parser* p) {
     RULE_PRINT("cond_clause");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_LET) {
         GET_TOKEN();
@@ -384,7 +284,7 @@ Rule cond_clause(Parser* p) {
  */
 Rule arg_list(Parser* p) {
     RULE_PRINT("arg_list");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_R_PAR) {
         return EXIT_SUCCESS;
@@ -400,7 +300,7 @@ Rule arg_list(Parser* p) {
  */
 Rule arg_next(Parser* p) {
     RULE_PRINT("arg_next");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_COMMA:
@@ -419,7 +319,7 @@ Rule arg_next(Parser* p) {
  */
 Rule arg(Parser* p) {
     RULE_PRINT("arg");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
         // symtable stuff?
@@ -435,7 +335,7 @@ Rule arg(Parser* p) {
  */
 Rule param_list(Parser* p) {
     RULE_PRINT("param_list");
-    unsigned res, err;
+    uint32_t res, err;
     p->in_param = true;
     if (p->curr_tok.type == TOKEN_R_PAR) {
         p->in_param = false;
@@ -452,7 +352,7 @@ Rule param_list(Parser* p) {
  */
 Rule param_next(Parser* p) {
     RULE_PRINT("param_next");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_R_PAR: p->in_param = false; break;
@@ -472,7 +372,7 @@ Rule param_next(Parser* p) {
  */
 Rule param(Parser* p) {
     RULE_PRINT("param");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_UND_SCR:
@@ -513,7 +413,7 @@ Rule param(Parser* p) {
  */
 Rule block_body(Parser* p) {
     RULE_PRINT("blocK_body");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
         return EXIT_SUCCESS;
@@ -529,7 +429,7 @@ Rule block_body(Parser* p) {
  */
 Rule func_body(Parser* p) {
     RULE_PRINT("func_body");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
         pop_scope(&p->local_symtab, &err);
@@ -551,7 +451,7 @@ Rule func_body(Parser* p) {
  */
 Rule func_stmt(Parser* p) {
     RULE_PRINT("func_stmt");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_VAR:
@@ -622,7 +522,7 @@ Rule func_stmt(Parser* p) {
  */
 Rule func_ret_type(Parser* p) {
     RULE_PRINT("func_ret_type");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_RET_VAL) {
         GET_TOKEN();
@@ -636,7 +536,7 @@ Rule func_ret_type(Parser* p) {
  */
 Rule opt_ret(Parser* p) {
     RULE_PRINT("opt_ret");
-    unsigned res, err;
+    uint32_t res, err;
     return EXIT_SUCCESS;
 } /* TODO EXPRESSIONS */
 
@@ -645,7 +545,7 @@ Rule opt_ret(Parser* p) {
  */
 Rule opt_type(Parser* p) {
     RULE_PRINT("opt_type");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
         GET_TOKEN();
@@ -660,7 +560,7 @@ Rule opt_type(Parser* p) {
  */
 Rule type(Parser* p) {
     RULE_PRINT("type");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_DT_INT:
@@ -723,7 +623,7 @@ Rule type(Parser* p) {
  */
 Rule nilable(Parser* p) {
     RULE_PRINT("nilable");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_NIL_CHECK) {
         DEBUG_PRINT("Nil Check");
@@ -743,7 +643,7 @@ Rule nilable(Parser* p) {
  */
 Rule opt_arg(Parser* p) {
     RULE_PRINT("opt_arg");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
         GET_TOKEN();
@@ -757,7 +657,7 @@ Rule opt_arg(Parser* p) {
  */
 Rule term(Parser* p) {
     RULE_PRINT("term");
-    unsigned res, err;
+    uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
         /* Check id in symtable */
@@ -772,7 +672,7 @@ Rule term(Parser* p) {
  */
 Rule literal(Parser* p) {
     RULE_PRINT("literal");
-    unsigned res, err;
+    uint32_t res, err;
 
     switch (p->curr_tok.type) {
         case TOKEN_INT:
@@ -784,11 +684,112 @@ Rule literal(Parser* p) {
     }
     return EXIT_SUCCESS;
 }
+/* ======================================================== */
 
-bool is_function(Parser* p) { return p->current_id->type == function; }
+/**
+ * @brief Initializes data needed by the parser
+ *
+ * @param p - Parser object
+ * @return true on success
+ */
+bool parser_init(Parser* p) {
+    uint32_t symtab_err;
 
-unsigned int parse() {
-    unsigned res;
+    // Global symbol table initialization
+    symtable_init(&p->global_symtab, &symtab_err);
+    if (symtab_err) {
+        return false;
+    }
+
+    // Scope (stack of local symbol tables) initialization
+    init_scope(&p->local_symtab);
+
+    dstring_init(&p->tmp);
+
+    p->current_id = NULL;
+    p->last_func_id = NULL;
+    // p->left_id = NULL;
+    // p->right_id = NULL;
+    p->in_cond = false;
+    p->in_declaration = false;
+    p->in_function = false;
+    p->in_loop = false;
+    p->in_param = false;
+    return true;
+}
+
+/**
+ * @brief Frees all data allocated by the parser
+ * @param p
+ */
+void parser_dispose(Parser* p) {
+    uint32_t err;
+    dstring_free(&p->tmp);
+    symtable_dispose(&p->global_symtab);
+    dispose_scope(&p->local_symtab, &err);
+}
+
+/**
+ * @brief Fill global symtable with builtin functions
+ *
+ * @param p Parser object
+ * @return true on success, otherwise false
+ */
+bool add_builtins(Parser* p) {
+    uint32_t st_err;
+    dstring_t builtin_id;
+    dstring_t param_name;
+    dstring_t label_name;
+    dstring_init(&builtin_id);
+    dstring_init(&param_name);
+    dstring_init(&label_name);
+
+    // readString() -> String?
+    SET_BUILTIN("readString", string, true);
+    // readInt() -> Int?
+    SET_BUILTIN("readInt", integer, true);
+    // readDouble() -> Double?
+    SET_BUILTIN("readDouble", double_, true);
+    // write() // TODO params maybe
+    SET_BUILTIN("write", nil, false);
+    // Int2Double(_ term : Int) -> Double
+    SET_BUILTIN("Int2Double", double_, false);
+    ADD_BUILTIN_PARAM("_", "term", integer, false);
+    // Double2Int(_ term: Double) -> Int
+    SET_BUILTIN("Double2Int", integer, false);
+    ADD_BUILTIN_PARAM("_", "term", double_, false);
+    // length(_ s: String) -> Int
+    SET_BUILTIN("length", integer, false);
+    ADD_BUILTIN_PARAM("_", "s", string, false);
+    // substring(of s: String, startingAt i : Int, endingBefore j : Int) ->
+    // String?
+    SET_BUILTIN("substring", string, true);
+    ADD_BUILTIN_PARAM("of", "s", string, false);
+    ADD_BUILTIN_PARAM("startingAt", "i", integer, false);
+    ADD_BUILTIN_PARAM("endingBefore", "j", integer, false);
+    // ord(_ c: String) -> Int
+    SET_BUILTIN("ord", integer, false);
+    ADD_BUILTIN_PARAM("_", "c", string, false);
+    // chr(_ i: Int) -> String
+    SET_BUILTIN("chr", string, false);
+    ADD_BUILTIN_PARAM("_", "i", integer, false);
+
+    dstring_free(&builtin_id);
+    dstring_free(&param_name);
+    dstring_free(&label_name);
+    if (st_err) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * @brief Parser entry point
+ * 
+ * @return uint ret_code
+ */
+uint32_t parse() {
+    uint32_t res;
     Parser p;
 
     // Initialize Parser structure
