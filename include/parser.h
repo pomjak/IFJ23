@@ -1,7 +1,7 @@
 /**
  * @file parser.h
  * @author Simon Cagala (xcagal00@stud.fit.vutbr.cz)
- * @brief 
+ * @brief
  * @date 2023-11-09
  */
 #ifndef PARSER_H
@@ -54,9 +54,9 @@ typedef struct parser_t {
     set_param_type(&p->global_symtab, &builtin_id, &param_name, _param_type, &st_err);                                 \
     set_param_nil(&p->global_symtab, &builtin_id, &param_name, _nilable, &st_err)
 
-/* Adding new parameters should only be accesible from function declaration rule, thus the scope should always be global, 
+/* Adding new parameters should only be accesible from function declaration rule, thus the scope should always be global,
    and the function we want to add parameters to should be stored in Parser.current_id, the name of the parameter should be
-   the last loaded token (identifier), thus Parser.curr_tok.value.string_val is the name of the param  
+   the last loaded token (identifier), thus Parser.curr_tok.value.string_val is the name of the param
 */
 /* Add a new parameter to the last loaded function */
 #define NEW_PARAM()                                                                                                    \
@@ -120,6 +120,6 @@ Rule literal(Parser* p);
 bool parser_init(Parser* p);
 bool add_builtins(Parser* p);
 void parser_dispose(Parser* p);
-unsigned int parse();
+uint32_t parse();
 
 #endif
