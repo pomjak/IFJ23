@@ -3,6 +3,7 @@
  * @file lexical_analyzer.h
  * @brief Lexical analyzer header
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
+ * @author Jakub Pomsar <xpomsa00@stud.fit.vutbr.cz>
  * @date 06.10.2023
  **/
 
@@ -12,11 +13,10 @@
 #include "dyn_string.h"
 
 /**
- * @brief defines type of tokenxw
+ * @brief defines type of tokens
  */
 typedef enum {
     TOKEN_UNDEFINED,
-    TOKEN_EOL,
     TOKEN_EOF,
     TOKEN_UND_SCR,
     TOKEN_COMMA,
@@ -61,7 +61,7 @@ typedef enum {
 } token_type_T;
 
 /**
- * @brief value of tokenxw
+ * @brief value of tokens
  */
 typedef union
 {
@@ -76,6 +76,7 @@ typedef union
  */
 typedef struct
 {
+    bool preceding_eol;//flag that signs preceding eol before processed token 
     token_type_T  type;
     token_value_T value;
 } token_T;

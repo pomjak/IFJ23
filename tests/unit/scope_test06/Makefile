@@ -27,6 +27,5 @@ run: build
 
 artifacts:
 	@echo "[info] creating artifacts for scope 6"
-	@echo "----------------------------------------"
 	cp output.txt ../test_artifacts/units_test_scope6.txt	
 	cp valgrind_output.txt ../test_artifacts/units_test_scope_valgrind6.txt

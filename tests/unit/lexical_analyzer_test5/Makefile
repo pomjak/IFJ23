@@ -2,6 +2,7 @@ CC=gcc -std=c99 -g -lm
 NAME=test
 
 build:
+	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test lexical analyzer 5"
 	$(CC) *.c -o $(NAME)
 
