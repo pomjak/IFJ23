@@ -3,6 +3,7 @@
  * @file lexical_analyzer.h
  * @brief Lexical analyzer header
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
+ * @author Jakub Pomsar <xpomsa00@stud.fit.vutbr.cz>
  * @date 06.10.2023
  **/
 
@@ -12,7 +13,7 @@
 #include "dyn_string.h"
 
 /**
- * @brief defines type of tokenxw
+ * @brief defines type of tokens
  */
 typedef enum {
     TOKEN_UNDEFINED,
@@ -60,7 +61,7 @@ typedef enum {
 } token_type_T;
 
 /**
- * @brief value of tokenxw
+ * @brief value of tokens
  */
 typedef union
 {
