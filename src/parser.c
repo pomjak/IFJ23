@@ -148,7 +148,7 @@ Rule prog(Parser* p) {
             break;
         default:
             NEXT_RULE(stmt);
-            GET_TOKEN();
+            // GET_TOKEN();
             NEXT_RULE(prog);
             break;
     }
@@ -254,7 +254,7 @@ Rule define(Parser* p) {
         }
 
         DEBUG_PRINT("before global insert");
-        symtable_insert(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
+        symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         DEBUG_PRINT("after global insert");
         /* TOTO symtable error check */
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
@@ -277,6 +277,7 @@ Rule var_def_cont(Parser* p) {
         case TOKEN_COL:
             GET_TOKEN();
             NEXT_RULE(type);
+            NEXT_RULE(opt_assign);
             break;
         case TOKEN_ASS:
             //  EXP
@@ -617,9 +618,7 @@ Rule func_ret_type(Parser* p) {
     RULE_PRINT("func_ret_type");
     unsigned res, err;
 
-    if (p->curr_tok.type == TOKEN_SUB) {
-        GET_TOKEN();
-        ASSERT_TOK_TYPE(TOKEN_GT);
+    if (p->curr_tok.type == TOKEN_RET_VAL) {
         GET_TOKEN();
         NEXT_RULE(type);
     }
