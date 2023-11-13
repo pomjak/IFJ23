@@ -14,8 +14,6 @@
 #include "scope.h"
 #include "symtable.h"
 
-
-
 /**
  * Structure containing the current state of the parser
  */
@@ -28,10 +26,11 @@ typedef struct parser_t {
     bool in_param;             // Parser should set param type
     token_T curr_tok;          // Currently processed token
     symtab_item_t* current_id; // Identifier of currently processed function
-    symtab_item_t* left_id;    // Identifier of left-side variable
-    symtab_item_t* right_id;   // Identifier of right-side function
-    symtab_t global_symtab;    // Global symbol table
-    scope_t local_symtab;      // Local symbol table
+    // symtab_item_t* left_id;    // Identifier of left-side variable
+    // symtab_item_t* right_id;   // Identifier of right-side function
+    symtab_item_t* last_func_id; // Identifier of the last loaded function
+    symtab_t global_symtab;      // Global symbol table
+    scope_t local_symtab;        // Local symbol table
 } Parser;
 
 // --------------------------------------------------------------------------------------
@@ -68,13 +67,15 @@ typedef struct parser_t {
 */
 
 #define NEW_PARAM()                                                                                                    \
-    add_param(&p->global_symtab, &p->current_id->name, &p->curr_tok.value.string_val, &err);                           \
+    add_param(&p->global_symtab, &p->last_func_id->name, &p->curr_tok.value.string_val, &err);                         \
+    DEBUG_PRINT("NEW_PARAM: func = %s", p->last_func_id->name.str);                                                    \
+    DEBUG_PRINT("NEW_PARAM: err = %d", err);                                                                           \
     switch (err) {                                                                                                     \
         case SYMTAB_ERR_ITEM_NOT_FOUND:                                                                                \
-            print_error(ERR_UNDEFINED_FUNCTION, "Identifier %s not defined", &p->current_id->name.str);                \
+            print_error(ERR_UNDEFINED_FUNCTION, "Identifier not defined\n");                                           \
             return ERR_UNDEFINED_FUNCTION;                                                                             \
         case SYMTAB_ERR_ITEM_NOT_FUNCTION:                                                                             \
-            print_error(ERR_SEMANTIC, "Identifier %s is not a function", &p->current_id->name.str);                    \
+            print_error(ERR_SEMANTIC, "Identifier not a function\n");                                                  \
             return ERR_SEMANTIC;                                                                                       \
         default: break;                                                                                                \
     }

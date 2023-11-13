@@ -34,8 +34,9 @@ bool parser_init(Parser* p) {
     dstring_init(&p->tmp);
 
     p->current_id = NULL;
-    p->left_id = NULL;
-    p->right_id = NULL;
+    p->last_func_id = NULL;
+    // p->left_id = NULL;
+    // p->right_id = NULL;
     p->in_cond = false;
     p->in_declaration = false;
     p->in_function = false;
@@ -126,10 +127,11 @@ Rule prog(Parser* p) {
 
             symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
             if (err == SYMTAB_ERR_ITEM_ALREADY_STORED) {
-                print_error(ERR_SEMANTIC, "Function %s already declared", p->curr_tok.value.string_val.str);
+                print_error(ERR_SEMANTIC, "Function already declared");
                 return ERR_SEMANTIC;
             }
-            p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+            p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+            p->last_func_id->type = function;
             GET_TOKEN();
             ASSERT_TOK_TYPE(TOKEN_L_PAR);
             GET_TOKEN();
@@ -440,7 +442,7 @@ Rule param_list(Parser* p) {
         return EXIT_SUCCESS;
     }
     NEXT_RULE(param);
-    GET_TOKEN();
+    // GET_TOKEN();
     NEXT_RULE(param_next);
     return EXIT_SUCCESS;
 }
@@ -457,10 +459,10 @@ Rule param_next(Parser* p) {
         case TOKEN_COMMA:
             GET_TOKEN();
             NEXT_RULE(param);
-            GET_TOKEN();
+            // GET_TOKEN();
             NEXT_RULE(param_next);
             break;
-        default: print_error(ERR_SYNTAX, "Unexpected Token, ) or , expected"); return ERR_SYNTAX;
+        default: print_error(ERR_SYNTAX, "Unexpected Token ')' or ',' expected"); return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -486,17 +488,21 @@ Rule param(Parser* p) {
         default: print_error(ERR_SYNTAX, "Unexpected token, identifier or _ expected"); return ERR_SYNTAX;
     }
     GET_TOKEN();
+    DEBUG_PRINT("GET_TOKEN, ID expected");
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     NEW_PARAM();
 
-    set_param_label(&p->global_symtab, &p->current_id->name, &p->curr_tok.value.string_val, &p->tmp, &err);
+    set_param_label(&p->global_symtab, &p->last_func_id->name, &p->curr_tok.value.string_val, &p->tmp, &err);
+    DEBUG_PRINT("Param label set");
     dstring_clear(&p->tmp);
     dstring_copy(&p->curr_tok.value.string_val, &p->tmp);
 
     GET_TOKEN();
+    DEBUG_PRINT("GET_TOKEN, colon expected");
     ASSERT_TOK_TYPE(TOKEN_COL);
 
     GET_TOKEN();
+    DEBUG_PRINT("GET_TOKEN, goto type");
     NEXT_RULE(type);
 
     return EXIT_SUCCESS;
@@ -658,44 +664,53 @@ Rule type(Parser* p) {
 
     switch (p->curr_tok.type) {
         case TOKEN_DT_INT:
+            DEBUG_PRINT("case TOKEN_DT_INT");
             if (p->in_declaration) {
                 if (p->in_param) {
-                    set_param_type(&p->global_symtab, &p->current_id->name, &p->tmp, integer, &err);
+                    DEBUG_PRINT("Set Param Label");
+                    set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, integer, &err);
                 } else {
-                    set_return_type(&p->global_symtab, &p->current_id->name, integer, &err);
+                    set_return_type(&p->global_symtab, &p->last_func_id->name, integer, &err);
                 }
             } else {
                 p->current_id->type = integer;
             }
             GET_TOKEN();
+            DEBUG_PRINT("GET_TOKEN, goto nilable");
             NEXT_RULE(nilable);
             break;
 
         case TOKEN_DT_DOUBLE:
+            DEBUG_PRINT("case TOKEN_DT_DOUBLE");
             if (p->in_declaration) {
                 if (p->in_param) {
-                    set_param_type(&p->global_symtab, &p->current_id->name, &p->tmp, double_, &err);
+                    DEBUG_PRINT("Set Param Label");
+                    set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, double_, &err);
                 } else {
-                    set_return_type(&p->global_symtab, &p->current_id->name, double_, &err);
+                    set_return_type(&p->global_symtab, &p->last_func_id->name, double_, &err);
                 }
             } else {
                 p->current_id->type = double_;
             }
             GET_TOKEN();
+            DEBUG_PRINT("GET_TOKEN, goto nilable");
             NEXT_RULE(nilable);
             break;
 
         case TOKEN_DT_STRING:
+            DEBUG_PRINT("case TOKEN_DT_STRING");
             if (p->in_declaration) {
                 if (p->in_param) {
-                    set_param_type(&p->global_symtab, &p->current_id->name, &p->tmp, string, &err);
+                    DEBUG_PRINT("Set Param Label");
+                    set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, string, &err);
                 } else {
-                    set_return_type(&p->global_symtab, &p->current_id->name, string, &err);
+                    set_return_type(&p->global_symtab, &p->last_func_id->name, string, &err);
                 }
             } else {
                 p->current_id->type = string;
             }
             GET_TOKEN();
+            DEBUG_PRINT("GET_TOKEN, goto nilable");
             NEXT_RULE(nilable);
             break;
         default: return ERR_SYNTAX;
@@ -711,8 +726,10 @@ Rule nilable(Parser* p) {
     unsigned res, err;
 
     if (p->curr_tok.type == TOKEN_NIL_CHECK) {
+        DEBUG_PRINT("Nil Check");
         if (p->in_declaration && p->in_param) {
-            set_param_nil(&p->global_symtab, &p->current_id->name, &p->tmp, true, &err);
+            DEBUG_PRINT("Set param nilable");
+            set_param_nil(&p->global_symtab, &p->last_func_id->name, &p->tmp, true, &err);
         } else {
             p->current_id->is_nillable = true;
         }
