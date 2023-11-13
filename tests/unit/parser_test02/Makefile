@@ -2,7 +2,7 @@ CC=gcc -std=c99 -g -lm
 NAME=test
 
 build:
-	@echo "[info] starting CC build for test parser 1"
+	@echo "[info] starting CC build for test parser 2"
 	$(CC) *.c -o $(NAME) -D RULEDEBUG 
 run: build
 	@echo "[info] performing test parser 2"
@@ -15,4 +15,4 @@ run: build
 artifacts:
 	@echo "[info] creating artifacts for parser 2"
 	@echo "----------------------------------------"
-	cp output.txt ../test_artifacts/units_test_parser1.txt	
+	cp output.txt ../test_artifacts/units_test_parser2.txt	

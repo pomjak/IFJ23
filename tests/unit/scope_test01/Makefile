@@ -3,7 +3,6 @@ NAME=test
 VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s --error-exitcode=1 
 
 build:
-	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test scope 1"
 	$(CC) *.c -o $(NAME)
 
