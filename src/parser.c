@@ -229,11 +229,14 @@ Rule stmt(Parser* p) {
 Rule define(Parser* p) {
     RULE_PRINT("define");
     unsigned res, err;
+    DEBUG_PRINT("%s", p->curr_tok.value.string_val.str);
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     if (p->in_cond || p->in_loop || p->in_function) {
         /* search local */
+        DEBUG_PRINT("before search scopes");
         p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+        DEBUG_PRINT("after search scopes");
         if (p->current_id) {
             return ERR_UNDEFINED_FUNCTION;
         }
@@ -243,11 +246,16 @@ Rule define(Parser* p) {
         p->current_id = symtable_search(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
         /* TODO ERR CHECK */
     } else {
+        DEBUG_PRINT("global scope");
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         if (p->current_id) {
+
             return ERR_UNDEFINED_FUNCTION;
         }
+
+        DEBUG_PRINT("before global insert");
         symtable_insert(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
+        DEBUG_PRINT("after global insert");
         /* TOTO symtable error check */
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
