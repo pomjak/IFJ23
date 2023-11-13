@@ -16,7 +16,6 @@
  */
 typedef enum {
     TOKEN_UNDEFINED,
-    TOKEN_EOL,
     TOKEN_EOF,
     TOKEN_UND_SCR,
     TOKEN_COMMA,
@@ -76,6 +75,7 @@ typedef union
  */
 typedef struct
 {
+    bool preceding_eol;
     token_type_T  type;
     token_value_T value;
 } token_T;

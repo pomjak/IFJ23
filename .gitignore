@@ -58,6 +58,7 @@ dkms.conf
 # End of https://www.toptal.com/developers/gitignore/api/c
 
 .vscode
+.clang-format
 ifj23.code-workspace
 
 build
