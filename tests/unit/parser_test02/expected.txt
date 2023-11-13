@@ -3,3 +3,15 @@ param_list
 func_ret_type
 func_body
 prog
+param_list
+func_ret_type
+type
+nilable
+func_body
+prog
+param_list
+func_ret_type
+type
+nilable
+func_body
+prog
