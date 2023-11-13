@@ -3,6 +3,8 @@ NAME=test
 
 build:
 	@echo "----------------------------------------"
+	@echo "             PARSER TESTS               "
+	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test parser 1"
 	$(CC) *.c -o $(NAME) -D RULEDEBUG 
 run: build
