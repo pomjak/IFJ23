@@ -1,0 +1,6 @@
+prog
+stmt
+define
+var_def_cont
+opt_assign
+prog
