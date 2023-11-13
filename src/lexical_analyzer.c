@@ -436,8 +436,8 @@ state_T eof(char read) {
     DEBUG_PRINT("read char is %c", read);
 
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
-    set_eol = false;
+    actual_token.preceding_eol = set_eol ? true : false;//set eol flag if eol was found before token
+    set_eol = false;   
     actual_token.type = TOKEN_EOF;
 
     NEXT_STATE(NULL);   

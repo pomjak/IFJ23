@@ -76,7 +76,7 @@ typedef union
  */
 typedef struct
 {
-    bool preceding_eol;
+    bool preceding_eol;//flag that signs preceding eol before processed token 
     token_type_T  type;
     token_value_T value;
 } token_T;
