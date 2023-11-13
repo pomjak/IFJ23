@@ -4,6 +4,8 @@ VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s
 
 build:
 	@echo "----------------------------------------"
+	@echo "		scope"
+	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test scope 1"
 	$(CC) *.c -o $(NAME)
 
