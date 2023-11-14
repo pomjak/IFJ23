@@ -282,6 +282,8 @@ Rule cond_clause(Parser* p) {
      // expressions
         return EXIT_SUCCESS;
     }
+
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -317,6 +319,7 @@ Rule arg_next(Parser* p) {
     case TOKEN_R_PAR: return EXIT_SUCCESS;
     default: print_error(ERR_SYNTAX, "Unexpected token, comma or ) expected"); return ERR_SYNTAX;
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -334,6 +337,7 @@ Rule arg(Parser* p) {
     else {
         NEXT_RULE(literal);
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -448,6 +452,7 @@ Rule func_body(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(func_body);
     }
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -561,9 +566,8 @@ Rule opt_type(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(type);
     }
-    else {
-        return EXIT_SUCCESS;
-    }
+    /* Token was not a color -> eps so return without loadnig any more tokens */
+    return EXIT_SUCCESS;
 }
 
 /**
