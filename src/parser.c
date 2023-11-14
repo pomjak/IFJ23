@@ -449,7 +449,7 @@ Rule block_body(Parser* p) {
     }
     else {
         NEXT_RULE(stmt);
-        GET_TOKEN();
+        // GET_TOKEN();
         NEXT_RULE(block_body);
     }
     return EXIT_SUCCESS;
@@ -585,7 +585,7 @@ Rule opt_type(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(type);
     }
-    /* Token was not a color -> eps so return without loadnig any more tokens */
+    /* Token was not a colon -> eps so return without loadnig any more tokens */
     return EXIT_SUCCESS;
 }
 
@@ -603,15 +603,18 @@ Rule type(Parser* p) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
                 set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, integer, &err);
+                set_param_nil(&p->global_symtab, &p->last_func_id->name, &p->tmp, p->curr_tok.value.is_nilable, &err);
             }
             else {
                 DEBUG_PRINT("Set function return type");
                 set_return_type(&p->global_symtab, &p->last_func_id->name, integer, &err);
+                set_nillable(&p->global_symtab, &p->last_func_id->name, p->curr_tok.value.is_nilable, &err);
             }
         }
         else {
             DEBUG_PRINT("Set var type");
             p->current_id->type = integer;
+            p->current_id->is_nillable = p->curr_tok.value.is_nilable;
         }
         GET_TOKEN();
         break;
@@ -622,13 +625,16 @@ Rule type(Parser* p) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
                 set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, double_, &err);
+                set_param_nil(&p->global_symtab, &p->last_func_id->name, &p->tmp, p->curr_tok.value.is_nilable, &err);
             }
             else {
                 set_return_type(&p->global_symtab, &p->last_func_id->name, double_, &err);
+                set_nillable(&p->global_symtab, &p->last_func_id->name, p->curr_tok.value.is_nilable, &err);
             }
         }
         else {
             p->current_id->type = double_;
+            p->current_id->is_nillable = p->curr_tok.value.is_nilable;
         }
         GET_TOKEN();
         break;
@@ -639,17 +645,21 @@ Rule type(Parser* p) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
                 set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, string, &err);
+                set_param_nil(&p->global_symtab, &p->last_func_id->name, &p->tmp, p->curr_tok.value.is_nilable, &err);
+
             }
             else {
                 set_return_type(&p->global_symtab, &p->last_func_id->name, string, &err);
+                set_nillable(&p->global_symtab, &p->last_func_id->name, p->curr_tok.value.is_nilable, &err);
             }
         }
         else {
             p->current_id->type = string;
+            p->current_id->is_nillable = p->curr_tok.value.is_nilable;
         }
         GET_TOKEN();
         break;
-    default: 
+    default:
         fprintf(stderr, "[ERROR %d] Type specifier expected\n", ERR_SYNTAX);
         return ERR_SYNTAX;
     }
