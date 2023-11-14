@@ -1,0 +1,7 @@
+let aaa : Int
+if let aaa {
+    var bbb : String?
+}
+else {
+    let ccc : Double
+}
