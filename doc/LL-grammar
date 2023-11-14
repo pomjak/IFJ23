@@ -21,8 +21,7 @@ funcstmt: "var" def | "let" def | "ID" exprtype | "while" "EXP" "{" funcbody | "
 funcrettype: "-"">" type | /*eps*/;
 optret: "EXP" | /*eps*/;
 opttype: ":" type | /*eps*/;
-type: "Int"nilable | "String"nilable | "Double"nilable;
-nilable: "?" | /*eps*/;
+type: "Int" | "String" | "Double";
 optarg: ":" term | /*eps*/;
 term: "ID" | literal;
 literal: "INT_LIT" | "STRING_LIT" | "DOUBLE_LIT";

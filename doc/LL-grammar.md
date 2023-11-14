@@ -46,11 +46,9 @@
    |         *opt-ret* |  ->   | **ε**                                                                          |
    |        *opt-type* |  ->   | **:** *type*                                                                   |
    |        *opt-type* |  ->   | **ε**                                                                          |
-   |            *type* |  ->   | **Int***nilable*                                                               |
-   |            *type* |  ->   | **Double***nilable*                                                            |
-   |            *type* |  ->   | **String***nilable*                                                            |
-   |         *nilable* |  ->   | **?**                                                                          |
-   |         *nilable* |  ->   | **ε**                                                                          |
+   |            *type* |  ->   | **Int**                                                                        |
+   |            *type* |  ->   | **Double**                                                                     |
+   |            *type* |  ->   | **String**                                                                     |
    |         *opt-arg* |  ->   | **:** *term*                                                                   |
    |         *opt-arg* |  ->   | **ε**                                                                          |
    |            *term* |  ->   | **ID**                                                                         |
