@@ -123,7 +123,11 @@ Rule stmt(Parser* p) {
         GET_TOKEN();
         p->in_cond = false; // condition should be fully parsed by the time we're exiting the switch statement
         break;
-    default: print_error(ERR_SYNTAX, "Unexpected token, var/let/while/if/identifier expected"); return ERR_SYNTAX;
+    default:
+        fprintf(stderr, "[ERROR %d] Unexpected token, var/let/while/if/identifier expected", ERR_SYNTAX
+
+        );
+        return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -137,7 +141,7 @@ Rule define(Parser* p) {
     DEBUG_PRINT("%s", p->curr_tok.value.string_val.str);
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-    if (p->in_cond || p->in_loop || p->in_function) {
+    if (p->in_cond || p->in_loop || p->in_declaration) {
         /* search local */
         DEBUG_PRINT("before search scopes");
         p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
@@ -149,6 +153,7 @@ Rule define(Parser* p) {
         symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
         /* TODO switch for symtable error */
         p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
+        DEBUG_PRINT("%s inserted to local symtab", p->current_id->name.str);
         /* TODO ERR CHECK */
     }
     else {
@@ -159,10 +164,7 @@ Rule define(Parser* p) {
             return ERR_UNDEFINED_FUNCTION;
         }
 
-        DEBUG_PRINT("before global insert");
         symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
-        DEBUG_PRINT("after global insert");
-        /* TOTO symtable error check */
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
 
@@ -188,7 +190,9 @@ Rule var_def_cont(Parser* p) {
     case TOKEN_ASS:
         //  EXP
         break;
-    default: print_error(ERR_SYNTAX, "Unexpected token, : or = expected"); return ERR_SYNTAX;
+    default:
+        fprintf(stderr, "[ERROR %d] Unexpected token after variable identifier", ERR_SYNTAX);
+        return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -203,10 +207,7 @@ Rule opt_assign(Parser* p) {
     if (p->curr_tok.type == TOKEN_ASS) {
         // TODO expressions
     }
-    else {
-        return EXIT_SUCCESS;
-    }
-
+    /* epsilon */
     return EXIT_SUCCESS;
 }
 
@@ -243,7 +244,9 @@ Rule expr_type(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(arg_list);
         break;
-    default: print_error(ERR_SYNTAX, "Unexpected token, = or (  expected"); return ERR_SYNTAX;
+    default:
+        fprintf(stderr, "[ERROR %d]Unexpected token after identifier, assignment or argument list expected", ERR_SYNTAX);
+        return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -292,7 +295,7 @@ Rule cond_clause(Parser* p) {
         return EXIT_SUCCESS;
     }
 
-    // return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
 /**
@@ -602,15 +605,15 @@ Rule type(Parser* p) {
                 set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, integer, &err);
             }
             else {
+                DEBUG_PRINT("Set function return type");
                 set_return_type(&p->global_symtab, &p->last_func_id->name, integer, &err);
             }
         }
         else {
+            DEBUG_PRINT("Set var type");
             p->current_id->type = integer;
         }
         GET_TOKEN();
-        DEBUG_PRINT("GET_TOKEN, goto nilable");
-        NEXT_RULE(nilable);
         break;
 
     case TOKEN_DT_DOUBLE:
@@ -628,8 +631,6 @@ Rule type(Parser* p) {
             p->current_id->type = double_;
         }
         GET_TOKEN();
-        DEBUG_PRINT("GET_TOKEN, goto nilable");
-        NEXT_RULE(nilable);
         break;
 
     case TOKEN_DT_STRING:
@@ -647,32 +648,10 @@ Rule type(Parser* p) {
             p->current_id->type = string;
         }
         GET_TOKEN();
-        DEBUG_PRINT("GET_TOKEN, goto nilable");
-        NEXT_RULE(nilable);
         break;
-    default: return ERR_SYNTAX;
-    }
-    return EXIT_SUCCESS;
-}
-
-/**
- * @brief <nilable> -> ? | eps
- */
-Rule nilable(Parser* p) {
-    RULE_PRINT("nilable");
-    uint32_t res, err;
-
-    if (p->curr_tok.type == TOKEN_NIL_CHECK) {
-        DEBUG_PRINT("Nil Check");
-        if (p->in_declaration && p->in_param) {
-            DEBUG_PRINT("Set param nilable");
-            set_param_nil(&p->global_symtab, &p->last_func_id->name, &p->tmp, true, &err);
-        }
-        else {
-            DEBUG_PRINT("Setting nillable for %s", p->current_id->name.str);
-            p->current_id->is_nillable = true;
-        }
-        GET_TOKEN();
+    default: 
+        fprintf(stderr, "[ERROR %d] Type specifier expected\n", ERR_SYNTAX);
+        return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -798,8 +777,7 @@ bool add_builtins(Parser* p) {
     // length(_ s: String) -> Int
     SET_BUILTIN("length", integer, false);
     ADD_BUILTIN_PARAM("_", "s", string, false);
-    // substring(of s: String, startingAt i : Int, endingBefore j : Int) ->
-    // String?
+    // substring(of s: String, startingAt i : Int, endingBefore j : Int) -> String?
     SET_BUILTIN("substring", string, true);
     ADD_BUILTIN_PARAM("of", "s", string, false);
     ADD_BUILTIN_PARAM("startingAt", "i", integer, false);

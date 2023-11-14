@@ -112,7 +112,6 @@ Rule func_ret_type(Parser* p);
 Rule opt_ret(Parser* p);
 Rule opt_type(Parser* p);
 Rule type(Parser* p);
-Rule nilable(Parser* p);
 Rule opt_arg(Parser* p);
 Rule term(Parser* p);
 Rule literal(Parser* p);
