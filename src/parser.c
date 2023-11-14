@@ -108,7 +108,7 @@ Rule stmt(Parser* p) {
         p->in_cond = true;
         GET_TOKEN();
         NEXT_RULE(cond_clause);
-
+        DEBUG_PRINT("cond_clause finished");
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
@@ -117,8 +117,10 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
+        DEBUG_PRINT("{ start of body");
         GET_TOKEN();
         NEXT_RULE(block_body);
+        GET_TOKEN();
         p->in_cond = false; // condition should be fully parsed by the time we're exiting the switch statement
         break;
     default: print_error(ERR_SYNTAX, "Unexpected token, var/let/while/if/identifier expected"); return ERR_SYNTAX;
@@ -269,14 +271,13 @@ Rule cond_clause(Parser* p) {
         if (!p->current_id) {
             DEBUG_PRINT("searching global scope");
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
-            DEBUG_PRINT("global: %s", p->current_id->name.str);
         }
         if (!p->current_id) {
-            DEBUG_PRINT("Control variable not found");
+            fprintf(stderr, "[ERROR %d] Constant %s undefined\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
             return ERR_UNDEFINED_VARIABLE;
         }
-        /* Add a local scope for the body of the if statement */ 
-        add_scope(&p->stack, &err); 
+        /* Add a local scope for the body of the if statement */
+        add_scope(&p->stack, &err);
         DEBUG_PRINT("Local scope for if created");
         /* And insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
@@ -291,7 +292,7 @@ Rule cond_clause(Parser* p) {
         return EXIT_SUCCESS;
     }
 
-    return EXIT_SUCCESS;
+    // return EXIT_SUCCESS;
 }
 
 /**
@@ -325,7 +326,9 @@ Rule arg_next(Parser* p) {
         NEXT_RULE(arg_next);
         break;
     case TOKEN_R_PAR: return EXIT_SUCCESS;
-    default: print_error(ERR_SYNTAX, "Unexpected token, comma or ) expected"); return ERR_SYNTAX;
+    default:
+        fprintf(stderr, "[ERROR %d] Unexpected token in parameters\n", ERR_SYNTAX);
+        return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -380,7 +383,9 @@ Rule param_next(Parser* p) {
         // GET_TOKEN();
         NEXT_RULE(param_next);
         break;
-    default: print_error(ERR_SYNTAX, "Unexpected Token ')' or ',' expected"); return ERR_SYNTAX;
+    default:
+        fprintf(stderr, "[ERROR %d] Unexpected token in parameters\n", ERR_SYNTAX);
+        return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -403,7 +408,9 @@ Rule param(Parser* p) {
         dstring_copy(&p->curr_tok.value.string_val, &p->tmp);
 
         break;
-    default: print_error(ERR_SYNTAX, "Unexpected token, identifier or _ expected"); return ERR_SYNTAX;
+    default:
+        fprintf(stderr, "[ERROR %d] Parameter label expected\n", ERR_SYNTAX);
+        return ERR_SYNTAX;
     }
     GET_TOKEN();
     DEBUG_PRINT("GET_TOKEN, ID expected");
@@ -430,10 +437,11 @@ Rule param(Parser* p) {
  * @brief <blk_body> -> <stmt> <blk_body> | }
  */
 Rule block_body(Parser* p) {
-    RULE_PRINT("blocK_body");
+    RULE_PRINT("block_body");
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
+        DEBUG_PRINT("block_body end }");
         return EXIT_SUCCESS;
     }
     else {
@@ -661,6 +669,7 @@ Rule nilable(Parser* p) {
             set_param_nil(&p->global_symtab, &p->last_func_id->name, &p->tmp, true, &err);
         }
         else {
+            DEBUG_PRINT("Setting nillable for %s", p->current_id->name.str);
             p->current_id->is_nillable = true;
         }
         GET_TOKEN();
@@ -822,13 +831,13 @@ uint32_t parse() {
 
     /* Initialize Parser structure */
     if (!parser_init(&p)) {
-        print_error(ERR_INTERNAL, "Error occured while initializing parser data");
+        fprintf(stderr, "[ERROR %d] Initializing parser data failed\n", ERR_INTERNAL);
         return ERR_INTERNAL;
     }
     /* Add builtin functions to the global symtable */
     if (!add_builtins(&p)) {
         parser_dispose(&p);
-        print_error(ERR_INTERNAL, "Error occured while adding builtin functions");
+        fprintf(stderr, "[ERROR %d] adding builtin functions failed\n", ERR_INTERNAL);
         return ERR_INTERNAL;
     }
 
