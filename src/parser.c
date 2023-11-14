@@ -80,8 +80,8 @@ Rule stmt(Parser* p) {
         p->current_id->is_mutable = false;
         break;
     case TOKEN_IDENTIFIER: /* ID<expression_type> */
-        if (peek_scope(p->local_symtab)) {
-            p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+        if (peek_scope(p->stack)) {
+            p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
         else {
             p->current_id = NULL;
@@ -138,15 +138,15 @@ Rule define(Parser* p) {
     if (p->in_cond || p->in_loop || p->in_function) {
         /* search local */
         DEBUG_PRINT("before search scopes");
-        p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+        p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         DEBUG_PRINT("after search scopes");
         if (p->current_id) {
             return ERR_UNDEFINED_FUNCTION;
         }
         /* Add symbol to local symtable */
-        symtable_insert(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
+        symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
         /* TODO switch for symtable error */
-        p->current_id = symtable_search(p->local_symtab->local_sym, &p->curr_tok.value.string_val, &err);
+        p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
         /* TODO ERR CHECK */
     }
     else {
@@ -257,8 +257,8 @@ Rule cond_clause(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
 
-        if (peek_scope(p->local_symtab)) {
-            p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+        if (peek_scope(p->stack)) {
+            p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
         else {
             p->current_id = NULL;
@@ -271,11 +271,11 @@ Rule cond_clause(Parser* p) {
             return ERR_UNDEFINED_VARIABLE;
         }
 
-        symtable_insert(p->local_symtab->local_sym, &p->current_id->name, &err);
+        symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
 
-        set_nillable(p->local_symtab->local_sym, &p->current_id->name, false, &err);
-        set_type(p->local_symtab->local_sym, &p->current_id->name, p->current_id->type, &err);
-        set_mutability(p->local_symtab->local_sym, &p->current_id->name, false, &err);
+        set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
+        set_type(p->stack->local_sym, &p->current_id->name, p->current_id->type, &err);
+        set_mutability(p->stack->local_sym, &p->current_id->name, false, &err);
 
     }
     else {
@@ -440,7 +440,7 @@ Rule func_body(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
-        pop_scope(&p->local_symtab, &err);
+        pop_scope(&p->stack, &err);
         return EXIT_SUCCESS;
     }
     else {
@@ -474,8 +474,8 @@ Rule func_stmt(Parser* p) {
         p->current_id->is_mutable = false;
         break;
     case TOKEN_IDENTIFIER:
-        if (peek_scope(p->local_symtab)) {
-            p->current_id = search_scopes(p->local_symtab, &p->curr_tok.value.string_val, &err);
+        if (peek_scope(p->stack)) {
+            p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
         else {
             p->current_id = NULL;
@@ -497,7 +497,7 @@ Rule func_stmt(Parser* p) {
         break;
     case TOKEN_IF:
         p->in_cond = true;
-        add_scope(&p->local_symtab, &err);
+        add_scope(&p->stack, &err);
 
         GET_TOKEN();
         NEXT_RULE(cond_clause);
@@ -514,7 +514,7 @@ Rule func_stmt(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
-        add_scope(&p->local_symtab, &err);
+        add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
         p->in_cond = false;
         break;
@@ -722,7 +722,7 @@ bool parser_init(Parser* p) {
     }
 
     /* Scope (stack of local symbol tables) initialization */
-    init_scope(&p->local_symtab);
+    init_scope(&p->stack);
     dstring_init(&p->tmp);
     p->current_id = NULL;
     p->last_func_id = NULL;
@@ -742,7 +742,7 @@ void parser_dispose(Parser* p) {
     uint32_t err;
     dstring_free(&p->tmp);
     symtable_dispose(&p->global_symtab);
-    dispose_scope(&p->local_symtab, &err);
+    dispose_scope(&p->stack, &err);
 }
 
 /**

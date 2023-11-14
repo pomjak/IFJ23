@@ -27,7 +27,7 @@ typedef struct parser_t {
     symtab_item_t* current_id;   // Identifier of currently processed function
     symtab_item_t* last_func_id; // Identifier of the last loaded function
     symtab_t global_symtab;      // Global symbol table
-    scope_t local_symtab;        // Local symbol table
+    scope_t stack;               // Stack of local symbol tables, HEAD = current scope
     dstring_t tmp;               // Temporary helper string
 } Parser;
 
