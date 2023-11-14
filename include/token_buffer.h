@@ -19,15 +19,15 @@ typedef struct token_buffer_node {
 
 
 /**
- * @brief 
- * @param head Last element in buffer
+ * @brief Initialize the token buffer linked list
+ * @param head Top of the list
  */
 void token_buffer_init(token_buffer_t* head);
 
 /**
  * @brief Add a new token to buffer
  * 
- * @param head Last element in buffer
+ * @param head Top of the list
  * @param token Added token
  */
 void token_buffer_add(token_buffer_t* head, token_T token);
@@ -35,21 +35,21 @@ void token_buffer_add(token_buffer_t* head, token_T token);
 /**
  * @brief Remove last element from buffer
  * 
- * @param head Last element in buffer
+ * @param head Top of the list
  */
 void token_buffer_pop(token_buffer_t* head);
 
 /**
  * @brief Dispose of the contents in buffer
  * 
- * @param head Last element in buffer
+ * @param head Top of the list
  */
 void token_buffer_dispose(token_buffer_t* head);
 
 /**
  * @brief Check if buffer is safe to use (not empty) 
  *
- * @param head 
+ * @param head Top of the list
  * @return true if not empty
  * @return false if empty
  */
