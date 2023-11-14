@@ -254,10 +254,12 @@ Rule cond_clause(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_LET) {
+        DEBUG_PRINT("Before getting ID tok");
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-
+        DEBUG_PRINT("if let %s ", p->curr_tok.value.string_val.str);
         if (peek_scope(p->stack)) {
+            DEBUG_PRINT("searching local scopes");
             p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
         else {
@@ -265,17 +267,23 @@ Rule cond_clause(Parser* p) {
         }
         /* item wasn't found in any of the local scopes so we search global symtable */
         if (!p->current_id) {
+            DEBUG_PRINT("searching global scope");
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+            DEBUG_PRINT("global: %s", p->current_id->name.str);
         }
         if (!p->current_id) {
+            DEBUG_PRINT("Control variable not found");
             return ERR_UNDEFINED_VARIABLE;
         }
-
+        /* Add a local scope for the body of the if statement */ 
+        add_scope(&p->stack, &err); 
+        DEBUG_PRINT("Local scope for if created");
+        /* And insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
-
         set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
         set_type(p->stack->local_sym, &p->current_id->name, p->current_id->type, &err);
         set_mutability(p->stack->local_sym, &p->current_id->name, false, &err);
+        DEBUG_PRINT("%s inserted into local if scope", p->current_id->name.str);
 
     }
     else {
