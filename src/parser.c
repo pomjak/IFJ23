@@ -734,6 +734,10 @@ bool parser_init(Parser* p) {
     /* Scope (stack of local symbol tables) initialization */
     init_scope(&p->stack);
     dstring_init(&p->tmp);
+
+    /* Initialize token buffer */
+    tb_init(&p->buffer);
+
     p->current_id = NULL;
     p->last_func_id = NULL;
     p->in_cond = false;
@@ -753,6 +757,7 @@ void parser_dispose(Parser* p) {
     dstring_free(&p->tmp);
     symtable_dispose(&p->global_symtab);
     dispose_scope(&p->stack, &err);
+    tb_dispose(&p->buffer);
 }
 
 /**

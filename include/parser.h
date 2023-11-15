@@ -13,6 +13,7 @@
 #include "lexical_analyzer.h"
 #include "scope.h"
 #include "symtable.h"
+#include "token_buffer.h"
 
 /**
  * Structure containing the current state of the parser
@@ -29,6 +30,7 @@ typedef struct parser_t {
     symtab_t global_symtab;      // Global symbol table
     scope_t stack;               // Stack of local symbol tables, HEAD = current scope
     dstring_t tmp;               // Temporary helper string
+    token_buffer_t buffer;
 } Parser;
 
 /* ============================================| MACROS |============================================================ */
