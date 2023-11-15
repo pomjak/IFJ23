@@ -77,8 +77,9 @@ typedef struct parser_t {
 
 /* Load the next token or return an error code */
 #define GET_TOKEN()                                                                                                    \
-    if ((res = get_token(&p->curr_tok)) != ERR_NO_ERR)                                                                 \
-    return res
+    p->curr_tok = tb_get_token(&p->buffer.runner);                                                                     \
+    if((p->curr_tok.type == TOKEN_UNDEFINED) && (p->curr_tok.value.int_val == 0))                                      \
+        return ERR_INTERNAL
 
 /* Check if last loaded token is the correct type */
 #define ASSERT_TOK_TYPE(_type)                                                                                         \
@@ -117,6 +118,8 @@ Rule type(Parser* p);
 Rule opt_arg(Parser* p);
 Rule term(Parser* p);
 Rule literal(Parser* p);
+Rule func_decl(Parser* p);
+Rule skip(Parser* p);
 
 bool parser_init(Parser* p);
 bool add_builtins(Parser* p);

@@ -18,42 +18,12 @@ Rule prog(Parser* p) {
     RULE_PRINT("prog");
     uint32_t res, err;
 
-    switch (p->curr_tok.type) {
-    case TOKEN_EOF: break;
-    case TOKEN_FUNC:
-        p->in_declaration = true;
-        GET_TOKEN();
-        ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-
-        symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
-        if (err == SYMTAB_ERR_ITEM_ALREADY_STORED) {
-            print_error(ERR_SEMANTIC, "Function already declared");
-            return ERR_SEMANTIC;
-        }
-        p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
-        p->last_func_id->type = function;
-        GET_TOKEN();
-        ASSERT_TOK_TYPE(TOKEN_L_PAR);
-        GET_TOKEN();
-        NEXT_RULE(param_list);
-
-        GET_TOKEN();
-        NEXT_RULE(func_ret_type);
-        /* Don't have to get the next token here, after checking the return type, <nilable> is called and loads a new token either way */
-        ASSERT_TOK_TYPE(TOKEN_L_BKT);
-        GET_TOKEN();
-        NEXT_RULE(func_body);
-
-        p->in_declaration = false;
-        GET_TOKEN();
-        NEXT_RULE(prog);
-        break;
-    default:
-        NEXT_RULE(stmt);
-        // GET_TOKEN();
-        NEXT_RULE(prog);
-        break;
+    if (p->curr_tok.type == TOKEN_EOF) {
+        return EXIT_SUCCESS;
     }
+    NEXT_RULE(stmt);
+    // GET_TOKEN();
+    NEXT_RULE(prog);
     return EXIT_SUCCESS;
 }
 
@@ -714,6 +684,47 @@ Rule literal(Parser* p) {
     return EXIT_SUCCESS;
 }
 
+Rule func_decl(Parser* p) {
+    RULE_PRINT("func_decl");
+    uint32_t res, err;
+
+    p->in_declaration = true;
+    GET_TOKEN();
+    ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
+
+    symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+    if (err == SYMTAB_ERR_ITEM_ALREADY_STORED) {
+        print_error(ERR_SEMANTIC, "Function already declared");
+        return ERR_SEMANTIC;
+    }
+    p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+    p->last_func_id->type = function;
+    GET_TOKEN();
+    ASSERT_TOK_TYPE(TOKEN_L_PAR);
+    GET_TOKEN();
+    NEXT_RULE(param_list);
+
+    GET_TOKEN();
+    NEXT_RULE(func_ret_type);
+    /* Don't have to get the next token here, after checking the return type, <nilable> is called and loads a new token either way */
+    ASSERT_TOK_TYPE(TOKEN_L_BKT);
+    GET_TOKEN();
+    NEXT_RULE(func_body);
+    p->in_declaration = false;
+    return EXIT_SUCCESS;
+}
+
+Rule skip(Parser* p) {
+    uint32_t res;
+    if (p->curr_tok.type == TOKEN_EOF) {
+        return EXIT_SUCCESS;
+    }
+    if (p->curr_tok.type == TOKEN_FUNC) {
+        NEXT_RULE(func_decl);
+    }
+    NEXT_RULE(skip);
+}
+
 /* ======================================================== */
 
 /**
@@ -815,7 +826,7 @@ bool add_builtins(Parser* p) {
 
 /**
  * @brief Loads all tokens from input and fills out the token buffer with them
- * 
+ *
  * @param p Parser structure
  * @return int relevant return code
  */
@@ -861,7 +872,7 @@ uint32_t parse() {
     }
     /* Get the first token */
     p.curr_tok = tb_get_token(&p.buffer.runner);
-    if(p.curr_tok.type == TOKEN_UNDEFINED) 
+    if (p.curr_tok.type == TOKEN_UNDEFINED)
         return ERR_INTERNAL;
 
     /* Start recursive descend */
