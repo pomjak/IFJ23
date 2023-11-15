@@ -10,11 +10,11 @@
 
 #include "token_buffer.h"
 
-void token_buffer_init(token_buffer_t* head) {
+void tb_init(token_buffer_t* head) {
     *head = NULL;
 }
 
-int token_buffer_push(token_buffer_t* head, token_T token) {
+int tb_push(token_buffer_t* head, token_T token) {
 
     token_buffer_t new_node = (token_buffer_t)malloc(sizeof(struct token_buffer_node));
     if (new_node == NULL) {
@@ -37,9 +37,9 @@ int token_buffer_push(token_buffer_t* head, token_T token) {
     return EXIT_SUCCESS;
 }
 
-void token_buffer_pop(token_buffer_t* head) {
+void tb_pop(token_buffer_t* head) {
 
-    if (token_buffer_peek(*head)) {
+    if (tb_peek(*head)) {
         token_buffer_t current = *head;
         *head = current->next;
         free(current);
@@ -49,11 +49,11 @@ void token_buffer_pop(token_buffer_t* head) {
 
 void token_buffer_dispose(token_buffer_t* head) {
 
-    while (token_buffer_peek(*head)) {
-        token_buffer_pop(head);
+    while (tb_peek(*head)) {
+        tb_pop(head);
     }
 }
 
-bool token_buffer_peek(token_buffer_t head) {
+bool tb_peek(token_buffer_t head) {
     return (head != NULL);
 }

@@ -12,13 +12,13 @@
 int main()
 {
     token_buffer_t buffer;
-    token_buffer_init(&buffer);
+    tb_init(&buffer);
     token_T token;
     int result;
     result = get_token(&token);
     assert(result == 0);
-    assert(token_buffer_push(&buffer, token) == 0);
-    token_buffer_dispose(&buffer);
+    assert(tb_push(&buffer, token) == 0);
+    tb_dispose(&buffer);
     
     return 0;
 }
