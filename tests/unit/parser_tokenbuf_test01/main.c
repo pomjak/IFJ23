@@ -24,8 +24,8 @@ int main()
             tb_dispose(&buffer);
             return 1;
         }
-        tb_push(&buffer, token);
-        tmp = tb_get_token(&buffer);
+        tb_push(&buffer.runner, token);
+        tmp = tb_get_token(&buffer.runner);
         print_token(tmp);
         if(tmp.type == TOKEN_STRING || tmp.type == TOKEN_IDENTIFIER) {
             dstring_free(&tmp.value.string_val);
