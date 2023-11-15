@@ -7,17 +7,14 @@ build:
 	@echo "			  Token Buffer				   "
 	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test token buffer 1"
-	$(CC) *.c -o $(NAME)
+	$(CC) *.c -o $(NAME) 
 
 run: build
+
 	@echo "[info] performing test token buffer 1"
-	
-	if ./$(NAME) < ./input.txt > ./output.txt 2>&1; then \
-        echo -e "[info] test token buffer 1 \e[32mPASS\e[0m"; \
-    else \
-        echo -e "[info] test token buffer 1 \e[31mFAIL\e[0m"; \
-		exit 1;\
-    fi
+	./$(NAME) < ./input.txt > ./output.txt 2>&1
+	diff ./expected.txt ./output.txt || (echo -e "[info] test token buffer 1 \e[31mFAIL\e[0m" && exit 1)
+	echo -e "[info] test token buffer 1 \e[32mPASS\e[0m"
 
 	@echo "[info] performing valgrind check token buffer 1"
 
