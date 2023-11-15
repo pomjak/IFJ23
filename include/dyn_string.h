@@ -10,6 +10,9 @@
 #ifndef DYN_STRING_H
 #define DYN_STRING_H
 
+#include "error.h"
+#include "debug.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>

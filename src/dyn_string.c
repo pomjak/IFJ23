@@ -6,9 +6,8 @@
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
  * @date 06.10.2023
  **/
-#include "dyn_string.h"
-#include "error.h"
 
+#include "dyn_string.h"
 
 void dstring_clear(dstring_t *dstring) {
 
@@ -21,7 +20,8 @@ void dstring_clear(dstring_t *dstring) {
 bool dstring_init(dstring_t *dstring) {
 
     if(!(dstring->str = (char *)malloc(sizeof(char)*DSTR_ALLOC_SIZE))) {
-        print_error(ERR_INTERNAL, "dyn_string: dstring_init: Dynamic string allocation failed.\n");
+        fprintf(stderr,"dyn_string: dstring_init: Dynamic string allocation failed.\n");
+        free(dstring->str);
         return false;
     }
     dstring->alloc_size = DSTR_ALLOC_SIZE;
@@ -46,7 +46,8 @@ bool dstring_append(dstring_t *dstring, char c) {
         dstring->str = (char *) realloc(dstring->str, (dstring->length+DSTR_ALLOC_SIZE)*sizeof(char));
 
         if(!(dstring->str)) {
-            print_error(ERR_INTERNAL, "dyn_string: dstring_append: realloc failed.\n");
+            fprintf(stderr, "dyn_string: dstring_append: realloc failed.\n");
+            free(dstring->str);
             return false;
         }
         dstring->alloc_size = dstring->length + DSTR_ALLOC_SIZE;
