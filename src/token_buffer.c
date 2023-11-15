@@ -9,6 +9,7 @@
  */
 
 #include "token_buffer.h"
+#include <stdio.h>
 
 void tb_init(token_buffer_t* head) {
     *head = NULL;
@@ -42,12 +43,14 @@ void tb_pop(token_buffer_t* head) {
     if (tb_peek(*head)) {
         token_buffer_t current = *head;
         *head = current->next;
+        if(current->token.type == TOKEN_STRING || current->token.type == TOKEN_IDENTIFIER)
+            dstring_free(&current->token.value.string_val);
         free(current);
     }
 
 }
 
-void token_buffer_dispose(token_buffer_t* head) {
+void tb_dispose(token_buffer_t* head) {
 
     while (tb_peek(*head)) {
         tb_pop(head);
@@ -56,4 +59,34 @@ void token_buffer_dispose(token_buffer_t* head) {
 
 bool tb_peek(token_buffer_t head) {
     return (head != NULL);
+}
+
+token_T tb_get_token(token_buffer_t* head) {
+
+    if (!tb_peek(*head)) {
+        WARNING_PRINT("empty buffer");
+        token_T err_token;
+        err_token.type = TOKEN_UNDEFINED;
+        err_token.value.int_val = 0;
+        err_token.preceding_eol = false;
+        return err_token;
+    }
+    token_buffer_t current = *head;
+    token_T curr_token = current->token;
+
+    *head = current->next;
+    DEBUG_PRINT("free(current)");
+    free(current);
+
+    
+    return curr_token;
+}
+
+void tb_print_token_type(token_buffer_t head) {
+    token_buffer_t current = head;
+
+    while(current != NULL) {
+        fprintf(stderr, "token: %d\n", current->token.type);
+        current = current->next;
+    }
 }
