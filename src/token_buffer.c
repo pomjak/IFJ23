@@ -76,8 +76,6 @@ token_T tb_get_token(token_buffer_node_t* head) {
     token_T curr_token = current->token;
 
     *head = current->next;
-    DEBUG_PRINT("free(current)");
-    free(current);
 
 
     return curr_token;

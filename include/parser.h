@@ -121,6 +121,7 @@ Rule literal(Parser* p);
 bool parser_init(Parser* p);
 bool add_builtins(Parser* p);
 void parser_dispose(Parser* p);
+uint32_t parser_fill_buffer(Parser* p);
 uint32_t parse();
 
 #endif

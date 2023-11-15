@@ -814,6 +814,25 @@ bool add_builtins(Parser* p) {
 }
 
 /**
+ * @brief Loads all tokens from input and fills out the token buffer with them
+ * 
+ * @param p Parser structure
+ * @return int relevant return code
+ */
+uint32_t parser_fill_buffer(Parser* p) {
+    int res;
+    do {
+        if ((res = get_token(&p->curr_tok)))
+            return res;
+        tb_push(&p->buffer.head, p->curr_tok);
+
+    } while (p->curr_tok.type != TOKEN_EOF);
+
+    p->buffer.runner = p->buffer.head;
+    return ERR_NO_ERR;
+}
+
+/**
  * @brief Parser entry point
  *
  * @return uint32 0 on success, otherwise relevant return code
@@ -834,11 +853,17 @@ uint32_t parse() {
         return ERR_INTERNAL;
     }
 
-    /* Get the first token */
-    if ((res = get_token(&p.curr_tok))) {
+    /* Load tokens from input and fill the token buffer */
+    if ((res = parser_fill_buffer(&p))) {
         parser_dispose(&p);
+        fprintf(stderr, "[ERROR %d] loading tokens to buffer failed\n", res);
         return res;
     }
+    /* Get the first token */
+    p.curr_tok = tb_get_token(&p.buffer.runner);
+    if(p.curr_tok.type == TOKEN_UNDEFINED) 
+        return ERR_INTERNAL;
+
     /* Start recursive descend */
     if ((res = prog(&p))) {
         parser_dispose(&p);
