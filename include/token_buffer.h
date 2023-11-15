@@ -25,12 +25,14 @@ typedef struct token_buffer_node {
 void token_buffer_init(token_buffer_t* head);
 
 /**
- * @brief Add a new token to buffer
+ * @brief Add a new token to the end of the buffer
  * 
  * @param head Top of the list
  * @param token Added token
+ * @return 0 on success
+ * @return 1 on failure
  */
-void token_buffer_add(token_buffer_t* head, token_T token);
+int token_buffer_push(token_buffer_t* head, token_T token);
 
 /**
  * @brief Remove last element from buffer
