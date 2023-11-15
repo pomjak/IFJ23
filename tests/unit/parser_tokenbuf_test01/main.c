@@ -18,21 +18,34 @@ int main()
     token_T token;
     token_T tmp;
     int result;
-
     do {
         if (get_token(&token)) {
+            fprintf(stderr, "get_token err");
             tb_dispose(&buffer);
             return 1;
         }
-        tb_push(&buffer.runner, token);
-        tmp = tb_get_token(&buffer.runner);
-        print_token(tmp);
-        if(tmp.type == TOKEN_STRING || tmp.type == TOKEN_IDENTIFIER) {
-            dstring_free(&tmp.value.string_val);
-        }
+        tb_push(&buffer.head, token);
+      
     } while (token.type != TOKEN_EOF);
 
-    tb_dispose(&buffer);
+    buffer.runner = buffer.head;
 
+    if(!tb_peek(buffer.head)) {
+        ERROR_PRINT("head empty");
+        return 1;
+    }
+
+    do {
+        tmp = tb_get_token(&buffer.runner);
+        if(tmp.type == TOKEN_UNDEFINED) {
+            ERROR_PRINT("token undef");
+            return 1;
+        }
+        print_token(tmp);
+
+    } while (tmp.type != TOKEN_EOF);
+    
+
+    tb_dispose(&buffer);
     return 0;
 }
