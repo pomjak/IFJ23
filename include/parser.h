@@ -77,7 +77,7 @@ typedef struct parser_t {
 
 /* Load the next token or return an error code */
 #define GET_TOKEN()                                                                                                    \
-    p->curr_tok = tb_get_token(&p->buffer.runner);                                                                     \
+    p->curr_tok = tb_get_token(&p->buffer);                                                                     \
     if((p->curr_tok.type == TOKEN_UNDEFINED) && (p->curr_tok.value.int_val == 0))                                      \
         return ERR_INTERNAL
 
