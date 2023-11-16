@@ -63,6 +63,7 @@ Rule stmt(Parser* p) {
         if (!p->current_id) {
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         }
+        tb_pop(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(expr_type);
         break;
@@ -79,20 +80,33 @@ Rule stmt(Parser* p) {
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
         p->in_cond = true;
+        tb_pop(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
         DEBUG_PRINT("cond_clause finished");
+
+        tb_pop(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
+
+        tb_pop(&p->buffer); 
         GET_TOKEN();
         NEXT_RULE(block_body);
+
+        tb_pop(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
+
+        tb_pop(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         DEBUG_PRINT("{ start of body");
+
+        tb_pop(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(block_body);
+
+        tb_pop(&p->buffer);
         GET_TOKEN();
         p->in_cond = false; // condition should be fully parsed by the time we're exiting the switch statement
         break;

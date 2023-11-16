@@ -78,6 +78,6 @@ int main()
         print_token(tmp);
 
     } while (tmp.type != TOKEN_EOF);
-    // tb_dispose(&buffer);
+    tb_pop(&buffer);
     return 0;
 }
