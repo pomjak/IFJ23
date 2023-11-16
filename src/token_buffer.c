@@ -16,7 +16,7 @@ void tb_init(token_buffer_t* buffer) {
     buffer->runner = buffer->head;
 }
 
-int tb_push(token_buffer_node_t* head, token_T token) {
+int tb_push(token_buffer_t* buffer, token_T token) {
 
     token_buffer_node_t new_node = (token_buffer_node_t)malloc(sizeof(struct token_buffer_node));
     if (new_node == NULL) {
@@ -25,25 +25,38 @@ int tb_push(token_buffer_node_t* head, token_T token) {
     new_node->token = token;
     new_node->next = NULL;
 
-    if (*head == NULL) {
-        *head = new_node;
+    /* Add first element to an empty list */
+    if (tb_peek(buffer)) {
+        buffer->head = new_node;
+        new_node->prev = NULL;
+        buffer->runner = buffer->head;
     }
     else {
-        token_buffer_node_t current = *head;
+        token_buffer_node_t current = buffer->runner;
         while (current->next != NULL) {
             current = current->next;
         }
         current->next = new_node;
+        new_node->prev = current;
     }
 
     return EXIT_SUCCESS;
 }
 
-void tb_pop(token_buffer_node_t* head) {
+void tb_pop(token_buffer_t* buffer) {
 
-    if (tb_peek(*head)) {
-        token_buffer_node_t current = *head;
-        *head = current->next;
+    if (tb_peek(buffer)) {
+        token_buffer_node_t current = buffer->runner;
+        if(current->prev != NULL) {
+            current->prev->next = current->next;
+        }
+        if(current->next != NULL) {
+            current->next->prev = current->prev;
+        }
+        if(buffer->runner == buffer->head) {
+            buffer->head = current->next;
+        }
+        buffer->runner = current->next;
         if (current->token.type == TOKEN_STRING || current->token.type == TOKEN_IDENTIFIER)
             dstring_free(&current->token.value.string_val);
         free(current);
@@ -53,18 +66,19 @@ void tb_pop(token_buffer_node_t* head) {
 
 void tb_dispose(token_buffer_t* buffer) {
 
-    while (tb_peek(buffer->head)) {
-        tb_pop(&buffer->head);
+    while (tb_peek(buffer)) {
+        tb_pop(buffer);
     }
+    return;
 }
 
-bool tb_peek(token_buffer_node_t head) {
-    return (head != NULL);
+bool tb_peek(token_buffer_t* buffer) {
+    return (buffer->head != NULL);
 }
 
-token_T tb_get_token(token_buffer_node_t* head) {
+token_T tb_get_token(token_buffer_t* buffer) {
 
-    if (!tb_peek(*head)) {
+    if (!tb_peek(buffer)) {
         WARNING_PRINT("empty buffer");
         token_T err_token;
         err_token.type = TOKEN_UNDEFINED;
@@ -72,11 +86,7 @@ token_T tb_get_token(token_buffer_node_t* head) {
         err_token.preceding_eol = false;
         return err_token;
     }
-    token_buffer_node_t current = *head;
-    token_T curr_token = current->token;
-
-    *head = current->next;
-
+    token_T curr_token = buffer->runner->token;
 
     return curr_token;
 }
@@ -87,5 +97,16 @@ void tb_print_token_type(token_buffer_node_t head) {
     while (current != NULL) {
         fprintf(stderr, "token: %d\n", current->token.type);
         current = current->next;
+    }
+}
+
+void tb_next(token_buffer_t* buffer) {
+    if(buffer->runner->next != NULL) {
+        buffer->runner = buffer->runner->next;
+    }
+}
+void tb_prev(token_buffer_t* buffer) {
+    if(buffer->runner->prev != NULL) {
+        buffer->runner = buffer->runner->prev;
     }
 }

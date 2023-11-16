@@ -16,6 +16,7 @@
 typedef struct token_buffer_node {
     token_T token;
     struct token_buffer_node* next;
+    struct token_buffer_node* prev;
 } *token_buffer_node_t;
 
 typedef struct {
@@ -37,14 +38,14 @@ void tb_init(token_buffer_t* buffer);
  * @return 0 on success
  * @return 1 on failure
  */
-int tb_push(token_buffer_node_t* head, token_T token);
+int tb_push(token_buffer_t* buffer, token_T token);
 
 /**
  * @brief Remove last element from buffer
  *
  * @param head Top of the list
  */
-void tb_pop(token_buffer_node_t* head);
+void tb_pop(token_buffer_t* buffer);
 
 /**
  * @brief Dispose of the contents in buffer
@@ -60,7 +61,7 @@ void tb_dispose(token_buffer_t* buffer);
  * @return true if not empty
  * @return false if empty
  */
-bool tb_peek(token_buffer_node_t head);
+bool tb_peek(token_buffer_t* buffer);
 
 /**
  * @brief Get the current token from buffer and move to next item in the list
@@ -68,7 +69,10 @@ bool tb_peek(token_buffer_node_t head);
  * @param head Current list element
  * @return token_T token \n token.type = TOKEN_UNDEFINED on error
  */
-token_T tb_get_token(token_buffer_node_t* head);
+token_T tb_get_token(token_buffer_t* buffer);
+
+void tb_next(token_buffer_t* buffer);
+void tb_prev(token_buffer_t* buffer);
 
 void tb_print_token_type(token_buffer_node_t head);
 
