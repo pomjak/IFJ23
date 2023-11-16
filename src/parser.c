@@ -89,7 +89,7 @@ Rule stmt(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        tb_pop(&p->buffer); 
+        tb_pop(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(block_body);
 
@@ -544,11 +544,11 @@ Rule func_stmt(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         // ?? check if if was declared with LET ID ??
-        
+
         tb_pop(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-        
+
         tb_pop(&p->buffer);
         GET_TOKEN();
         add_scope(&p->stack, &err);
@@ -597,6 +597,7 @@ Rule opt_type(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
+        tb_pop(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(type);
     }
@@ -767,7 +768,7 @@ Rule func_decl(Parser* p) {
     NEXT_RULE(func_ret_type);
     DEBUG_PRINT("after func_ret_type; token = %d", p->curr_tok.type);
     ASSERT_TOK_TYPE(TOKEN_L_BKT);
-    
+
     tb_pop(&p->buffer);
     GET_TOKEN();
     DEBUG_PRINT("before func_body; token = %d", p->curr_tok.type);
@@ -927,7 +928,7 @@ uint32_t parser_fill_buffer(Parser* p) {
  * @param p Parser object
  * @return relevant error code or 0 on success
  */
-uint32_t parser_get_func_decls(Parser *p) {
+uint32_t parser_get_func_decls(Parser* p) {
     uint32_t res;
     /* Get the first token */
     p->curr_tok = tb_get_token(&p->buffer);
@@ -935,7 +936,7 @@ uint32_t parser_get_func_decls(Parser *p) {
         return ERR_INTERNAL;
 
     NEXT_RULE(skip);
-    
+
 
     return EXIT_SUCCESS;
 }
@@ -971,7 +972,7 @@ uint32_t parse() {
     DEBUG_PRINT("buffer filled");
 
     /* First run through the token buffer to collect all function declaration */
-    if((res = parser_get_func_decls(&p))) {
+    if ((res = parser_get_func_decls(&p))) {
         ERROR_PRINT("parser_get_func_decl not 0");
         parser_dispose(&p);
         return res;
@@ -980,10 +981,10 @@ uint32_t parse() {
     p.buffer.runner = p.buffer.head;
 
     p.curr_tok = tb_get_token(&p.buffer);                                                                     \
-    if((p.curr_tok.type == TOKEN_UNDEFINED) && (p.curr_tok.value.int_val == 0))                                      \
-        return ERR_INTERNAL;
+        if ((p.curr_tok.type == TOKEN_UNDEFINED) && (p.curr_tok.value.int_val == 0))                                      \
+            return ERR_INTERNAL;
 
-    /* Start recursive descend */
+        /* Start recursive descend */
     if ((res = prog(&p))) {
         WARNING_PRINT("prog not 0");
         parser_dispose(&p);
