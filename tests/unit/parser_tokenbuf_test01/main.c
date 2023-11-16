@@ -24,19 +24,30 @@ int main()
             tb_dispose(&buffer);
             return 1;
         }
-        tb_push(&buffer.head, token);
-      
+        tb_push(&buffer, token);
+        DEBUG_PRINT("pushed token: %d", token.type);
     } while (token.type != TOKEN_EOF);
 
     buffer.runner = buffer.head;
+    DEBUG_PRINT("reset runner");
 
-    if(!tb_peek(buffer.head)) {
+    if(!tb_peek(&buffer)) {
         ERROR_PRINT("head empty");
         return 1;
     }
 
+    tmp = tb_get_token(&buffer);
+        DEBUG_PRINT("tb_get_token: %d", tmp.type);
+        if(tmp.type == TOKEN_UNDEFINED) {
+            ERROR_PRINT("token undef");
+            return 1;
+        }
+        print_token(tmp);
+
     do {
-        tmp = tb_get_token(&buffer.runner);
+        tb_next(&buffer);
+        tmp = tb_get_token(&buffer);
+        DEBUG_PRINT("tb_get_token: %d", tmp.type);
         if(tmp.type == TOKEN_UNDEFINED) {
             ERROR_PRINT("token undef");
             return 1;
@@ -45,7 +56,28 @@ int main()
 
     } while (tmp.type != TOKEN_EOF);
     
+    // tb_pop(&buffer);
+    buffer.runner = buffer.head;
 
-    tb_dispose(&buffer);
+
+    tmp = tb_get_token(&buffer);
+        DEBUG_PRINT("tb_get_token: %d", tmp.type);
+        if(tmp.type == TOKEN_UNDEFINED) {
+            ERROR_PRINT("token undef");
+            return 1;
+        }
+        print_token(tmp);
+    do {
+        tb_pop(&buffer);
+        tmp = tb_get_token(&buffer);
+        DEBUG_PRINT("tb_get_token: %d", tmp.type);
+        if(tmp.type == TOKEN_UNDEFINED) {
+            ERROR_PRINT("token undef");
+            return 1;
+        }
+        print_token(tmp);
+
+    } while (tmp.type != TOKEN_EOF);
+    // tb_dispose(&buffer);
     return 0;
 }

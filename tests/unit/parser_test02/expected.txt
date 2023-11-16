@@ -1,13 +1,13 @@
-prog
+func_decl
 param_list
 func_ret_type
 func_body
-prog
+func_decl
 param_list
 func_ret_type
 type
 func_body
-prog
+func_decl
 param_list
 func_ret_type
 type

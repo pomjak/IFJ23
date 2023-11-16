@@ -7,7 +7,7 @@ build:
 	@echo "			  Token Buffer				   "
 	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test token buffer 1"
-	$(CC) *.c -o $(NAME)
+	$(CC) *.c -o $(NAME)  -D DEBUGL=2
 
 run: build
 

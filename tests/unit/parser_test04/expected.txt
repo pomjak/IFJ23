@@ -1,11 +1,11 @@
-prog
+func_decl
 param_list
 param
 type
 param_next
 func_ret_type
 func_body
-prog
+func_decl
 param_list
 param
 type
@@ -13,7 +13,7 @@ param_next
 func_ret_type
 type
 func_body
-prog
+func_decl
 param_list
 param
 type
