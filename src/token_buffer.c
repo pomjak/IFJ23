@@ -26,7 +26,7 @@ int tb_push(token_buffer_t* buffer, token_T token) {
     new_node->next = NULL;
 
     /* Add first element to an empty list */
-    if (tb_peek(buffer)) {
+    if (!tb_peek(buffer)) {
         buffer->head = new_node;
         new_node->prev = NULL;
         buffer->runner = buffer->head;
