@@ -24,6 +24,7 @@ typedef struct parser_t {
     bool in_cond;                // Parser is inside a condition statement
     bool in_loop;                // Parser is inside a while loop
     bool in_param;               // Parser should set param type
+    param_t* current_arg;         // Current function argument list
     token_T curr_tok;            // Currently processed token
     symtab_item_t* current_id;   // Identifier of currently processed function
     symtab_item_t* last_func_id; // Identifier of the last loaded function

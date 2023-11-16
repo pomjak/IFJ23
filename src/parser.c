@@ -228,14 +228,17 @@ Rule expr_type(Parser* p) {
             return ERR_UNDEFINED_FUNCTION;
         }
         if (p->current_id->type != function) {
+            fprintf(stderr, "[ERROR %d] Identifier '%s' is not a function", ERR_UNDEFINED_FUNCTION, p->current_id->name.str);
             return ERR_UNDEFINED_FUNCTION;
         }
+        p->last_func_id = p->current_id;
+
         tb_pop(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(arg_list);
         break;
     default:
-        fprintf(stderr, "[ERROR %d]Unexpected token after identifier, assignment or argument list expected", ERR_SYNTAX);
+        fprintf(stderr, "[ERROR %d] Unexpected token after identifier '%s'", ERR_SYNTAX, p->current_id->name.str);
         return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
@@ -295,13 +298,23 @@ Rule cond_clause(Parser* p) {
 Rule arg_list(Parser* p) {
     RULE_PRINT("arg_list");
     uint32_t res, err;
-
+    p->current_arg = p->last_func_id->parameters;
     if (p->curr_tok.type == TOKEN_R_PAR) {
+        /* Function had parameters declared but no arguments were passed while calling */
+        if (p->current_arg != NULL) {
+            fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
         return EXIT_SUCCESS;
+    }
+    if (p->current_arg == NULL) {
+        fprintf(stderr, "[ERROR %d] Too many arguments in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+        return ERR_FUNCTION_PARAMETER;
     }
     NEXT_RULE(arg);
     tb_pop(&p->buffer);
     GET_TOKEN();
+
     NEXT_RULE(arg_next);
     return EXIT_SUCCESS;
 }
@@ -315,6 +328,12 @@ Rule arg_next(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_COMMA:
+
+        if (p->current_arg->next == NULL) {
+            fprintf(stderr, "[ERROR %d] Too many arguments in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
+        p->current_arg = p->current_arg->next;
         tb_pop(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(arg);
@@ -322,7 +341,12 @@ Rule arg_next(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(arg_next);
         break;
-    case TOKEN_R_PAR: return EXIT_SUCCESS;
+    case TOKEN_R_PAR:
+        if (p->current_arg->next != NULL) {
+            fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
+        return EXIT_SUCCESS;
     default:
         fprintf(stderr, "[ERROR %d] Unexpected token in parameters\n", ERR_SYNTAX);
         return ERR_SYNTAX;
@@ -338,6 +362,28 @@ Rule arg(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
+        /* If the current parameter's label is set to _ the loaded identifier must be a variable passed as an argument */
+        if (!dstring_cmp_const_str(&p->current_arg->label, "_")) {
+            if (peek_scope(p->stack)) {
+                p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+            }
+            if (!p->current_id) {
+                p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+            }
+            if (!p->current_id) {
+                fprintf(stderr, "[ERROR %d] Unknown identifier %s\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
+                return ERR_UNDEFINED_VARIABLE;
+            }
+            // TODO maybe get token here
+            return EXIT_SUCCESS;
+        }
+
+        /* Assert validity of the label */
+        if (dstring_cmp(&p->current_arg->label, &p->curr_tok.value.string_val)) {
+            fprintf(stderr, "[ERROR %d] Unknown label %s in function %s\n", ERR_SEMANTIC, p->curr_tok.value.string_val.str, p->last_func_id->name.str);
+            return ERR_SEMANTIC;
+        }
+
         // symtable stuff?
         tb_pop(&p->buffer);
         GET_TOKEN();
@@ -348,6 +394,7 @@ Rule arg(Parser* p) {
     }
     return EXIT_SUCCESS;
 }
+
 
 /**
  * @brief <param_list> -> <param> <param_next> | )
@@ -822,6 +869,7 @@ bool parser_init(Parser* p) {
     /* Initialize token buffer */
     tb_init(&p->buffer);
 
+    p->current_arg = NULL;
     p->current_id = NULL;
     p->last_func_id = NULL;
     p->in_cond = false;
