@@ -663,24 +663,6 @@ int expr()
     return error_code_handler(EXIT_SUCCESS);
 }
 
-void generateArithmeticByOperator(token_T operator, float first_operand, float second_operand)
-{
-    switch (operator.type)
-    {
-    case TOKEN_ADD:
-        GENERATE_CODE("Generate ADDITION %f + %f\n", first_operand, second_operand);
-        break;
-    case TOKEN_SUB:
-        GENERATE_CODE("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
-        break;
-    case TOKEN_MUL:
-        GENERATE_CODE("Generate ADDITION %f * %f\n", first_operand, second_operand);
-        break;
-    default:
-        break;
-    }
-}
-
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 {
     token_T first_operand = sym_arr->arr[0].token;
@@ -722,16 +704,15 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
     {
-        GENERATE_CODE("Generate conversion \"int2double\"\n");
-        // GENERATE_CODE("Generate ADDITION %f + %f\n", first_operand.value.double_val, second_operand.value.double_val);
-        generateArithmeticByOperator(operator, first_operand.value.double_val, second_operand.value.double_val);
+        int2double(&first_operand, &second_operand);
+        generateFloatArithmeticByOperator(operator, first_operand.value.double_val, second_operand.value.double_val);
         expr_symbol.token.type = TOKEN_DBL;
         return expr_symbol;
     }
     else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
     {
         // GENERATE_CODE("Generate ADDITION %d + %d\n", first_operand.value.int_val, second_operand.value.int_val);
-        generateArithmeticByOperator(operator, first_operand.value.int_val, second_operand.value.int_val);
+        generateIntArithmeticByOperator(operator, first_operand.value.int_val, second_operand.value.int_val);
         expr_symbol.token.type = TOKEN_INT;
         return expr_symbol;
     }
@@ -848,4 +829,55 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         break;
     }
     return expr_symbol;
+}
+
+/* CODE GENERATION FUNCTIONS */
+void int2double(token_T *first_operand, token_T *second_operand)
+{
+    if (first_operand->type == TOKEN_INT)
+    {
+        GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
+        first_operand->value.double_val = (double)first_operand->value.int_val;
+    }
+    else
+    {
+        GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
+        second_operand->value.double_val = (double)second_operand->value.int_val;
+    }
+}
+
+void generateFloatArithmeticByOperator(token_T operator, double first_operand, double second_operand)
+{
+    switch (operator.type)
+    {
+    case TOKEN_ADD:
+        GENERATE_CODE("Generate ADDITION %f + %f\n", first_operand, second_operand);
+        break;
+    case TOKEN_SUB:
+        GENERATE_CODE("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
+        break;
+    case TOKEN_MUL:
+        GENERATE_CODE("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
+        break;
+    default:
+        break;
+    }
+}
+
+void generateIntArithmeticByOperator(token_T operator, int first_operand, int second_operand)
+{
+    switch (operator.type)
+    {
+    case TOKEN_ADD:
+        GENERATE_CODE("Generate ADDITION %d + %d\n", first_operand, second_operand);
+        break;
+    case TOKEN_SUB:
+        GENERATE_CODE("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
+        break;
+    case TOKEN_MUL:
+        GENERATE_CODE("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
+        break;
+    default:
+        break;
+    }
 }
