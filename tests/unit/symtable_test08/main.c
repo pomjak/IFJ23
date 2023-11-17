@@ -16,10 +16,10 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item, param, label;
-    uint8_t error = 255;
-    bool err;
+    unsigned int error;
 
-    symtable_init(&global_sym_table);
+    symtable_init(&global_sym_table, &error);
+    assert(error == SYMTAB_OK);
 
     dstring_init(&item);
     dstring_add_const_str(&item, "item1");
@@ -30,29 +30,29 @@ int main()
     dstring_init(&label);
     dstring_add_const_str(&label, "with");
 
-    
     // insert new item
-    symtable_insert(&global_sym_table, &item);
+    symtable_insert(&global_sym_table, &item, &error);
+    assert(error == SYMTAB_OK);
 
-    assert(set_type(&global_sym_table, &item, function) == 0);
+    set_type(&global_sym_table, &item, function, &error);
+    assert(error == SYMTAB_OK);
 
-    assert(get_type(&global_sym_table, &item, &err) == function);
+    assert(get_type(&global_sym_table, &item, &error) == function);
+    assert(error == SYMTAB_OK);
 
-    assert(err == false);
-    
-    //now item is function but param not set
-    assert(set_param_label(&global_sym_table, &item, &param, &label) == 3);
+    // now item is function but param not set
+    set_param_label(&global_sym_table, &item, &param, &label, &error);
+    assert(error == SYMTAB_ERR_PARAM_NOT_FOUND);
 
     assert(get_param_label(&global_sym_table, &item, &param, &error) == NULL);
+    assert(error == SYMTAB_ERR_PARAM_NOT_FOUND);
 
-    assert(error == 3);
-
-    assert(set_param_type(&global_sym_table, &item, &param, integer) == 3);
-
-    assert(get_param_type(&global_sym_table, &item, &param, &error) == undefined);
-
-    assert(error == 3);
+    set_param_type(&global_sym_table, &item, &param, integer, &error);
+    assert(error == SYMTAB_ERR_PARAM_NOT_FOUND);
     
+    assert(get_param_type(&global_sym_table, &item, &param, &error) == undefined);
+    assert(error == SYMTAB_ERR_PARAM_NOT_FOUND);
+
     dstring_free(&item);
     dstring_free(&param);
     dstring_free(&label);

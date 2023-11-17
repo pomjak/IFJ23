@@ -3,6 +3,7 @@
  * @file lexical_analyzer.h
  * @brief Lexical analyzer header
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
+ * @author Jakub Pomsar <xpomsa00@stud.fit.vutbr.cz>
  * @date 08.10.2023
  **/
 
@@ -18,25 +19,27 @@
 
 /* For set next state */
 #define NEXT_STATE(X) {actual_state = X; return;}
-#define UNREAD(X)     unreaded = X
+#define UNREAD(X)     unread = X
 
 /* Actual state */
 state_T (*actual_state)(char);
 
 bool is_final = false;
-char unreaded = '\0';
+bool set_eol  = false;//flag for preceding eol 
+
+char unread = '\0';
 
 token_T actual_token;
 
 unsigned actual_line = 1;
-unsigned actual_collumn = 0;
+unsigned actual_column = 0;
 
 int open_comments = 0;
 int hexa_string = 0;
 
 bool malloc_error = false;
 
-dstring_t readed_string;
+dstring_t read_string;
 
 dstring_t tmp_string;
 
@@ -183,7 +186,6 @@ const token_type_T data_types_tokens[] = {
 const int data_types_count = 3;
 
 const token_type_T tokens[] = {
-    TOKEN_EOL,
     TOKEN_EOF,
     TOKEN_UND_SCR,
     TOKEN_COMMA,
@@ -227,8 +229,7 @@ const token_type_T tokens[] = {
     TOKEN_STRING
 };
 
-const char* tokens_names[] = {
-    "\n",
+const char *tokens_names[] = {
     "<EOF>",
     "<UND_SCR>",
     "<COMMA>",
@@ -269,8 +270,7 @@ const char* tokens_names[] = {
     "<INT ",
     "<DBL ",
 
-    "<STRING "
-};
+    "<STRING "};
 
 const int tokens_count = 39;
 
@@ -278,6 +278,9 @@ void print_token(token_T token) {
 
     for (int i = 0; i < tokens_count; i++) {
         if (token.type == tokens[i]) {
+            if(token.preceding_eol){
+                printf("\n");
+            }
             if        (token.type == TOKEN_STRING) {
                 printf("%s value='%s'>", tokens_names[i], token.value.string_val.str);
             } else if (token.type == TOKEN_INT) {
@@ -305,42 +308,44 @@ int get_token(token_T *token)
 {
     DEBUG_PRINT("get token");
     actual_token.type   = TOKEN_UNDEFINED;
+    actual_token.preceding_eol = false;
 
+    set_eol        = false;
     is_final       = false;
     actual_state   = start;
-    if(!dstring_init(&readed_string)) {
+    if(!dstring_init(&read_string)) {
         return ERR_INTERNAL;
     }
     if(!dstring_init(&tmp_string)) {
         return ERR_INTERNAL;
     }
 
-    char readed;
+    char read;
     
     do {
-        if (unreaded == '\0') {
-            readed = fgetc(stdin);
-            actual_collumn++;
+        if (unread == '\0') {
+            read = fgetc(stdin);
+            actual_column++;
 
-            if (readed == '\n') {
+            if (read == '\n') {
                 actual_line++;
-                actual_collumn =1;
+                actual_column =1;
             }
         } else {
-            readed = unreaded;
-            unreaded = '\0';
+            read = unread;
+            unread = '\0';
         }
 
-        actual_state(readed);
+        actual_state(read);
 
         if (malloc_error == true) return ERR_INTERNAL;
         if (actual_state == NULL) break;
-    } while(readed != EOF);
+    } while(read != EOF);
 
     dstring_free(&tmp_string);
 
     if (actual_token.type != TOKEN_STRING && actual_token.type != TOKEN_IDENTIFIER) {
-        dstring_free(&readed_string);
+        dstring_free(&read_string);
     }
 
     if (open_comments > 0) {
@@ -352,61 +357,62 @@ int get_token(token_T *token)
     }
 
     if (!is_final) {
-        ERROR_PRINT("Lexical analyzer did not end in final state. On line %d and collumn %d.", actual_line, actual_collumn);
+        ERROR_PRINT("Lexical analyzer did not end in final state. On line %d and column %d.", actual_line, actual_column);
 
         return ERR_LEXICAL;
     }
 
+    token->preceding_eol = actual_token.preceding_eol;
     token->type  = actual_token.type;
     token->value = actual_token.value;
 
     return ERR_NO_ERR;
 }
 
-state_T start(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T start(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (is_whitespace(readed))  NEXT_STATE(start);
-    if (is_number(readed)) {
-        if (!dstring_append(&readed_string, readed)) {
+    if (is_whitespace(read))  NEXT_STATE(start);
+    if (is_number(read)) {
+        if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(s_int);
     }
-    if (readed == '\n')         NEXT_STATE(eol);
-    if (readed == EOF)          eof(readed);
-    if (readed == '_') {
-        if (!dstring_append(&readed_string, readed)) {
+    if (read == '\n'){        set_eol = true; NEXT_STATE(start);}
+    if (read == EOF)          eof(read);
+    if (read == '_') {
+        if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(und_scr);
     }
-    if (readed == ',')          NEXT_STATE(comma);
-    if (readed == '<')          NEXT_STATE(lt);
-    if (readed == '>')          NEXT_STATE(gt);
-    if (readed == '!')          NEXT_STATE(not_nil);
-    if (readed == '?')          NEXT_STATE(qm);
-    if (readed == '=')          NEXT_STATE(ass);
-    if (readed == ':')          NEXT_STATE(col);
-    if (readed == ';')          NEXT_STATE(semicol);
-    if (readed == '}')          NEXT_STATE(r_bkt);
-    if (readed == '{')          NEXT_STATE(l_bkt);
-    if (readed == ')')          NEXT_STATE(r_par);
-    if (readed == '(')          NEXT_STATE(l_par);
-    if (readed == '+')          NEXT_STATE(add);
-    if (readed == '-')          NEXT_STATE(sub);
-    if (readed == '*')          NEXT_STATE(mul);
-    if (readed == '/')          NEXT_STATE(s_div);
-    if (is_alfa(readed)) {
-        if (!dstring_append(&readed_string, readed)) {
+    if (read == ',')          NEXT_STATE(comma);
+    if (read == '<')          NEXT_STATE(lt);
+    if (read == '>')          NEXT_STATE(gt);
+    if (read == '!')          NEXT_STATE(not_nil);
+    if (read == '?')          NEXT_STATE(qm);
+    if (read == '=')          NEXT_STATE(ass);
+    if (read == ':')          NEXT_STATE(col);
+    if (read == ';')          NEXT_STATE(semicol);
+    if (read == '}')          NEXT_STATE(r_bkt);
+    if (read == '{')          NEXT_STATE(l_bkt);
+    if (read == ')')          NEXT_STATE(r_par);
+    if (read == '(')          NEXT_STATE(l_par);
+    if (read == '+')          NEXT_STATE(add);
+    if (read == '-')          NEXT_STATE(sub);
+    if (read == '*')          NEXT_STATE(mul);
+    if (read == '/')          NEXT_STATE(s_div);
+    if (is_alfa(read)) {
+        if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(identifier);
     }
-    if (readed == '"')          NEXT_STATE(string_start);
+    if (read == '"')          NEXT_STATE(string_start);
 
     NEXT_STATE(NULL);
 }
@@ -415,274 +421,310 @@ state_T start(char readed) {
  * Operators
  */
 
-state_T eol(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
-    
-    is_final          = true;
-    actual_token.type = TOKEN_EOL;
-    
-    UNREAD(readed);
-    NEXT_STATE(NULL);   
-}
-
-state_T eof(char readed) {
-    UNUSED(readed);
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T eof(char read) {
+    UNUSED(read);
+    DEBUG_PRINT("read char is %c", read);
 
     is_final          = true;
+    actual_token.preceding_eol = set_eol;//set eol flag if eol was found before token
+    set_eol = false;   
     actual_token.type = TOKEN_EOF;
 
     NEXT_STATE(NULL);   
 }
 
-state_T und_scr(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T und_scr(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (is_alfa_num(readed))  NEXT_STATE(identifier);
+    if (is_alfa_num(read))  NEXT_STATE(identifier);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_UND_SCR;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T comma(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T comma(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_COMMA;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T lt(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T lt(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '=')  NEXT_STATE(leq);
+    if (read == '=')  NEXT_STATE(leq);
 
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_LT;
 
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T leq(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T leq(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_LEQ;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T gt(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T gt(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '=')  NEXT_STATE(geq);
+    if (read == '=')  NEXT_STATE(geq);
 
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_GT;
 
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T geq(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T geq(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_GEQ;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T not_nil(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T not_nil(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '=')  NEXT_STATE(neq);
+    if (read == '=')  NEXT_STATE(neq);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_NOT_NIL;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T neq(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T neq(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_NEQ;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T qm(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T qm(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '?')  NEXT_STATE(nil_check);
+    if (read == '?')  NEXT_STATE(nil_check);
     
     NEXT_STATE(NULL);   
 }
 
-state_T nil_check(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T nil_check(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_NIL_CHECK;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T ass(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T ass(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '=')  NEXT_STATE(eq);
+    if (read == '=')  NEXT_STATE(eq);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_ASS;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T eq(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T eq(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_EQ;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T col(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T col(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_COL;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T semicol(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T semicol(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_SEMICOL;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T r_bkt(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T r_bkt(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_R_BKT;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T l_bkt(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T l_bkt(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_L_BKT;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T r_par(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T r_par(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_R_PAR;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T l_par(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T l_par(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_L_PAR;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T add(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T add(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_ADD;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T sub(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T sub(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '>')  NEXT_STATE(ret_val);
+    if (read == '>')  NEXT_STATE(ret_val);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_SUB;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T ret_val(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T ret_val(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_RET_VAL;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T mul(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T mul(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_MUL;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T s_div(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T s_div(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
-    if (readed == '/') NEXT_STATE(line_c);
-    if (readed == '*') {
+    if (read == '/') NEXT_STATE(line_c);
+    if (read == '*') {
         open_comments++;
         NEXT_STATE(block_c);
     }
 
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_DIV;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
@@ -690,29 +732,29 @@ state_T s_div(char readed) {
  * Comments
  */
 
-state_T line_c(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T line_c(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
-    if (readed == EOF) eof(readed);
-    if (readed != '\n') NEXT_STATE(line_c);
+    if (read == EOF) eof(read);
+    if (read != '\n') NEXT_STATE(line_c);
 
     NEXT_STATE(start);   
 }
 
-state_T block_c(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T block_c(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
-    if (readed == '*')   NEXT_STATE(block_c_end_q);
-    if (readed == '/')   NEXT_STATE(block_c_start_q);
-    if (readed != '*')  NEXT_STATE(block_c);
+    if (read == '*')   NEXT_STATE(block_c_end_q);
+    if (read == '/')   NEXT_STATE(block_c_start_q);
+    if (read != '*')  NEXT_STATE(block_c);
 
     NEXT_STATE(NULL);   
 }
 
-state_T block_c_end_q(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T block_c_end_q(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
-    if (readed == '/') {
+    if (read == '/') {
         open_comments--;
         DEBUG_PRINT("Open comments %d", open_comments);
 
@@ -722,10 +764,10 @@ state_T block_c_end_q(char readed) {
     NEXT_STATE(block_c);
 }
 
-state_T block_c_start_q(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T block_c_start_q(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
-    if (readed == '*')  open_comments++;
+    if (read == '*')  open_comments++;
     DEBUG_PRINT("Open comments %d", open_comments);
 
     NEXT_STATE(block_c);  
@@ -735,48 +777,52 @@ state_T block_c_start_q(char readed) {
  * Keywords/Identifiers
  */
 
-state_T identifier(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T identifier(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (is_alfa_num(readed) || readed == '_')  NEXT_STATE(identifier);
+    if (is_alfa_num(read) || read == '_')  NEXT_STATE(identifier);
 
     is_final          = true;
     actual_token.type = TOKEN_IDENTIFIER;
-    UNREAD(readed);
-    dstring_retract(&readed_string, 1);
-    actual_token.value.string_val = readed_string;
+    UNREAD(read);
+    dstring_retract(&read_string, 1);
+    actual_token.value.string_val = read_string;
 
-    DEBUG_PRINT("Readed string is %s", readed_string.str);
+    DEBUG_PRINT("read string is %s", read_string.str);
 
     for (int i = 0; i < keywords_count; i++) {
-        if (dstring_cmp_const_str(&readed_string, keywords[i]) == 0) {
+        if (dstring_cmp_const_str(&read_string, keywords[i]) == 0) {
             actual_token.type = keywords_tokens[i];
         }
     }
 
     for (int i = 0; i < data_types_count; i++) {
-        if (dstring_cmp_const_str(&readed_string, data_types[i]) == 0) {
+        if (dstring_cmp_const_str(&read_string, data_types[i]) == 0) {
             actual_token.type = data_types_tokens[i];
+            actual_token.preceding_eol = set_eol;
+            set_eol = false;
             actual_token.value.is_nilable = false;
             NEXT_STATE(data_type);
         }
     }
-    
+
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
+
     NEXT_STATE(NULL);   
 }
 
-state_T data_type(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T data_type(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final = true;
-
-    if(readed == '?') actual_token.value.is_nilable = true;
-    else              UNREAD(readed);
+    if(read == '?') actual_token.value.is_nilable = true;
+    else              UNREAD(read);
 
     NEXT_STATE(NULL);
 }
@@ -785,104 +831,110 @@ state_T data_type(char readed) {
  * Number literal
  */
 
-state_T s_int(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T s_int(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (is_number(readed))                  NEXT_STATE(s_int);
-    if (readed == '.')                      NEXT_STATE(dbl_s);
-    if (readed == 'e' || readed == 'E')     NEXT_STATE(exp_s);
-    
-    is_final          = true;
+    if (is_number(read))                  NEXT_STATE(s_int);
+    if (read == '.')                      NEXT_STATE(dbl_s);
+    if (read == 'e' || read == 'E')     NEXT_STATE(exp_s);
+
+    is_final = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_INT;
-    actual_token.value.int_val = atoi(dstring_to_str(&readed_string));
+    actual_token.value.int_val = atoi(dstring_to_str(&read_string));
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T dbl_s(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T dbl_s(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (is_number(readed))      NEXT_STATE(dbl);
+    if (is_number(read))      NEXT_STATE(dbl);
 
     NEXT_STATE(NULL);   
 }
 
-state_T dbl(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T dbl(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (is_number(readed))                   NEXT_STATE(dbl);
-    if (readed == 'e' || readed == 'E')      NEXT_STATE(exp_s);
+    if (is_number(read))                   NEXT_STATE(dbl);
+    if (read == 'e' || read == 'E')      NEXT_STATE(exp_s);
     
     is_final          = true;
     actual_token.type = TOKEN_DBL;
-    actual_token.value.double_val = atof(dstring_to_str(&readed_string));
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
+    actual_token.value.double_val = atof(dstring_to_str(&read_string));
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T exp_s(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T exp_s(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed == '+' || readed == '-')      NEXT_STATE(exp_sign);
-    if (is_number(readed))                   NEXT_STATE(s_exp);
+    if (read == '+' || read == '-')      NEXT_STATE(exp_sign);
+    if (is_number(read))                   NEXT_STATE(s_exp);
 
     NEXT_STATE(NULL);   
 }
 
-state_T exp_sign(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T exp_sign(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (is_number(readed))  NEXT_STATE(s_exp);
+    if (is_number(read))  NEXT_STATE(s_exp);
 
     NEXT_STATE(NULL);   
 }
 
-state_T s_exp(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T s_exp(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (is_number(readed))  NEXT_STATE(s_exp);
+    if (is_number(read))  NEXT_STATE(s_exp);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_DBL;
 
     char* exponent;
-    double base = strtod(dstring_to_str(&readed_string), &exponent);
+    double base = strtod(dstring_to_str(&read_string), &exponent);
     exponent++;
     actual_token.value.double_val = base * pow(10, atof(exponent));
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
@@ -890,131 +942,133 @@ state_T s_exp(char readed) {
  * String literal
  */
 
-state_T string_start(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T string_start(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '"')                                 NEXT_STATE(empty_string);
-    if (readed == '\\')                                NEXT_STATE(string_escape);
+    if (read == '"')                                 NEXT_STATE(empty_string);
+    if (read == '\\')                                NEXT_STATE(string_escape);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed != '\\' && is_in_string_sigma(readed))  NEXT_STATE(string_inner);
+    if (read != '\\' && is_in_string_sigma(read))  NEXT_STATE(string_inner);
 
     NEXT_STATE(NULL);   
 }
 
-state_T empty_string(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T empty_string(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '"')  NEXT_STATE(eol_start_q);
+    if (read == '"')  NEXT_STATE(eol_start_q);
 
-    DEBUG_PRINT("Readed string is %s", readed_string.str);
+    DEBUG_PRINT("read string is %s", read_string.str);
     
     is_final          = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type = TOKEN_STRING;
-    actual_token.value.string_val = readed_string;
+    actual_token.value.string_val = read_string;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T eol_start_q(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T eol_start_q(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '\n')  NEXT_STATE(m_string_inner);
+    if (read == '\n')  NEXT_STATE(m_string_inner);
 
     NEXT_STATE(NULL);   
 }
 
-state_T m_string_inner(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T m_string_inner(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '\\')                     NEXT_STATE(m_string_escape);
+    if (read == '\\')                     NEXT_STATE(m_string_escape);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
     
-    if (readed == '\n')                     NEXT_STATE(eol_end_q);
-    if (readed != '\\' && readed != '\n')   NEXT_STATE(m_string_inner);
+    if (read == '\n')                     NEXT_STATE(eol_end_q);
+    if (read != '\\' && read != '\n')   NEXT_STATE(m_string_inner);
 
     NEXT_STATE(NULL);   
 }
 
-state_T m_string_escape(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T m_string_escape(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == 'n') {
-        if (!dstring_append(&readed_string, '\n')) {
+    if (read == 'n') {
+        if (!dstring_append(&read_string, '\n')) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(m_string_inner);
     }
 
-    if (readed == 'r') {
-        if (!dstring_append(&readed_string, '\r')) {
+    if (read == 'r') {
+        if (!dstring_append(&read_string, '\r')) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(m_string_inner);
     }
 
-    if (readed == 't') {
-        if (!dstring_append(&readed_string, '\t')) {
+    if (read == 't') {
+        if (!dstring_append(&read_string, '\t')) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(m_string_inner);
     }
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed != 'u')  NEXT_STATE(m_string_inner);
-    if (readed == 'u')  NEXT_STATE(m_string_hexa_q);
+    if (read != 'u')  NEXT_STATE(m_string_inner);
+    if (read == 'u')  NEXT_STATE(m_string_hexa_q);
 
     NEXT_STATE(NULL);   
 }
 
-state_T m_string_hexa_q(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T m_string_hexa_q(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '{') {
+    if (read == '{') {
         hexa_string = 0;
         NEXT_STATE(m_string_hexa);
     }
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed != '{')  NEXT_STATE(m_string_inner);
+    if (read != '{')  NEXT_STATE(m_string_inner);
 
     NEXT_STATE(NULL);   
 }
 
-state_T m_string_hexa(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T m_string_hexa(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '}' && hexa_string > 0) {
-        dstring_retract(&readed_string, 1);
-        if (!dstring_append(&readed_string, hexa_to_dec(&tmp_string))) {
+    if (read == '}' && hexa_string > 0) {
+        dstring_retract(&read_string, 1);
+        if (!dstring_append(&read_string, hexa_to_dec(&tmp_string))) {
             malloc_error = true;
             return;
         }
         dstring_clear(&tmp_string);
         NEXT_STATE(m_string_inner);
     }
-    if (is_hexa(readed)) {
-        if (!dstring_append(&tmp_string, readed)) {
+    if (is_hexa(read)) {
+        if (!dstring_append(&tmp_string, read)) {
             malloc_error = true;
             return;
         }
@@ -1026,153 +1080,155 @@ state_T m_string_hexa(char readed) {
     NEXT_STATE(NULL);   
 }
 
-state_T eol_end_q(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T eol_end_q(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '\\')  NEXT_STATE(m_string_escape);
+    if (read == '\\')  NEXT_STATE(m_string_escape);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed == '\n')  NEXT_STATE(eol_end_q);
-    if (readed != '"')  NEXT_STATE(m_string_inner);
-    if (readed == '"')  NEXT_STATE(m_string_end1);
+    if (read == '\n')  NEXT_STATE(eol_end_q);
+    if (read != '"')  NEXT_STATE(m_string_inner);
+    if (read == '"')  NEXT_STATE(m_string_end1);
 
     NEXT_STATE(NULL);   
 }
 
-state_T m_string_end1(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T m_string_end1(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed == '\n') NEXT_STATE(eol_end_q);
-    if (readed != '"')  NEXT_STATE(m_string_inner);
-    if (readed == '"')  NEXT_STATE(m_string_end2);
+    if (read == '\n') NEXT_STATE(eol_end_q);
+    if (read != '"')  NEXT_STATE(m_string_inner);
+    if (read == '"')  NEXT_STATE(m_string_end2);
 
     NEXT_STATE(NULL);   
 }
 
-state_T m_string_end2(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T m_string_end2(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed == '\n') NEXT_STATE(eol_end_q);
-    if (readed != '"')  NEXT_STATE(m_string_inner);
-    if (readed == '"')  {
-        dstring_retract(&readed_string, 4);
+    if (read == '\n') NEXT_STATE(eol_end_q);
+    if (read != '"')  NEXT_STATE(m_string_inner);
+    if (read == '"')  {
+        dstring_retract(&read_string, 4);
         NEXT_STATE(string_end);
     }
 
     NEXT_STATE(NULL);   
 }
 
-state_T string_end(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T string_end(char read) {
+    DEBUG_PRINT("read char is %c", read);
     
     is_final                      = true;
+    actual_token.preceding_eol = set_eol;
+    set_eol = false;
     actual_token.type             = TOKEN_STRING;
-    actual_token.value.string_val = readed_string;
+    actual_token.value.string_val = read_string;
     
-    UNREAD(readed);
+    UNREAD(read);
     NEXT_STATE(NULL);   
 }
 
-state_T string_inner(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T string_inner(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '\\')                                NEXT_STATE(string_escape);
-    if (readed == '"')                                 NEXT_STATE(string_end);
+    if (read == '\\')                                NEXT_STATE(string_escape);
+    if (read == '"')                                 NEXT_STATE(string_end);
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed != '\\' && is_in_string_sigma(readed))  NEXT_STATE(string_inner);
+    if (read != '\\' && is_in_string_sigma(read))  NEXT_STATE(string_inner);
 
     NEXT_STATE(NULL);   
 }
 
-state_T string_escape(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T string_escape(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == 'n') {
-        if (!dstring_append(&readed_string, '\n')) {
+    if (read == 'n') {
+        if (!dstring_append(&read_string, '\n')) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(string_inner);
     }
 
-    if (readed == 'r') {
-        if (!dstring_append(&readed_string, '\r')) {
+    if (read == 'r') {
+        if (!dstring_append(&read_string, '\r')) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(string_inner);
     }
 
-    if (readed == 't') {
-        if (!dstring_append(&readed_string, '\t')) {
+    if (read == 't') {
+        if (!dstring_append(&read_string, '\t')) {
             malloc_error = true;
             return;
         }
         NEXT_STATE(string_inner);
     }
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
 
-    if (readed == 'u')                                                   NEXT_STATE(string_hexa_q);
-    if ((readed != 'u' && is_in_string_sigma(readed)) || readed == '"')  NEXT_STATE(string_inner);
+    if (read == 'u')                                                   NEXT_STATE(string_hexa_q);
+    if ((read != 'u' && is_in_string_sigma(read)) || read == '"')  NEXT_STATE(string_inner);
 
     NEXT_STATE(NULL);   
 }
 
-state_T string_hexa_q(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T string_hexa_q(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '{') {
+    if (read == '{') {
         hexa_string = 0;
         NEXT_STATE(string_hexa);
     }
 
-    if (!dstring_append(&readed_string, readed)) {
+    if (!dstring_append(&read_string, read)) {
             malloc_error = true;
             return;
         }
     
-    if (readed != '{' && is_in_string_sigma(readed))  NEXT_STATE(string_inner);
+    if (read != '{' && is_in_string_sigma(read))  NEXT_STATE(string_inner);
 
     NEXT_STATE(NULL);   
 }
 
-state_T string_hexa(char readed) {
-    DEBUG_PRINT("Readed char is %c", readed);
+state_T string_hexa(char read) {
+    DEBUG_PRINT("read char is %c", read);
 
-    if (readed == '}' && hexa_string > 0) {
-        dstring_retract(&readed_string, 1);
-        if (!dstring_append(&readed_string, hexa_to_dec(&tmp_string))) {
+    if (read == '}' && hexa_string > 0) {
+        dstring_retract(&read_string, 1);
+        if (!dstring_append(&read_string, hexa_to_dec(&tmp_string))) {
             malloc_error = true;
             return;
         }
         dstring_clear(&tmp_string);
         NEXT_STATE(string_inner);
     }
-    if (is_hexa(readed)) {
-        if (!dstring_append(&tmp_string, readed)) {
+    if (is_hexa(read)) {
+        if (!dstring_append(&tmp_string, read)) {
             malloc_error = true;
             return;
         }

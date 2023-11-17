@@ -8,6 +8,7 @@ ifeq ($(shell UNAME),Darwin)
 endif 
 
 build:
+	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test lexical analyzer 10 valgrind"
 	$(CC) *.c -o $(NAME)
 

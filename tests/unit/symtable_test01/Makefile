@@ -4,6 +4,8 @@ VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s
 
 build:
 	@echo "----------------------------------------"
+	@echo "		symtab"
+	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test symtable 1"
 	$(CC) *.c -o $(NAME)
 

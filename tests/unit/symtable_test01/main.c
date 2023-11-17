@@ -1,7 +1,7 @@
 /**
  * @file main.c (for testing purposes)
  * @author Pomsar Jakub xpomsa00
- * @brief   main for unit test 3 delete of 1 item 
+ * @brief   main for unit test 1 empty symtable [search]
  * @version 0.1
  * @date 2023-10-14
  *
@@ -16,22 +16,18 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item1;
+    unsigned int error;
 
-    symtable_init(&global_sym_table);
+    symtable_init(&global_sym_table, &error);
+    assert(error == SYMTAB_OK);
 
     dstring_init(&item1);
     dstring_add_const_str(&item1, "item1");
 
-    //in symtable is stored item with id "item1"
-    assert(symtable_insert(&global_sym_table, &item1) == 0);
-    //and succesfully searched
-    assert(symtable_search(&global_sym_table, &item1) != NULL);
-    //however delete on item with id "item1" returns 0
-    assert(symtable_delete(&global_sym_table, &item1) == 0);
-
-
+    assert(symtable_search(&global_sym_table, &item1, &error) == NULL);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
+    
     dstring_free(&item1);
-
     symtable_dispose(&global_sym_table);
 
     return 0;

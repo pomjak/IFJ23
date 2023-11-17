@@ -16,11 +16,10 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item, param, label;
-    uint8_t error = 255;
-    bool err;
+    unsigned int error;
 
-    symtable_init(&global_sym_table);
-
+    symtable_init(&global_sym_table, &error);
+    assert(error == SYMTAB_OK);
     dstring_init(&item);
     dstring_add_const_str(&item, "item1");
 
@@ -30,32 +29,34 @@ int main()
     dstring_init(&label);
     dstring_add_const_str(&label, "with");
 
-    
     // insert new item
-    symtable_insert(&global_sym_table, &item);
+    symtable_insert(&global_sym_table, &item, &error);
+    assert(error == SYMTAB_OK);
 
-    assert(set_type(&global_sym_table, &item, integer) == 0);
+    set_type(&global_sym_table, &item, integer, &error);
+    assert(error == SYMTAB_OK);
 
-    assert(get_type(&global_sym_table, &item, &err) == integer);
+    assert(get_type(&global_sym_table, &item, &error) == integer);
+    assert(error == SYMTAB_OK);
 
-    assert(err == false);
-    
     // insert new param, however item is integer not function
-    assert(add_param(&global_sym_table, &item, &param, &err) == 2);
+    add_param(&global_sym_table, &item, &param, &error);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
     // try to set label for param, but param was not added and item is function
-    assert(set_param_label(&global_sym_table, &item, &param, &label) == 2);
+    set_param_label(&global_sym_table, &item, &param, &label, &error);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
     // get label of param
     assert(get_param_label(&global_sym_table, &item, &param, &error) == NULL);
-    // err flag is raised to value of 3 [param not found]
-    assert(error == 2);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
+    
 
-    assert(set_param_type(&global_sym_table, &item, &param, integer) == 2);
+    set_param_type(&global_sym_table, &item, &param, integer, &error);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
 
     assert(get_param_type(&global_sym_table, &item, &param, &error) == undefined);
+    assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
 
-    assert(error == 2);
-    
-    
+
     dstring_free(&item);
     dstring_free(&param);
     dstring_free(&label);

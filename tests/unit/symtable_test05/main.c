@@ -16,8 +16,10 @@ int main()
 {
     symtab_t global_sym_table;
     dstring_t item, param, label;
+    unsigned int error;
 
-    symtable_init(&global_sym_table);
+    symtable_init(&global_sym_table, &error);
+    assert(error == SYMTAB_OK);
 
     dstring_init(&item);
     dstring_add_const_str(&item, "item1");
@@ -28,32 +30,31 @@ int main()
     dstring_init(&label);
     dstring_add_const_str(&label, "with");
 
-    symtable_insert(&global_sym_table, &item);
+    symtable_insert(&global_sym_table, &item, &error);
+    assert(error == SYMTAB_OK);
 
-    bool err;
+    set_type(&global_sym_table, &item, function, &error);
+    assert(error == SYMTAB_OK);
 
-    assert(set_type(&global_sym_table, &item, function) == 0);
+    assert(get_type(&global_sym_table, &item, &error) == function);
+    assert(error == SYMTAB_OK);
 
-    assert(get_type(&global_sym_table, &item, &err) == function);
-
-    assert(err == false);
-
-    uint8_t error = 255;
-    //insert new param
-    assert(add_param(&global_sym_table, &item, &param, &err) == 0);
-    //set label for param
-    assert(set_param_label(&global_sym_table, &item, &param, &label) == 0);
-    //get label of param
+    // insert new param
+    add_param(&global_sym_table, &item, &param, &error);
+    assert(error == SYMTAB_OK);
+    // set label for param
+    set_param_label(&global_sym_table, &item, &param, &label, &error);
+    assert(error == SYMTAB_OK);
+    // get label of param
     assert(dstring_cmp(get_param_label(&global_sym_table, &item, &param, &error), &label) == 0);
-    //without error
-    assert(error == 0);
+    assert(error == SYMTAB_OK);
+    // without error
 
-    assert(set_param_type(&global_sym_table, &item, &param, integer) == 0);
+    set_param_type(&global_sym_table, &item, &param, integer, &error);
+    assert(error == SYMTAB_OK);
 
     assert(get_param_type(&global_sym_table, &item, &param, &error) == integer);
-
-    assert(error == 0);
-
+    assert(error == SYMTAB_OK);
 
     dstring_free(&item);
     dstring_free(&param);

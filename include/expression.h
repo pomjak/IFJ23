@@ -279,4 +279,18 @@ symstack_data_t process_contcatenation(symbol_arr_t *sym_arr);
 
 symstack_data_t process_relational_operation(symbol_arr_t *sym_arr);
 
+/*****************************
+ * Generation code functions *
+ ****************************/
+
+void int2double(token_T *first_operand, token_T *second_operand);
+
+void generate_float_arithmetic_by_operator(token_T operator, double first_operand, double second_operand);
+
+void generate_int_arithmetic_by_operator(token_T operator, int first_operand, int second_operand);
+
+void generate_division(token_T first_operand, token_T second_operand);
+
+void generate_comparison();
+
 #endif

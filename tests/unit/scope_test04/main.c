@@ -9,16 +9,18 @@
  *
  */
 
-#include "symtable.h"
+#include "scope.h"
 #include <assert.h>
 
 int main()
 {
-    symtab_t global_sym_table;
+    scope_t stack;
     dstring_t item, value1;
+    unsigned int error;
+
     FILE *input = fopen("input.txt", "r");
 
-    symtable_init(&global_sym_table);
+    init_scope(&stack);
 
     dstring_init(&item);
 
@@ -33,31 +35,14 @@ int main()
 
         dstring_add_const_str(&item, buffer);
 
-        assert(symtable_insert(&global_sym_table, &item) == 0);
+        add_scope(&stack, &error);
+        assert(error == SYMTAB_OK);
 
-        assert(set_type(&global_sym_table, &item, i % 6) == 0);
-    }
+        symtable_insert((*stack).local_sym, &item, &error);
+        assert(error == SYMTAB_OK);
 
-    rewind(input);
-    bool err;
-
-
-    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
-    {
-        if (strchr(buffer, '\n') != NULL)
-            *(strchr(buffer, '\n')) = '\0';
-
-        err = true;
-
-        dstring_clear(&item);
-
-        dstring_add_const_str(&item, buffer);
-
-        assert(symtable_search(&global_sym_table, &item) != NULL);
-
-        assert(get_type(&global_sym_table, &item, &err) == i % 6);
-
-        assert(err == false);
+        search_scopes(stack, &item, &error)->type = i % 6;
+        assert(error == SYMTAB_OK);
     }
 
     rewind(input);
@@ -71,13 +56,16 @@ int main()
 
         dstring_add_const_str(&item, buffer);
 
-        if (i % 2)
-            assert(symtable_delete(&global_sym_table, &item) == 0);
+        assert(search_scopes(stack, &item, &error) != NULL);
+        assert(error == SYMTAB_OK);
+
+        assert(search_scopes(stack, &item, &error)->type == i % 6);
+        assert(error == SYMTAB_OK);
     }
 
     rewind(input);
-
-    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
+    int i = 0;
+    for (i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
     {
         if (strchr(buffer, '\n') != NULL)
             *(strchr(buffer, '\n')) = '\0';
@@ -87,16 +75,41 @@ int main()
         dstring_add_const_str(&item, buffer);
 
         if (i % 2)
-            assert(symtable_search(&global_sym_table, &item) == NULL);
+        {
+            pop_scope(&stack, &error);
+            assert(error == SYMTAB_OK);
+        }
+    }
+    int cnt = i;
+    rewind(input);
+
+    for (int i = 0; fgets(buffer, sizeof(buffer), input) != NULL; i++)
+    {
+        if (strchr(buffer, '\n') != NULL)
+            *(strchr(buffer, '\n')) = '\0';
+
+        dstring_clear(&item);
+
+        dstring_add_const_str(&item, buffer);
+
+        if (i < (cnt / 2)+1)
+        {
+            assert(search_scopes(stack, &item, &error) != NULL);
+            assert(error == SYMTAB_OK);
+        }
         else
-            assert(symtable_search(&global_sym_table, &item) != NULL);
+        {
+            assert(search_scopes(stack, &item, &error) == NULL);
+            assert(error == SYMTAB_ERR_ITEM_NOT_FOUND);
+        }
     }
-    
+
     fclose(input);
 
     dstring_free(&item);
 
-    symtable_dispose(&global_sym_table);
+    dispose_scope(&stack, &error);
+    assert(error == SYMTAB_OK);
 
     return 0;
 }
