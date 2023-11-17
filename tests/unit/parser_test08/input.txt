@@ -14,7 +14,7 @@ length(string)
 
 length(string)
 
-substring(of:string, startingAt: 0)
+substring(of:string, startingAt: 0, endingBefore : 10)
 
 ord(string)
 
