@@ -11,4 +11,5 @@
 <ASS>
 <IDENTIFIER  value='a'>
 <SUB>
-<IDENTIFIER  value='b'><EOF>
+<IDENTIFIER  value='b'>
+<EOF>
