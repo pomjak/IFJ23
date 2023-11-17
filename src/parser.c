@@ -937,7 +937,7 @@ Rule param_skip(Parser* p) {
     RULE_PRINT("param_skip");
     uint32_t res;
 
-    if (p->curr_tok.type != TOKEN_UND_SCR || p->curr_tok.type != TOKEN_IDENTIFIER) {
+    if (p->curr_tok.type != TOKEN_UND_SCR && p->curr_tok.type != TOKEN_IDENTIFIER) {
         fprintf(stderr, "[ERROR %d] Parameter label expected\n", ERR_SYNTAX);
         return ERR_SYNTAX;
     }
@@ -966,6 +966,7 @@ Rule param_next_skip(Parser* p) {
     case TOKEN_COMMA:
         tb_next(&p->buffer);
         GET_TOKEN();
+        NEXT_RULE(param_skip);
         NEXT_RULE(param_next_skip);
         break;
     default:
