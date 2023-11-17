@@ -1,7 +1,7 @@
 readString()
 readInt()
 readDouble()
-write("hello", "world") //might be problematic
+//write("hello", "world") //might be problematic
 
 var integer : Int 
 Int2Double(integer)
@@ -19,4 +19,3 @@ substring(of:string, startingAt: 0)
 ord(string)
 
 chr(integer)
-
