@@ -17,4 +17,4 @@ artifacts:
 	@echo "[info] creating artifacts for parser 4"
 	@echo "----------------------------------------"
 	cp output.txt ../test_artifacts/units_test_parser4.txt		
-	cp output.txt ../test_artifacts/units_test_parser4_rule_print.txt	
+	cp debug_output.txt ../test_artifacts/units_test_parser4_rule_print.txt	
