@@ -635,7 +635,7 @@ int expr()
             break;
         case R:
             reduce(&stack);
-            // print_stack(&stack, 1);
+            print_stack(&stack, 1);
             break;
         case X:
             sym_data = convert_token_to_data(token);
