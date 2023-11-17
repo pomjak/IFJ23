@@ -705,14 +705,13 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
     {
         int2double(&first_operand, &second_operand);
-        generateFloatArithmeticByOperator(operator, first_operand.value.double_val, second_operand.value.double_val);
+        generate_float_arithmetic_by_operator(operator, first_operand.value.double_val, second_operand.value.double_val);
         expr_symbol.token.type = TOKEN_DBL;
         return expr_symbol;
     }
     else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
     {
-        // GENERATE_CODE("Generate ADDITION %d + %d\n", first_operand.value.int_val, second_operand.value.int_val);
-        generateIntArithmeticByOperator(operator, first_operand.value.int_val, second_operand.value.int_val);
+        generate_int_arithmetic_by_operator(operator, first_operand.value.int_val, second_operand.value.int_val);
         expr_symbol.token.type = TOKEN_INT;
         return expr_symbol;
     }
@@ -753,7 +752,7 @@ symstack_data_t process_divsion(symbol_arr_t *sym_arr)
             return expr_symbol;
         }
     }
-    GENERATE_CODE("Generate division\n");
+    generate_division(first_operand, second_operand);
     return expr_symbol;
 }
 
@@ -846,7 +845,7 @@ void int2double(token_T *first_operand, token_T *second_operand)
     }
 }
 
-void generateFloatArithmeticByOperator(token_T operator, double first_operand, double second_operand)
+void generate_float_arithmetic_by_operator(token_T operator, double first_operand, double second_operand)
 {
     switch (operator.type)
     {
@@ -864,7 +863,7 @@ void generateFloatArithmeticByOperator(token_T operator, double first_operand, d
     }
 }
 
-void generateIntArithmeticByOperator(token_T operator, int first_operand, int second_operand)
+void generate_int_arithmetic_by_operator(token_T operator, int first_operand, int second_operand)
 {
     switch (operator.type)
     {
@@ -881,3 +880,31 @@ void generateIntArithmeticByOperator(token_T operator, int first_operand, int se
         break;
     }
 }
+
+void generate_division(token_T first_operand, token_T second_operand)
+{
+    if (first_operand.type == second_operand.type)
+    {
+        if (first_operand.type == TOKEN_INT)
+        {
+            GENERATE_CODE("Generate DIVISION %d / %d\n", first_operand.value.int_val, second_operand.value.int_val);
+        }
+        else
+        {
+            GENERATE_CODE("Generate DIVISION %f / %f\n", first_operand.value.double_val, second_operand.value.double_val);
+        }
+    }
+    else
+    {
+        if (first_operand.type == TOKEN_DBL)
+        {
+            GENERATE_CODE("Generate DIVISION %f / %d\n", first_operand.value.double_val, second_operand.value.int_val);
+        }
+        else
+        {
+            GENERATE_CODE("Generate DIVISION %d / %f\n", first_operand.value.int_val, second_operand.value.double_val);
+        }
+    }
+}
+
+void generate_comparison();
