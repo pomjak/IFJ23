@@ -231,7 +231,10 @@ Rule expr_type(Parser* p) {
             fprintf(stderr, "[ERROR %d] Identifier '%s' is not a function", ERR_UNDEFINED_FUNCTION, p->current_id->name.str);
             return ERR_UNDEFINED_FUNCTION;
         }
+        /* If the ID we're processing is a function, set it to last_func_id and reset current_id */
         p->last_func_id = p->current_id;
+        p->current_id = NULL;
+        p->in_function = true;
 
         tb_pop(&p->buffer);
         GET_TOKEN();
@@ -346,6 +349,8 @@ Rule arg_next(Parser* p) {
             fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
         }
+        tb_pop(&p->buffer);
+        GET_TOKEN();
         return EXIT_SUCCESS;
     default:
         fprintf(stderr, "[ERROR %d] Unexpected token in parameters\n", ERR_SYNTAX);
@@ -374,6 +379,12 @@ Rule arg(Parser* p) {
                 fprintf(stderr, "[ERROR %d] Unknown identifier %s\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
                 return ERR_UNDEFINED_VARIABLE;
             }
+
+            /* Check if the variable is the same type as function parameter */
+            if (p->current_id->type != p->current_arg->type) {
+                fprintf(stderr, "[ERROR %d] Function %s: Invalid argument type in %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
             // TODO maybe get token here
             return EXIT_SUCCESS;
         }
@@ -394,7 +405,6 @@ Rule arg(Parser* p) {
     }
     return EXIT_SUCCESS;
 }
-
 
 /**
  * @brief <param_list> -> <param> <param_next> | )
@@ -758,7 +768,23 @@ Rule term(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
-        /* Check id in symtable */
+        if (peek_scope(p->stack)) {
+            DEBUG_PRINT("Searching %s in local scopes", p->curr_tok.value.string_val.str);
+            p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+        }
+        if (!p->current_id) {
+            DEBUG_PRINT("Searching %s in global scope", p->curr_tok.value.string_val.str);
+            p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+        }
+        if (!p->current_id) {
+            fprintf(stderr, "[ERROR %d] Unknown identifier %s\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
+            return ERR_UNDEFINED_VARIABLE;
+        }
+        DEBUG_PRINT("Id found : %s", p->current_id->name.str);
+        if (p->current_id->type != p->current_arg->type) {
+            fprintf(stderr, "[ERROR %d] Invalid type of identifier %s in function %s\n", ERR_FUNCTION_PARAMETER, p->current_id->name.str, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
     }
     else {
         NEXT_RULE(literal);
@@ -775,10 +801,25 @@ Rule literal(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_INT:
+        if (p->current_arg->type != integer) {
+            fprintf(stderr, "[ERROR %d] Invalid argument type(int) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
         /* generate term value */
         break;
-    case TOKEN_DBL: break;
-    case TOKEN_STRING: break;
+    case TOKEN_DBL:
+
+        if (p->current_arg->type != double_) {
+            fprintf(stderr, "[ERROR %d] Invalid argument type(double) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
+        break;
+    case TOKEN_STRING:
+        if (p->current_arg->type != string) {
+            fprintf(stderr, "[ERROR %d] Invalid argument type(string) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
+        break;
     default: return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
