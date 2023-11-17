@@ -29,8 +29,8 @@ Rule prog(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
 
-        p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
-        p->last_func_id->type = function;
+        // p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+        // p->last_func_id->type = function;
 
         tb_next(&p->buffer);
         GET_TOKEN();
@@ -38,11 +38,11 @@ Rule prog(Parser* p) {
 
         tb_next(&p->buffer);
         GET_TOKEN();
-        NEXT_RULE(param_list);
+        NEXT_RULE(param_list_skip);
 
         tb_next(&p->buffer);
         GET_TOKEN();
-        NEXT_RULE(func_ret_type);
+        NEXT_RULE(func_ret_type_skip);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         tb_next(&p->buffer);
@@ -709,7 +709,7 @@ Rule opt_type(Parser* p) {
 }
 
 /**
- * @brief <type> -> Int<nilable> | String<nilable> | Double<nilable>
+ * @brief <type> -> Int | String | Double
  */
 Rule type(Parser* p) {
     RULE_PRINT("type");
@@ -914,6 +914,91 @@ Rule func_header(Parser* p) {
     return EXIT_SUCCESS;
 }
 
+Rule type_skip(Parser* p) {
+    RULE_PRINT("type_skip");
+    uint32_t res;
+
+    switch (p->curr_tok.type)
+    {
+    case TOKEN_DT_INT:
+    case TOKEN_DT_DOUBLE:
+    case TOKEN_DT_STRING:
+        tb_next(&p->buffer);
+        GET_TOKEN();
+        break;
+    default:
+        fprintf(stderr, "[ERROR %d] Type specifier expected\n", ERR_SYNTAX);
+        return ERR_SYNTAX;
+    }
+    return EXIT_SUCCESS;
+}
+
+Rule param_skip(Parser* p) {
+    RULE_PRINT("param_skip");
+    uint32_t res;
+
+    if (p->curr_tok.type != TOKEN_UND_SCR || p->curr_tok.type != TOKEN_IDENTIFIER) {
+        fprintf(stderr, "[ERROR %d] Parameter label expected\n", ERR_SYNTAX);
+        return ERR_SYNTAX;
+    }
+    tb_next(&p->buffer);
+    GET_TOKEN();
+    ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
+
+    tb_next(&p->buffer);
+    GET_TOKEN();
+    ASSERT_TOK_TYPE(TOKEN_COL);
+
+    tb_next(&p->buffer);
+    GET_TOKEN();
+    NEXT_RULE(type_skip);
+    return EXIT_SUCCESS;
+}
+
+Rule param_next_skip(Parser* p) {
+    RULE_PRINT("param_next_skip");
+    uint32_t res;
+
+    switch (p->curr_tok.type)
+    {
+    case TOKEN_R_PAR:
+        break;
+    case TOKEN_COMMA:
+        tb_next(&p->buffer);
+        GET_TOKEN();
+        NEXT_RULE(param_next_skip);
+        break;
+    default:
+        fprintf(stderr, "[ERROR %d] Unexpected token in parameters\n", ERR_SYNTAX);
+        return ERR_SYNTAX;
+    }
+    return EXIT_SUCCESS;
+}
+
+Rule param_list_skip(Parser* p) {
+    RULE_PRINT("param_list_skip");
+    uint32_t res;
+
+    if (p->curr_tok.type == TOKEN_R_PAR) {
+        return EXIT_SUCCESS;
+    }
+    NEXT_RULE(param_skip);
+    NEXT_RULE(param_next_skip);
+    return EXIT_SUCCESS;
+}
+
+Rule func_ret_type_skip(Parser* p) {
+    RULE_PRINT("func_ret_type_skip");
+    uint32_t res;
+
+    if (p->curr_tok.type == TOKEN_RET_VAL) {
+        tb_next(&p->buffer);
+        GET_TOKEN();
+        NEXT_RULE(type_skip);
+    }
+    return EXIT_SUCCESS;
+}
+
 Rule skip(Parser* p) {
     uint32_t res;
     if (p->curr_tok.type == TOKEN_EOF) {
@@ -1052,10 +1137,6 @@ uint32_t parser_fill_buffer(Parser* p) {
 
     p->buffer.runner = p->buffer.head;
     return ERR_NO_ERR;
-}
-
-uint32_t parser_get_func_headers(Parser* p) {
-
 }
 
 /**

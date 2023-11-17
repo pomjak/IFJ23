@@ -121,7 +121,11 @@ Rule term(Parser* p);
 Rule literal(Parser* p);
 Rule func_decl(Parser* p);
 Rule skip(Parser* p);
-
+Rule type_skip(Parser* p);
+Rule func_ret_type_skip(Parser* p);
+Rule param_list_skip(Parser* p);
+Rule param_next_skip(Parser* p);
+Rule param_skip(Parser* p);
 bool parser_init(Parser* p);
 bool add_builtins(Parser* p);
 void parser_dispose(Parser* p);
