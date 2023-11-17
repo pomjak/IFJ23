@@ -16,6 +16,6 @@ int main()
 {
     uint32_t res;
     res = parse();
-    fprintf(stderr, "res: %d", res);
+    // fprintf(stderr, "res: %d", res);
     return res;
 }

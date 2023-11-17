@@ -1,10 +1,10 @@
 func bar(with param : String) { 
     let r : String // = foo(param) expr
-    foo()
+    foo("Hello")
 }
 func foo(_ param : String) { 
     let r : String
-    bar()
+    bar("world")
 }
 
 bar(with: "ahoj")
