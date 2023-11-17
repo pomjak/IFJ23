@@ -380,7 +380,7 @@ state_T start(char read) {
         }
         NEXT_STATE(s_int);
     }
-    if (read == '\n')         NEXT_STATE(eol);
+    if (read == '\n'){        set_eol = true; NEXT_STATE(start);}
     if (read == EOF)          eof(read);
     if (read == '_') {
         if (!dstring_append(&read_string, read)) {
@@ -421,22 +421,12 @@ state_T start(char read) {
  * Operators
  */
 
-state_T eol(char read) {
-    DEBUG_PRINT("read char is %c", read);
-    
-    is_final          = false;
-    set_eol           = true;
-
-    UNREAD(read);
-    NEXT_STATE(start);   
-}
-
 state_T eof(char read) {
     UNUSED(read);
     DEBUG_PRINT("read char is %c", read);
 
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;//set eol flag if eol was found before token
+    actual_token.preceding_eol = set_eol;//set eol flag if eol was found before token
     set_eol = false;   
     actual_token.type = TOKEN_EOF;
 
@@ -454,7 +444,7 @@ state_T und_scr(char read) {
     if (is_alfa_num(read))  NEXT_STATE(identifier);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_UND_SCR;
     
@@ -466,7 +456,7 @@ state_T comma(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_COMMA;
     
@@ -480,7 +470,7 @@ state_T lt(char read) {
     if (read == '=')  NEXT_STATE(leq);
 
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_LT;
 
@@ -492,7 +482,7 @@ state_T leq(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_LEQ;
     
@@ -506,7 +496,7 @@ state_T gt(char read) {
     if (read == '=')  NEXT_STATE(geq);
 
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_GT;
 
@@ -518,7 +508,7 @@ state_T geq(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_GEQ;
     
@@ -532,7 +522,7 @@ state_T not_nil(char read) {
     if (read == '=')  NEXT_STATE(neq);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_NOT_NIL;
     
@@ -544,7 +534,7 @@ state_T neq(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_NEQ;
     
@@ -564,7 +554,7 @@ state_T nil_check(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_NIL_CHECK;
     
@@ -578,7 +568,7 @@ state_T ass(char read) {
     if (read == '=')  NEXT_STATE(eq);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_ASS;
     
@@ -590,7 +580,7 @@ state_T eq(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_EQ;
     
@@ -602,7 +592,7 @@ state_T col(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_COL;
     
@@ -614,7 +604,7 @@ state_T semicol(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_SEMICOL;
     
@@ -626,7 +616,7 @@ state_T r_bkt(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_R_BKT;
     
@@ -638,7 +628,7 @@ state_T l_bkt(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_L_BKT;
     
@@ -650,7 +640,7 @@ state_T r_par(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_R_PAR;
     
@@ -662,7 +652,7 @@ state_T l_par(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_L_PAR;
     
@@ -674,7 +664,7 @@ state_T add(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_ADD;
     
@@ -688,7 +678,7 @@ state_T sub(char read) {
     if (read == '>')  NEXT_STATE(ret_val);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_SUB;
     
@@ -700,7 +690,7 @@ state_T ret_val(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_RET_VAL;
     
@@ -712,7 +702,7 @@ state_T mul(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_MUL;
     
@@ -730,7 +720,7 @@ state_T s_div(char read) {
     }
 
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_DIV;
     
@@ -814,14 +804,14 @@ state_T identifier(char read) {
     for (int i = 0; i < data_types_count; i++) {
         if (dstring_cmp_const_str(&read_string, data_types[i]) == 0) {
             actual_token.type = data_types_tokens[i];
-            actual_token.preceding_eol = set_eol ? true : false;
+            actual_token.preceding_eol = set_eol;
             set_eol = false;
             actual_token.value.is_nilable = false;
             NEXT_STATE(data_type);
         }
     }
 
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
 
     NEXT_STATE(NULL);   
@@ -854,7 +844,7 @@ state_T s_int(char read) {
     if (read == 'e' || read == 'E')     NEXT_STATE(exp_s);
 
     is_final = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_INT;
     actual_token.value.int_val = atoi(dstring_to_str(&read_string));
@@ -889,7 +879,7 @@ state_T dbl(char read) {
     
     is_final          = true;
     actual_token.type = TOKEN_DBL;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.value.double_val = atof(dstring_to_str(&read_string));
     
@@ -935,7 +925,7 @@ state_T s_exp(char read) {
     if (is_number(read))  NEXT_STATE(s_exp);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_DBL;
 
@@ -976,7 +966,7 @@ state_T empty_string(char read) {
     DEBUG_PRINT("read string is %s", read_string.str);
     
     is_final          = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type = TOKEN_STRING;
     actual_token.value.string_val = read_string;
@@ -1144,7 +1134,7 @@ state_T string_end(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     is_final                      = true;
-    actual_token.preceding_eol = set_eol ? true : false;
+    actual_token.preceding_eol = set_eol;
     set_eol = false;
     actual_token.type             = TOKEN_STRING;
     actual_token.value.string_val = read_string;
