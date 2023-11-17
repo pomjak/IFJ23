@@ -65,7 +65,7 @@ void tb_pop(token_buffer_t* buffer) {
 }
 
 void tb_dispose(token_buffer_t* buffer) {
-
+    buffer->runner = buffer->head;
     while (tb_peek(buffer)) {
         tb_pop(buffer);
     }

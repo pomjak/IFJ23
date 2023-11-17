@@ -1066,8 +1066,8 @@ void parser_dispose(Parser* p) {
     dstring_free(&p->tmp);
     symtable_dispose(&p->global_symtab);
     dispose_scope(&p->stack, &err);
-    // tb_dispose(&p->buffer);
-    tb_pop(&p->buffer);
+    tb_dispose(&p->buffer);
+    // tb_pop(&p->buffer);
 }
 
 /**
