@@ -4,6 +4,5 @@
 
 int main(void)
 {
-    expr();
-    return EXIT_SUCCESS;
+    return expr();
 }
