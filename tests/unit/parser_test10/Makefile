@@ -11,7 +11,11 @@ run: build
 	diff ./expected_debug.txt ./debug_output.txt || (echo -e "[info] test parser 10 - bad syntax - missing head of func [RULE_PRINT] \e[31mFAIL\e[0m" && exit 1)
 	diff ./expected.txt ./output.txt || (echo -e "[info] test parser 10 - bad syntax - missing head of func [INSTR] \e[31mFAIL\e[0m" && exit 1)
 	echo -e "[info] test parser 10 - bad syntax - missing head of func \e[32mPASS\e[0m"
-
+	if $(VALGRIND) ./$(NAME)< ./input.txt > ./valgrind_output.txt 2>&1; then \
+        echo -e "[info] valgrind test parser 11 \e[32mOK\e[0m"; \
+    else \
+        echo -e "[info] valgrind test parser 11 \e[33mWARN VALGRIND\e[0m"; \
+    fi
 artifacts:
 	@echo "[info] creating artifacts for parser 10"
 	@echo "----------------------------------------"
