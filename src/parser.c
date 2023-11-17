@@ -352,6 +352,8 @@ Rule arg_list(Parser* p) {
             fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
         }
+        tb_next(&p->buffer);
+        GET_TOKEN();
         return EXIT_SUCCESS;
     }
     if (p->current_arg == NULL) {
