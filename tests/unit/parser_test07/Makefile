@@ -2,7 +2,6 @@ CC=gcc -std=c99 -g -lm
 NAME=test
 
 build:
-	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test parser 7"
 	$(CC) *.c -o $(NAME) -D RULEDEBUG -D DEBUG -D DEBUGL=2
 run: build
