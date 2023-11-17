@@ -380,7 +380,7 @@ state_T start(char read) {
         }
         NEXT_STATE(s_int);
     }
-    if (read == '\n')         NEXT_STATE(eol);
+    if (read == '\n'){        set_eol = true; NEXT_STATE(start);}
     if (read == EOF)          eof(read);
     if (read == '_') {
         if (!dstring_append(&read_string, read)) {
@@ -420,16 +420,6 @@ state_T start(char read) {
 /**
  * Operators
  */
-
-state_T eol(char read) {
-    DEBUG_PRINT("read char is %c", read);
-    
-    is_final          = false;
-    set_eol           = true;
-
-    UNREAD(read);
-    NEXT_STATE(start);   
-}
 
 state_T eof(char read) {
     UNUSED(read);
