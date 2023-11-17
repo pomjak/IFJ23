@@ -666,8 +666,8 @@ int expr()
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 {
     token_T first_operand = sym_arr->arr[0].token;
-    token_T second_operand = sym_arr->arr[2].token;
     token_T operator= sym_arr->arr[1].token;
+    token_T second_operand = sym_arr->arr[2].token;
 
     symstack_data_t expr_symbol;
     if (first_operand.type == TOKEN_STRING || second_operand.type == TOKEN_STRING)
@@ -695,13 +695,9 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
             error_code_handler(ERR_UNCOMPATIBILE_TYPE);
             expr_symbol.token.type = TOKEN_UNDEFINED;
         }
-        // return expr_symbol;
     }
 
-    // if tokens are not strings
-    // if (first_operand.type != TOKEN_STRING && second_operand.type != TOKEN_STRING)
-    // {
-
+    // if one of the operands is double need to convert it
     if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
     {
         int2double(&first_operand, &second_operand);
@@ -709,6 +705,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         expr_symbol.token.type = TOKEN_DBL;
         return expr_symbol;
     }
+    // if one of the operands is double need to convert it
     else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
     {
         generate_int_arithmetic_by_operator(operator, first_operand.value.int_val, second_operand.value.int_val);
