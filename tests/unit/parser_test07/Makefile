@@ -1,5 +1,6 @@
 CC=gcc -std=c99 -g -lm
 NAME=test
+VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s --error-exitcode=1
 
 build:
 	@echo "[info] starting CC build for test parser 7"
@@ -11,6 +12,11 @@ run: build
 	diff ./expected_debug.txt ./debug_output.txt || (echo -e "[info] test parser 07 - func_decl with body & func call [RULE_PRINT] \e[31mFAIL\e[0m" && exit 1)
 	diff ./expected.txt ./output.txt || (echo -e "[info] test parser 07 - func_decl with body & func call [INSTR]\e[31mFAIL\e[0m" && exit 1)
 	echo -e "[info] test parser 07 - func_decl with body \e[32mPASS\e[0m"
+	if $(VALGRIND) ./$(NAME)< ./input.txt > ./valgrind_output.txt 2>&1; then \
+        echo -e "[info] valgrind test parser 7 \e[32mOK\e[0m"; \
+    else \
+        echo -e "[info] valgrind test parser 7 \e[33mWARN VALGRIND\e[0m"; \
+    fi
 
 
 artifacts:
@@ -18,3 +24,4 @@ artifacts:
 	@echo "----------------------------------------"
 	cp output.txt 		../test_artifacts/units_test_parser7.txt
 	cp debug_output.txt ../test_artifacts/units_test_parser7_rule_print.txt	
+	cp valgrind_output.txt ../test_artifacts/units_test_parser7_valgrind.txt

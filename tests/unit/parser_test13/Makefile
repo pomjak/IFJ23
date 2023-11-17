@@ -1,5 +1,6 @@
 CC=gcc -std=c99 -g -lm
 NAME=test
+VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s --error-exitcode=1
 
 build:
 	@echo "[info] starting CC build for test parser 13"
