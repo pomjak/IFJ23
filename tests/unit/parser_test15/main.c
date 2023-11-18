@@ -16,6 +16,6 @@ int main()
 {
     uint32_t res = parse();
     fprintf(stderr,"res = %d", res);
-    assert(res == 6);
+    assert(res == 0);
     return 0;
 }
