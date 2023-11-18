@@ -104,12 +104,18 @@ Rule stmt(Parser* p) {
     case TOKEN_WHILE: /* while EXP { <block_body> */
         p->in_loop++;
 
-        /* TODO EXPRESSION PROCESSING HERE */
+        if ((res = expr(p))) {
+            fprintf(stderr, "[ERROR %d] Invalid expression in while loop\n", res);
+            return res;
+        }
+        ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        GET_TOKEN();
-        ASSERT_TOK_TYPE(TOKEN_R_BKT);
+        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(block_body);
+
+        tb_next(&p->buffer);
+        GET_TOKEN();
         p->in_loop--;
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
@@ -119,8 +125,6 @@ Rule stmt(Parser* p) {
         NEXT_RULE(cond_clause);
         DEBUG_PRINT("cond_clause finished");
 
-        tb_next(&p->buffer);
-        GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         tb_next(&p->buffer);
@@ -242,7 +246,7 @@ Rule opt_assign(Parser* p) {
     if (p->curr_tok.type == TOKEN_ASS) {
         if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
-              return res;
+            return res;
         }
         if (p->current_id->type != p->type_expr) {
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
@@ -267,11 +271,11 @@ Rule expr_type(Parser* p) {
             fprintf(stderr, "[ERROR %d] Assignment to undefined variable\n", ERR_UNDEFINED_VARIABLE);
             return ERR_UNDEFINED_VARIABLE;
         }
-        if(p->current_id->is_mutable == false) {
+        if (p->current_id->is_mutable == false) {
             fprintf(stderr, "[ERROR %d] Assigning a new value to immutable variable %s\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
-        if((res = expr(p))) {
+        if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
             return res;
         }
@@ -313,6 +317,7 @@ Rule cond_clause(Parser* p) {
     RULE_PRINT("cond_clause");
     uint32_t res, err;
 
+    /* if let id */
     if (p->curr_tok.type == TOKEN_LET) {
         tb_next(&p->buffer);
         GET_TOKEN();
@@ -348,9 +353,18 @@ Rule cond_clause(Parser* p) {
         set_mutability(p->stack->local_sym, &p->current_id->name, false, &err);
         DEBUG_PRINT("%s inserted into local if scope", p->current_id->name.str);
 
+        tb_next(&p->buffer);
+        GET_TOKEN();
     }
+    /* if (EXPR) */
     else {
-        return EXIT_SUCCESS;
+        ASSERT_TOK_TYPE(TOKEN_L_PAR);
+        /* Move to previous token since expression func expects loading parentheses */
+        tb_prev(&p->buffer);
+        if ((res = expr(p))) {
+            fprintf(stderr, "[ERROR %d] Invalid expression in conditional\n", res);
+            return res;
+        }
     }
 
     return EXIT_SUCCESS;
@@ -366,7 +380,7 @@ Rule arg_list(Parser* p) {
     if (p->curr_tok.type == TOKEN_R_PAR) {
         /* Function had parameters declared but no arguments were passed while calling */
         if (p->current_arg != NULL) {
-            fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            fprintf(stderr, "[ERROR %d] Missing arguments in function '%s' \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
         }
         tb_next(&p->buffer);
@@ -374,7 +388,7 @@ Rule arg_list(Parser* p) {
         return EXIT_SUCCESS;
     }
     if (p->current_arg == NULL) {
-        fprintf(stderr, "[ERROR %d] Too many arguments in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+        fprintf(stderr, "[ERROR %d] Too many arguments in function '%s'\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
         return ERR_FUNCTION_PARAMETER;
     }
     NEXT_RULE(arg);
@@ -443,7 +457,7 @@ Rule arg(Parser* p) {
             }
             /* Check if the variable is the same type as function parameter */
             if (p->current_id->type != p->current_arg->type) {
-                fprintf(stderr, "[ERROR %d] Function %s: Invalid argument type in %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
+                fprintf(stderr, "[ERROR %d] Function '%s': Invalid argument type in %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
                 return ERR_FUNCTION_PARAMETER;
             }
             // TODO maybe get token here
@@ -451,7 +465,7 @@ Rule arg(Parser* p) {
         }
         /* Assert validity of the label */
         if (dstring_cmp(&p->current_arg->label, &p->curr_tok.value.string_val)) {
-            fprintf(stderr, "[ERROR %d] Unknown label %s in function %s\n", ERR_SEMANTIC, p->curr_tok.value.string_val.str, p->last_func_id->name.str);
+            fprintf(stderr, "[ERROR %d] Unknown label '%s' in function '%s'\n", ERR_SEMANTIC, p->curr_tok.value.string_val.str, p->last_func_id->name.str);
             return ERR_SEMANTIC;
         }
 
@@ -573,12 +587,20 @@ Rule func_body(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
+        if (p->last_func_id->return_type != nil) {
+            if (p->return_found == false) {
+                fprintf(stderr, "[ERROR %d] Missing return statement in function '%s'\n", ERR_SEMANTIC, p->last_func_id->name.str);
+                return ERR_SEMANTIC;
+            }
+        }
+        p->return_found = false;
         return EXIT_SUCCESS;
     }
     else {
         NEXT_RULE(func_stmt);
         NEXT_RULE(func_body);
     }
+
     return EXIT_SUCCESS;
 }
 
@@ -623,13 +645,19 @@ Rule func_stmt(Parser* p) {
         NEXT_RULE(expr_type);
         break;
     case TOKEN_WHILE:
-        /* TODO EXPRESSION */
-        tb_next(&p->buffer);
-        GET_TOKEN();
+        p->in_loop++;
+        if ((res = expr(p))) {
+            fprintf(stderr, "[ERROR %d] Invalid expression in while loop\n", res);
+            return res;
+        }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(func_body);
+
+        tb_next(&p->buffer);
+        GET_TOKEN();
+        p->in_loop--;
         break;
     case TOKEN_IF:
         p->in_cond++;
@@ -662,8 +690,7 @@ Rule func_stmt(Parser* p) {
         p->in_cond--;
         break;
     case TOKEN_RETURN:
-        tb_next(&p->buffer);
-        GET_TOKEN();
+        p->return_found = true;
         NEXT_RULE(opt_ret);
         break;
     default:
@@ -685,6 +712,9 @@ Rule func_ret_type(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(type);
     }
+    else {
+        set_return_type(&p->global_symtab, &p->last_func_id->name, nil, &err);
+    }
     return EXIT_SUCCESS;
 }
 
@@ -694,8 +724,28 @@ Rule func_ret_type(Parser* p) {
 Rule opt_ret(Parser* p) {
     RULE_PRINT("opt_ret");
     uint32_t res, err;
+
+    if (p->last_func_id->return_type == nil) {
+        tb_next(&p->buffer);
+        GET_TOKEN();
+
+        if (p->curr_tok.type != TOKEN_R_BKT) {
+            fprintf(stderr, "[ERROR %d] Unexpected expression in return from void function\n", ERR_FUNCTION_RETURN);
+            return ERR_FUNCTION_RETURN;
+        }
+    }
+    else {
+        if ((res = expr(p))) {
+            fprintf(stderr, "[ERROR %d] Invalid expression in return statement\n", res);
+            return res;
+        }
+        if (p->last_func_id->return_type != p->type_expr) {
+            fprintf(stderr, "[ERROR %d] Function %s: Invalid return expression type\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
+            return ERR_RETURN_TYPE;
+        }
+    }
     return EXIT_SUCCESS;
-} /* TODO EXPRESSIONS */
+}
 
 /**
  * @brief <opt_type> ->  : <type> | eps
@@ -1068,6 +1118,7 @@ bool parser_init(Parser* p) {
     p->in_cond = 0;
     p->in_declaration = false;
     p->in_function = false;
+    p->return_found = false;
     p->in_loop = 0;
     p->in_param = false;
     p->type_expr = undefined;
@@ -1220,7 +1271,7 @@ uint32_t parse() {
         fprintf(stderr, "[ERROR %d] Getting first token from buffer failed\n", ERR_INTERNAL);
         return ERR_INTERNAL;
     };
-    
+
     /* Start recursive descend */
     if ((res = prog(&p))) {
         WARNING_PRINT("prog not 0");

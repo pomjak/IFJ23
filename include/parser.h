@@ -22,9 +22,10 @@
 typedef struct parser_t {
     bool in_function;            // Parser is inside a function call
     bool in_declaration;         // Parser is inside a function declaration
+    bool in_param;               // Parser should set param type
+    bool return_found;
     uint32_t in_cond;                // Parser is inside a condition statement
     uint32_t in_loop;                // Parser is inside a while loop
-    bool in_param;               // Parser should set param type
     param_t* current_arg;        // Current function argument list
     token_T curr_tok;            // Currently processed token
     symtab_item_t* current_id;   // Identifier of currently processed function
@@ -86,9 +87,12 @@ typedef struct parser_t {
         return ERR_INTERNAL
 
 /* Check if last loaded token is the correct type */
-#define ASSERT_TOK_TYPE(_type)                                                                                         \
-    if (p->curr_tok.type != _type)                                                                                     \
-    return ERR_SYNTAX
+#define ASSERT_TOK_TYPE(_type)                                                                                          \
+    if (p->curr_tok.type != _type) {                                                                                    \
+        fprintf(stderr, "[ERROR 2] Unexpected token %d, expected %d\n", p->curr_tok.type, _type);                         \
+        return ERR_SYNTAX;                                                                                              \
+    }                                                                                     
+
 
 /* Go to next rule, return (with a relevant exit code) if the exit code of the next rule was not 0 */
 #define NEXT_RULE(_rule)                                                                                               \
