@@ -1,7 +1,22 @@
-//int func -> return must be found
-//void func -> does not need return 
+let cond : Int?
 
-func function1(this num1 : Int, plus num2 : Int) -> Int
+let cond2 : Int?
+
+func aaa(_ x : Double) { }
+
+if let cond 
 {
-    var sum : Int // = num1 + num2
+    if let cond2
+    {
+        var x : Double
+    }
+
+    else
+    {
+        aaa(x)
+    }
+}
+
+else{
+
 }

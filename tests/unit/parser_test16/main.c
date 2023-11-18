@@ -15,6 +15,6 @@
 int main()
 {   uint32_t res = parse();
     // fprintf(stderr, " res = %d",res);
-    assert(res == 5);
+    assert(res == 0);
     return 0;
 }

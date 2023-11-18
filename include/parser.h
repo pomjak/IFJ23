@@ -21,17 +21,18 @@
 typedef struct parser_t {
     bool in_function;            // Parser is inside a function call
     bool in_declaration;         // Parser is inside a function declaration
-    bool in_cond;                // Parser is inside a condition statement
-    bool in_loop;                // Parser is inside a while loop
+    uint32_t in_cond;                // Parser is inside a condition statement
+    uint32_t in_loop;                // Parser is inside a while loop
     bool in_param;               // Parser should set param type
-    param_t* current_arg;         // Current function argument list
+    param_t* current_arg;        // Current function argument list
     token_T curr_tok;            // Currently processed token
     symtab_item_t* current_id;   // Identifier of currently processed function
     symtab_item_t* last_func_id; // Identifier of the last loaded function
     symtab_t global_symtab;      // Global symbol table
     scope_t stack;               // Stack of local symbol tables, HEAD = current scope
     dstring_t tmp;               // Temporary helper string
-    token_buffer_t buffer;
+    token_buffer_t buffer;       // List of tokens
+    Type type_expr;              // Type of reduced expression 
 } Parser;
 
 /* ============================================| MACROS |============================================================ */

@@ -104,7 +104,7 @@ Rule stmt(Parser* p) {
         NEXT_RULE(expr_type);
         break;
     case TOKEN_WHILE: /* while EXP { <block_body> */
-        p->in_loop = true;
+        p->in_loop++;
 
         /* TODO EXPRESSION PROCESSING HERE */
 
@@ -112,10 +112,10 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_R_BKT);
         GET_TOKEN();
         NEXT_RULE(block_body);
-        p->in_loop = false;
+        p->in_loop--;
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
-        p->in_cond = true;
+        p->in_cond++;
         tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
@@ -132,7 +132,7 @@ Rule stmt(Parser* p) {
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
-
+        add_scope(&p->stack,&err);//adding scope for else
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
@@ -144,7 +144,7 @@ Rule stmt(Parser* p) {
 
         tb_next(&p->buffer);
         GET_TOKEN();
-        p->in_cond = false; // condition should be fully parsed by the time we're exiting the switch statement
+        p->in_cond--; // condition should be fully parsed by the time we're exiting the switch statement
         break;
     default:
         fprintf(stderr, "[ERROR %d] Unexpected token, var/let/while/if/identifier expected", ERR_SYNTAX
@@ -164,7 +164,9 @@ Rule define(Parser* p) {
     DEBUG_PRINT("%s %d", p->curr_tok.value.string_val.str, p->curr_tok.type);
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-    if (p->in_cond || p->in_loop || p->in_declaration) {
+    if ((p->in_cond > 0) || (p->in_loop > 0) || p->in_declaration)
+    {
+        DEBUG_PRINT("define : in cond, loop or decl");
         if (!peek_scope(p->stack)) {
             return ERR_INTERNAL; //TODO;
         }
@@ -548,6 +550,7 @@ Rule block_body(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
         DEBUG_PRINT("block_body end }");
+        pop_scope(&p->stack,&err);
         return EXIT_SUCCESS;
     }
     else {
@@ -629,7 +632,7 @@ Rule func_stmt(Parser* p) {
         NEXT_RULE(func_body);
         break;
     case TOKEN_IF:
-        p->in_cond = true;
+        p->in_cond++;
         add_scope(&p->stack, &err);
         tb_next(&p->buffer);
         GET_TOKEN();
@@ -656,7 +659,7 @@ Rule func_stmt(Parser* p) {
         GET_TOKEN();
         add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
-        p->in_cond = false;
+        p->in_cond--;
         break;
     case TOKEN_RETURN:
         tb_next(&p->buffer);
@@ -912,6 +915,7 @@ Rule func_header(Parser* p) {
     tb_next(&p->buffer);
     GET_TOKEN();
     NEXT_RULE(func_ret_type);
+    p->in_declaration = false;
     DEBUG_PRINT("after func_ret_type; token = %d", p->curr_tok.type);
     return EXIT_SUCCESS;
 }
@@ -1049,11 +1053,12 @@ bool parser_init(Parser* p) {
     p->current_arg = NULL;
     p->current_id = NULL;
     p->last_func_id = NULL;
-    p->in_cond = false;
+    p->in_cond = 0;
     p->in_declaration = false;
     p->in_function = false;
-    p->in_loop = false;
+    p->in_loop = 0;
     p->in_param = false;
+    p->type_expr = undefined;
     return true;
 }
 
