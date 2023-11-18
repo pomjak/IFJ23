@@ -30,9 +30,6 @@ Rule prog(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
 
-        // p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
-        // p->last_func_id->type = function;
-
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
@@ -133,11 +130,11 @@ Rule stmt(Parser* p) {
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
-        add_scope(&p->stack, &err);//adding scope for else
+        /* adding scope for else */
+        add_scope(&p->stack, &err);
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-        DEBUG_PRINT("{ start of body");
 
         tb_next(&p->buffer);
         GET_TOKEN();
@@ -148,9 +145,7 @@ Rule stmt(Parser* p) {
         p->in_cond--; // condition should be fully parsed by the time we're exiting the switch statement
         break;
     default:
-        fprintf(stderr, "[ERROR %d] Unexpected token, var/let/while/if/identifier expected", ERR_SYNTAX
-
-        );
+        fprintf(stderr, "[ERROR %d] Unexpected token, var/let/while/if/identifier expected", ERR_SYNTAX);
         return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
@@ -167,37 +162,33 @@ Rule define(Parser* p) {
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     if ((p->in_cond > 0) || (p->in_loop > 0) || p->in_declaration)
     {
-        DEBUG_PRINT("define : in cond, loop or decl");
+        DEBUG_PRINT("in cond, loop or decl");
         if (!peek_scope(p->stack)) {
-            return ERR_INTERNAL; //TODO;
+            fprintf(stderr, "[ERROR %d] Missing local scope in body\n", ERR_INTERNAL);
+            return ERR_INTERNAL;
         }
         else {
             p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
         }
 
-        // /* search local */
-        // DEBUG_PRINT("before search scopes");
-        // p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
-        // DEBUG_PRINT("after search scopes");
         if (p->current_id) {
             fprintf(stderr, "[ERROR %d] Variable %s already defined\n", ERR_REDEFINING_VARIABLE, p->current_id->name.str);
             return ERR_REDEFINING_VARIABLE;
         }
         /* Add symbol to local symtable */
         symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
-        /* TODO switch for symtable error */
+
+        /* save the added ID to parser data */
         p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
         DEBUG_PRINT("%s inserted to local symtab", p->current_id->name.str);
-        /* TODO ERR CHECK */
     }
     else {
         DEBUG_PRINT("global scope");
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         if (p->current_id) {
-
-            return ERR_UNDEFINED_FUNCTION;
+            fprintf(stderr, "[ERROR %d] Variable %s already defined\n", ERR_REDEFINING_VARIABLE, p->current_id->name.str);
+            return ERR_REDEFINING_VARIABLE;
         }
-
         symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
@@ -235,7 +226,7 @@ Rule var_def_cont(Parser* p) {
         }
         break;
     default:
-        fprintf(stderr, "[ERROR %d] Unexpected token after variable identifier '%s'", ERR_SYNTAX, p->current_id->name.str);
+        fprintf(stderr, "[ERROR %d] Unexpected token after variable identifier '%s'\n", ERR_SYNTAX, p->current_id->name.str);
         return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
@@ -254,7 +245,7 @@ Rule opt_assign(Parser* p) {
             return res;
         }
         if (p->current_id->type != p->type_expr) {
-            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
+            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_UNCOMPATIBILE_TYPE;
         }
     }
@@ -270,12 +261,10 @@ Rule expr_type(Parser* p) {
     uint32_t res, err;
 
     switch (p->curr_tok.type) {
-            /* If the previously loaded identifier was't found in any symtable we have to
-            determenine whether to return ERR_UNDEFINED_VARIABLE or
-                ERR_UNDEFINED_FUNCTION in this rule */
+    /* If assignment is the next step after loading the identifier, the ID was a variable */
     case TOKEN_ASS:
-        /* If assignment is the next step after loading the identifier, the ID was a variable */
         if (!p->current_id) {
+            fprintf(stderr, "[ERROR %d] Assignment to undefined variable\n", ERR_UNDEFINED_VARIABLE);
             return ERR_UNDEFINED_VARIABLE;
         }
         switch (p->current_id->type) {
@@ -284,9 +273,10 @@ Rule expr_type(Parser* p) {
         case string: break;
         default: return ERR_UNDEFINED_VARIABLE; break;
         }
+    /* If the loaded ID is followed by opening parentheses the ID should have been a function */
     case TOKEN_L_PAR:
-        /* If the loaded ID is followed by opening parentheses the ID should have been a function */
         if (!p->current_id) {
+            fprintf(stderr, "[ERROR %d] Attempting to call an undefined function\n", ERR_UNDEFINED_FUNCTION);
             return ERR_UNDEFINED_FUNCTION;
         }
         if (p->current_id->type != function) {
@@ -317,7 +307,6 @@ Rule cond_clause(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_LET) {
-        DEBUG_PRINT("Before getting ID tok");
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
@@ -354,7 +343,6 @@ Rule cond_clause(Parser* p) {
 
     }
     else {
-     // expressions
         return EXIT_SUCCESS;
     }
 
@@ -399,7 +387,6 @@ Rule arg_next(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_COMMA:
-
         if (p->current_arg->next == NULL) {
             fprintf(stderr, "[ERROR %d] Too many arguments in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
@@ -447,7 +434,6 @@ Rule arg(Parser* p) {
                 fprintf(stderr, "[ERROR %d] Unknown identifier %s\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
                 return ERR_UNDEFINED_VARIABLE;
             }
-
             /* Check if the variable is the same type as function parameter */
             if (p->current_id->type != p->current_arg->type) {
                 fprintf(stderr, "[ERROR %d] Function %s: Invalid argument type in %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
@@ -456,14 +442,12 @@ Rule arg(Parser* p) {
             // TODO maybe get token here
             return EXIT_SUCCESS;
         }
-
         /* Assert validity of the label */
         if (dstring_cmp(&p->current_arg->label, &p->curr_tok.value.string_val)) {
             fprintf(stderr, "[ERROR %d] Unknown label %s in function %s\n", ERR_SEMANTIC, p->curr_tok.value.string_val.str, p->last_func_id->name.str);
             return ERR_SEMANTIC;
         }
 
-        // symtable stuff?
         tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(opt_arg);
@@ -486,7 +470,6 @@ Rule param_list(Parser* p) {
         return EXIT_SUCCESS;
     }
     NEXT_RULE(param);
-    // GET_TOKEN();
     NEXT_RULE(param_next);
     return EXIT_SUCCESS;
 }
@@ -504,7 +487,6 @@ Rule param_next(Parser* p) {
         tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(param);
-        // GET_TOKEN();
         NEXT_RULE(param_next);
         break;
     default:
@@ -530,7 +512,6 @@ Rule param(Parser* p) {
         /* Store the label into Parser.tmp so we can add it after adding the whole parameter to symtable */
         dstring_clear(&p->tmp);
         dstring_copy(&p->curr_tok.value.string_val, &p->tmp);
-
         break;
     default:
         fprintf(stderr, "[ERROR %d] Parameter label expected\n", ERR_SYNTAX);
@@ -539,7 +520,6 @@ Rule param(Parser* p) {
 
     tb_next(&p->buffer);
     GET_TOKEN();
-    DEBUG_PRINT("GET_TOKEN, ID expected");
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     NEW_PARAM();
 
@@ -550,12 +530,10 @@ Rule param(Parser* p) {
 
     tb_next(&p->buffer);
     GET_TOKEN();
-    DEBUG_PRINT("GET_TOKEN, colon expected");
     ASSERT_TOK_TYPE(TOKEN_COL);
 
     tb_next(&p->buffer);
     GET_TOKEN();
-    DEBUG_PRINT("GET_TOKEN, goto type");
     NEXT_RULE(type);
 
     return EXIT_SUCCESS;
@@ -575,7 +553,6 @@ Rule block_body(Parser* p) {
     }
     else {
         NEXT_RULE(stmt);
-        // GET_TOKEN();
         NEXT_RULE(block_body);
     }
     return EXIT_SUCCESS;
@@ -589,14 +566,10 @@ Rule func_body(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
-        DEBUG_PRINT("}");
-        // pop_scope(&p->stack, &err);
         return EXIT_SUCCESS;
     }
     else {
         NEXT_RULE(func_stmt);
-        // tb_next(&p->buffer);
-        // GET_TOKEN();
         NEXT_RULE(func_body);
     }
     return EXIT_SUCCESS;
@@ -669,7 +642,7 @@ Rule func_stmt(Parser* p) {
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
-        // ?? check if if was declared with LET ID ??
+        add_scope(&p->stack, &err);
 
         tb_next(&p->buffer);
         GET_TOKEN();
@@ -742,7 +715,6 @@ Rule type(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_DT_INT:
-        DEBUG_PRINT("case TOKEN_DT_INT");
         if (p->in_declaration) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
@@ -765,7 +737,6 @@ Rule type(Parser* p) {
         break;
 
     case TOKEN_DT_DOUBLE:
-        DEBUG_PRINT("case TOKEN_DT_DOUBLE");
         if (p->in_declaration) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
@@ -787,7 +758,6 @@ Rule type(Parser* p) {
         break;
 
     case TOKEN_DT_STRING:
-        DEBUG_PRINT("case TOKEN_DT_STRING");
         if (p->in_declaration) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
@@ -814,7 +784,6 @@ Rule type(Parser* p) {
         GET_TOKEN();
         break;
     default:
-        DEBUG_PRINT("default");
         fprintf(stderr, "[ERROR %d] Type specifier expected\n", ERR_SYNTAX);
         return ERR_SYNTAX;
     }
@@ -918,7 +887,7 @@ Rule func_header(Parser* p) {
 
     symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     if (err == SYMTAB_ERR_ITEM_ALREADY_STORED) {
-        print_error(ERR_SEMANTIC, "Function already declared");
+        fprintf(stderr, "[ERROR %d] Redeclaration of function %s\n", ERR_SEMANTIC, p->curr_tok.value.string_val.str);
         return ERR_SEMANTIC;
     }
     p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
@@ -936,10 +905,12 @@ Rule func_header(Parser* p) {
     GET_TOKEN();
     NEXT_RULE(func_ret_type);
     p->in_declaration = false;
-    DEBUG_PRINT("after func_ret_type; token = %d", p->curr_tok.type);
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Substitute for type Rule during second run through token buffer
+ */
 Rule type_skip(Parser* p) {
     RULE_PRINT("type_skip");
     uint32_t res;
@@ -959,6 +930,9 @@ Rule type_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Substitute for param Rule for second run through token buffer
+ */
 Rule param_skip(Parser* p) {
     RULE_PRINT("param_skip");
     uint32_t res;
@@ -981,6 +955,9 @@ Rule param_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Substitute for param_next Rule for second run through token buffer
+ */
 Rule param_next_skip(Parser* p) {
     RULE_PRINT("param_next_skip");
     uint32_t res;
@@ -1002,6 +979,9 @@ Rule param_next_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Substitute for param_list Rule for second run through token buffer
+ */
 Rule param_list_skip(Parser* p) {
     RULE_PRINT("param_list_skip");
     uint32_t res;
@@ -1014,6 +994,9 @@ Rule param_list_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Substitute for func_ret_type Rule for second run through token buffer
+ */
 Rule func_ret_type_skip(Parser* p) {
     RULE_PRINT("func_ret_type_skip");
     uint32_t res;
@@ -1026,6 +1009,9 @@ Rule func_ret_type_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Skips all tokens except for func and EOF in first run through the token buffer
+ */
 Rule skip(Parser* p) {
     uint32_t res;
     if (p->curr_tok.type == TOKEN_EOF) {
@@ -1045,6 +1031,10 @@ Rule skip(Parser* p) {
     NEXT_RULE(skip);
 }
 
+/*
+    The purpose of the above skip rules is to be able to parse only function headers during the first run through tok buf
+    without the risk of 'redefine' error during the second run
+*/
 
 /* ======================================================== */
 
@@ -1059,15 +1049,10 @@ bool parser_init(Parser* p) {
 
     /* Global symbol table initialization */
     symtable_init(&p->global_symtab, &symtab_err);
-    if (symtab_err) {
-        return false;
-    }
+    if (symtab_err) return false;
 
-    /* Scope (stack of local symbol tables) initialization */
     init_scope(&p->stack);
     dstring_init(&p->tmp);
-
-    /* Initialize token buffer */
     tb_init(&p->buffer);
 
     p->current_arg = NULL;
@@ -1092,7 +1077,6 @@ void parser_dispose(Parser* p) {
     symtable_dispose(&p->global_symtab);
     dispose_scope(&p->stack, &err);
     tb_dispose(&p->buffer);
-    // tb_pop(&p->buffer);
 }
 
 /**
@@ -1182,8 +1166,6 @@ uint32_t parser_get_func_decls(Parser* p) {
         return ERR_INTERNAL;
 
     NEXT_RULE(skip);
-
-
     return EXIT_SUCCESS;
 }
 
@@ -1219,18 +1201,20 @@ uint32_t parse() {
 
     /* First run through the token buffer to collect all function declaration */
     if ((res = parser_get_func_decls(&p))) {
-        ERROR_PRINT("parser_get_func_decl not 0");
         parser_dispose(&p);
         return res;
     }
+    DEBUG_PRINT("First token buffer iteration finished");
 
+    /* Reset runner to the beggining of the list after first run */
     p.buffer.runner = p.buffer.head;
-
-    p.curr_tok = tb_get_token(&p.buffer);                                                                     \
-        if ((p.curr_tok.type == TOKEN_UNDEFINED) && (p.curr_tok.value.int_val == 0))                                      \
-            return ERR_INTERNAL;
-
-        /* Start recursive descend */
+    p.curr_tok = tb_get_token(&p.buffer);
+    if ((p.curr_tok.type == TOKEN_UNDEFINED) && (p.curr_tok.value.int_val == 0)) {
+        fprintf(stderr, "[ERROR %d] Getting first token from buffer failed\n", ERR_INTERNAL);
+        return ERR_INTERNAL;
+    };
+    
+    /* Start recursive descend */
     if ((res = prog(&p))) {
         WARNING_PRINT("prog not 0");
         parser_dispose(&p);
