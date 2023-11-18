@@ -8,7 +8,6 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 #include "error.h"
-#include "lexical_analyzer.h"
 #include "symstack.h"
 #include "parser.h"
 

@@ -19,6 +19,9 @@
     if (error_code_handler(EXIT_SUCCESS) == EXIT_SUCCESS) \
         printf(__VA_ARGS__);
 
+#define CURRENT_TOKEN \
+    parser_defined ? token : p->curr_tok
+
 /**
  * @brief Methods to write
  * 0) equal_shift()
@@ -626,12 +629,12 @@ void expr_error(symstack_t *stack)
  *
  * return idea: token after expr
  */
-int expr(Parser *parser_data)
+int expr(Parser *p)
 {
 
     /* error handling */
     int error_code = EXIT_SUCCESS;
-    bool is_end_of_expression = false;
+    bool parser_defined = p == NULL;
 
     // init stack
     symstack_t stack;
@@ -642,45 +645,52 @@ int expr(Parser *parser_data)
 
     // get next symbol a
     token_T token;
-    get_token(&token);
+    tb_next(&p->buffer);
+    GET_TOKEN();
 
-    symstack_data_t sym_data = convert_token_to_data(token);
+    symstack_data_t sym_data = convert_token_to_data(p->curr_tok);
 
     // print_stack(&stack, 1);
     do
     {
-        switch (get_prec_table_operation(&stack, token))
+        switch (get_prec_table_operation(&stack, p->curr_tok))
         {
         case E:
-            equal_shift(&stack, &token);
-            get_token(&token);
+            equal_shift(&stack, &p->curr_tok);
+            tb_next(&p->buffer);
+            GET_TOKEN();
+            // get_token(&p->curr_tok);
             break;
         case S:
-            shift(&stack, &token);
-            get_token(&token);
+            shift(&stack, &p->curr_tok);
+            tb_next(&p->buffer);
+            GET_TOKEN();
+            // get_token(&p->curr_tok);
             break;
         case R:
             reduce(&stack);
             // print_stack(&stack, 1);
             break;
         case X:
-            sym_data = convert_token_to_data(token);
+            sym_data = convert_token_to_data(p->curr_tok);
             symstack_push(&stack, sym_data);
 
             expr_error(&stack);
 
-            get_token(&token);
+            // get_token(&p->curr_tok);
+            tb_next(&p->buffer);
+            GET_TOKEN();
             break;
         default:
             print_error(ERR_INTERNAL, "Unknown precedense table operation.\n");
             return ERR_INTERNAL;
         }
-    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(token) == INDEX_DOLLAR)));
+    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
     if (!symstack_is_empty(&stack))
     {
         symstack_dispose(&stack);
     };
-    parser_data->curr_tok = token;
+    // p->curr_tok = token;
     // delete_token(&token);
 
     return error_code_handler(EXIT_SUCCESS);
@@ -924,3 +934,10 @@ void generate_division(token_T first_operand, token_T second_operand)
 }
 
 void generate_comparison();
+
+/**
+ * E + bar(x: " ") \n let -> E + E
+ * bar -> ID ? –> E + E()
+ * bar -> FUNC_ID ? -> function_call(x: <expr>)
+
+ */
