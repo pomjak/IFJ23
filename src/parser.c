@@ -6,6 +6,7 @@
  * @date 2023-11-09
  */
 #include "parser.h"
+#include "expression.h"
 
 /* ===================| RULE DEFINITIONS |================= */
 
@@ -132,7 +133,7 @@ Rule stmt(Parser* p) {
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
-        add_scope(&p->stack,&err);//adding scope for else
+        add_scope(&p->stack, &err);//adding scope for else
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
@@ -223,10 +224,18 @@ Rule var_def_cont(Parser* p) {
         NEXT_RULE(opt_assign);
         break;
     case TOKEN_ASS:
-        //  EXP
+        if ((res = expr(p))) {
+            fprintf(stderr, "[ERROR %d] expression procesing failed\n", res);
+            return res;
+        }
+        /* Implicit setting of variable type */
+        if (p->current_id->type == undefined) {
+            p->current_id->type = p->type_expr;
+            break;
+        }
         break;
     default:
-        fprintf(stderr, "[ERROR %d] Unexpected token after variable identifier", ERR_SYNTAX);
+        fprintf(stderr, "[ERROR %d] Unexpected token after variable identifier '%s'", ERR_SYNTAX, p->current_id->name.str);
         return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
@@ -240,9 +249,16 @@ Rule opt_assign(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_ASS) {
-        // TODO expressions
+        if ((res = expr(p))) {
+            fprintf(stderr, "[ERROR %d] expression procesing failed\n", res);
+            return res;
+        }
+        if (p->current_id->type != p->type_expr) {
+            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
+            return ERR_UNCOMPATIBILE_TYPE;
+        }
     }
-    /* epsilon */
+
     return EXIT_SUCCESS;
 }
 
@@ -321,6 +337,10 @@ Rule cond_clause(Parser* p) {
         if (!p->current_id) {
             fprintf(stderr, "[ERROR %d] Constant %s undefined\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
             return ERR_UNDEFINED_VARIABLE;
+        }
+        if (p->current_id->is_mutable) {
+            fprintf(stderr, "[ERROR %d] Using mutable variable %s in conditional\n", ERR_SEMANTIC, p->current_id->name.str);
+            return ERR_SEMANTIC;
         }
         /* Add a local scope for the body of the if statement */
         add_scope(&p->stack, &err);
@@ -550,7 +570,7 @@ Rule block_body(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_R_BKT) {
         DEBUG_PRINT("block_body end }");
-        pop_scope(&p->stack,&err);
+        pop_scope(&p->stack, &err);
         return EXIT_SUCCESS;
     }
     else {

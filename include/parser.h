@@ -15,6 +15,7 @@
 #include "symtable.h"
 #include "token_buffer.h"
 
+
 /**
  * Structure containing the current state of the parser
  */
@@ -28,6 +29,7 @@ typedef struct parser_t {
     token_T curr_tok;            // Currently processed token
     symtab_item_t* current_id;   // Identifier of currently processed function
     symtab_item_t* last_func_id; // Identifier of the last loaded function
+    symtab_item_t* rhs_id;       // Identifier in the right hand side of assignment
     symtab_t global_symtab;      // Global symbol table
     scope_t stack;               // Stack of local symbol tables, HEAD = current scope
     dstring_t tmp;               // Temporary helper string
