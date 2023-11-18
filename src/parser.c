@@ -132,7 +132,7 @@ Rule stmt(Parser* p) {
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
-        add_scope(&p->stack,&err);
+        add_scope(&p->stack,&err);//adding scope for else
         tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
