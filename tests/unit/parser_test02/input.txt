@@ -1,0 +1,3 @@
+func aaa() { }
+func bbb() -> Int { }
+func ccc() -> String? { }

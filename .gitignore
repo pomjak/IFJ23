@@ -60,6 +60,7 @@ dkms.conf
 .vscode
 .clang-format
 ifj23.code-workspace
+.clang-format
 
 build
 test_artifacts

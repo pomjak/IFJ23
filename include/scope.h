@@ -9,6 +9,9 @@
  *
  */
 
+#ifndef SCOPE_H
+#define SCOPE_H
+
 #include <stdio.h>
 #include "symtable.h"
 
@@ -69,3 +72,5 @@ symtab_item_t *search_scopes(scope_t stack, dstring_t *id, unsigned int *error);
  * @return false stack is null -> skip
  */
 bool peek_scope(scope_t scope);
+
+#endif

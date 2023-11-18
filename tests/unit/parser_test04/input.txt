@@ -1,0 +1,3 @@
+func aaa(_ x : Double) { }
+func bbb(p param: Int) -> Int { }
+func ccc(_ x : String, with y : String) -> String? { }

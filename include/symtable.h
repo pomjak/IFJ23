@@ -9,6 +9,9 @@
  *
  */
 
+#ifndef SYMTABLE_H
+#define SYMTABLE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -415,3 +418,5 @@ void set_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_para
  * @return bool             value if success, else false and err flag is raised
  */
 bool get_param_nil(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, unsigned int *error);
+
+#endif

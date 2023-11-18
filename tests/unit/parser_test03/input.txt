@@ -1,0 +1,3 @@
+let aaa : Int
+var bbb : String?
+let ccc : Double
