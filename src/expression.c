@@ -660,33 +660,33 @@ int expr(Parser *p)
 
     // get next symbol a
     token_T token;
-    get_token(&token);
-    // tb_next(&p->buffer);
-    // GET_TOKEN();
+    // get_token(&token);
+    tb_next(&p->buffer);
+    GET_TOKEN();
 
-    // symstack_data_t sym_data = convert_token_to_data(p->curr_tok);
-    symstack_data_t sym_data = convert_token_to_data(token);
+    symstack_data_t sym_data = convert_token_to_data(p->curr_tok);
+    // symstack_data_t sym_data = convert_token_to_data(token);
 
     // print_stack(&stack, 1);
     do
     {
-        // switch (get_prec_table_operation(&stack, p->curr_tok))
-        switch (get_prec_table_operation(&stack, token))
+        switch (get_prec_table_operation(&stack, p->curr_tok))
+        // switch (get_prec_table_operation(&stack, token))
         {
         case E:
-            // equal_shift(&stack, &p->curr_tok);
-            // tb_next(&p->buffer);
-            // GET_TOKEN();
+            equal_shift(&stack, &p->curr_tok);
+            tb_next(&p->buffer);
+            GET_TOKEN();
 
-            equal_shift(&stack, &token);
-            get_token(&token);
+            // equal_shift(&stack, &token);
+            // get_token(&token);
             break;
         case S:
-            // shift(&stack, &p->curr_tok);
-            // tb_next(&p->buffer);
-            // GET_TOKEN();
-            shift(&stack, &token);
-            get_token(&token);
+            shift(&stack, &p->curr_tok);
+            tb_next(&p->buffer);
+            GET_TOKEN();
+            // shift(&stack, &token);
+            // get_token(&token);
             break;
         case R:
             reduce(&stack);
@@ -699,16 +699,16 @@ int expr(Parser *p)
 
             expr_error(&stack);
 
-            // tb_next(&p->buffer);
-            // GET_TOKEN();
-            get_token(&token);
+            tb_next(&p->buffer);
+            GET_TOKEN();
+            // get_token(&token);
             break;
         default:
             print_error(ERR_INTERNAL, "Unknown precedense table operation.\n");
             return ERR_INTERNAL;
         }
-        // } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
-    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(token) == INDEX_DOLLAR)));
+    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
+    // } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(token) == INDEX_DOLLAR)));
 
     // print_stack(&stack, 1);
     symstack_data_t final_expr = symstack_pop(&stack);
