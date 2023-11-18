@@ -1,0 +1,6 @@
+gcc -std=c99 -g -lm -I../../../include ../../../src//lexical_analyzer.c ../../../src//error.c ../../../src//dyn_string.c ../../../src//expression.c ../../../src//symstack.c main.c -o test
+./test < input.txt
+[31mError [2][0m: Missing operator.
+[31mError [7][0m: Unknwon string operation.
+[31mError [7][0m: Concatenation with uncompatibile types.
+Return code: 2

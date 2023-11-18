@@ -4,5 +4,10 @@
 
 int main(void)
 {
-    return expr();
+    FILE *stdinput = freopen("input.txt", "r", stdin);
+    int return_code = expr();
+    printf("Return code: %d\n", return_code);
+    fclose(stdinput);
+
+    return 0;
 }

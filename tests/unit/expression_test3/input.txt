@@ -1,1 +1,1 @@
-"str" + "string" + "anothre"
+"str" + 12  3.0 * 4.5 / "hello"

@@ -1,1 +1,1 @@
-"str" + "string" + "anothre"
+"tests string" + "second string" + "another string"
