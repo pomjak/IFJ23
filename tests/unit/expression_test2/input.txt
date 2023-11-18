@@ -1,1 +1,1 @@
-"tests string" + "second string" + "another string"
+"hello" + "world" + 3
