@@ -14,8 +14,6 @@
 
 int main()
 {
-    uint32_t res = parse();
-    fprintf(stderr,"res = %d", res);
-    assert(res == 0);
+    assert(parse() == 0);
     return 0;
 }
