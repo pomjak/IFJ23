@@ -750,8 +750,8 @@ symstack_data_t process_divsion(symbol_arr_t *sym_arr)
     {
         if (second_operand.value.int_val == 0)
         {
-            error_code_handler(ERR_SEMANTIC_ERR);
-            print_error(ERR_SEMANTIC_ERR, "Division by zero.\n");
+            error_code_handler(ERR_SEMANTIC);
+            print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
@@ -759,8 +759,8 @@ symstack_data_t process_divsion(symbol_arr_t *sym_arr)
     {
         if (second_operand.value.double_val == 0.0)
         {
-            error_code_handler(ERR_SEMANTIC_ERR);
-            print_error(ERR_SEMANTIC_ERR, "Division by zero.\n");
+            error_code_handler(ERR_SEMANTIC);
+            print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
