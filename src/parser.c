@@ -241,8 +241,8 @@ Rule opt_assign(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_ASS) {
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] expression procesing failed\n", res);
-            return res;
+            fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
+              return res;
         }
         if (p->current_id->type != p->type_expr) {
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
@@ -267,12 +267,19 @@ Rule expr_type(Parser* p) {
             fprintf(stderr, "[ERROR %d] Assignment to undefined variable\n", ERR_UNDEFINED_VARIABLE);
             return ERR_UNDEFINED_VARIABLE;
         }
-        switch (p->current_id->type) {
-        case integer:
-        case double_:
-        case string: break;
-        default: return ERR_UNDEFINED_VARIABLE; break;
+        if(p->current_id->is_mutable == false) {
+            fprintf(stderr, "[ERROR %d] Assigning a new value to immutable variable %s\n", ERR_SEMANTIC, p->current_id->name.str);
+            return ERR_SEMANTIC;
         }
+        if((res = expr(p))) {
+            fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
+            return res;
+        }
+        if (p->current_id->type != p->type_expr) {
+            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
+            return ERR_UNCOMPATIBILE_TYPE;
+        }
+        break;
     /* If the loaded ID is followed by opening parentheses the ID should have been a function */
     case TOKEN_L_PAR:
         if (!p->current_id) {
