@@ -629,6 +629,21 @@ void expr_error(symstack_t *stack)
     symbol_arr_free(&sym_arr);
 }
 
+Type convert_to_expr_type(token_type_T type)
+{
+    switch (type)
+    {
+    case TOKEN_INT:
+        return integer;
+    case TOKEN_DBL:
+        return double_;
+    case TOKEN_STRING:
+        return string;
+    default:
+        return undefined;
+    }
+}
+
 /**
  * a - current got token / symbol
  * b - closest terminal on stack top
@@ -718,6 +733,7 @@ int expr(Parser *p)
     {
         symstack_dispose(&stack);
     };
+    p->type_expr = convert_to_expr_type(final_expr.token.type);
     p->curr_tok = token;
 
     return error_code_handler(EXIT_SUCCESS);

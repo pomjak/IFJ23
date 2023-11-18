@@ -261,6 +261,14 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr);
 void expr_error(symstack_t *stack);
 
 /**
+ * @brief converts exrpession type to parser expr type
+ *
+ * @param type
+ * @return Type
+ */
+Type convert_to_expr_type(token_type_T type);
+
+/**
  * @brief processes expression
  *
  * @return int error code
