@@ -1,0 +1,15 @@
+let x : Int = 5
+let y : Double = 3.4
+let z : String = "Hello"
+
+let x1 = 5
+let y1 = 3.4
+let z1 = "Hello"
+
+var a : Int = 5
+var b : Double = 3.4
+var c : String = "Hello"
+
+var a1 = 5
+var b1 = 3.4
+var c1 = "Hello"
