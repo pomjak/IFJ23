@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symstack.h"
+#include "debug.h"
 
 #define MIN_WIDTH 10
 

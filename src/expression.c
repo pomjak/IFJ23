@@ -11,6 +11,7 @@
 #include "expression.h"
 #include "lexical_analyzer.h"
 #include "symstack.h"
+#include "error.h"
 #include "debug.h"
 
 #define GENERATE_CODE(...) printf(__VA_ARGS__);
@@ -102,6 +103,7 @@ void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
 
 void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
 {
+    // tady error lebo stack je empty
     symstack_data_t current_symbol = symstack_pop(stack);
     while (!current_symbol.isHandleBegin && !symstack_is_empty(stack) && sym_arr->size < MAX_EXPR_SIZE)
     {
@@ -113,6 +115,10 @@ void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
             return;
         }
         current_symbol = symstack_pop(stack);
+    }
+    if (symstack_is_empty(stack))
+    {
+        symstack_push(stack, current_symbol);
     }
     // remove handle and push it back
     current_symbol.isHandleBegin = false;
@@ -141,7 +147,10 @@ void symbol_arr_free(symbol_arr_t *sym_arr)
 {
     for (int i = 0; i < sym_arr->size; i++)
     {
-        delete_token(&sym_arr->arr[i].token);
+        if (sym_arr->arr[i].isTerminal)
+        {
+            delete_token(&sym_arr->arr[i].token);
+        }
     }
 
     free(sym_arr->arr);
@@ -292,7 +301,7 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
         return X;
     }
     prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
-    printf("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token), prec_op);
+    DEBUG_PRINT("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token), prec_op);
     return prec_op;
 }
 
@@ -351,6 +360,10 @@ prec_rule_t choose_operator_rule(symstack_data_t data)
 
 prec_rule_t get_rule(symbol_arr_t *sym_arr)
 {
+    if (sym_arr->arr == NULL)
+    {
+        return RULE_NO_RULE;
+    }
     prec_rule_t rule = RULE_NO_RULE;
     switch (sym_arr->size)
     {
@@ -413,7 +426,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     // see expression types
     symstack_data_t expr_symbol;
 
-    printf("RULE %d\n", rule);
+    DEBUG_PRINT("RULE %d\n", rule);
 
     switch (rule)
     {
@@ -465,9 +478,6 @@ void reduce(symstack_t *stack)
     symbol_arr_move_expr_to_arr(stack, &sym_arr);
     symbol_arr_reverse(&sym_arr);
 
-    // printf("expr to be reduced: \n");
-    // print_symbol_arr(&sym_arr);
-
     prec_rule_t rule = get_rule(&sym_arr);
 
     if (rule == RULE_NO_RULE)
@@ -479,13 +489,18 @@ void reduce(symstack_t *stack)
     }
 
     push_reduced_symbol_on_stack(stack, &sym_arr, rule);
-    // symbol_arr_free(&sym_arr);
+    symbol_arr_free(&sym_arr);
 }
 
 void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 {
     error_code_handler(ERR_SYNTAX);
-    print_symbol_arr(sym_arr);
+    // print_symbol_arr(sym_arr);
+
+    if (sym_arr == NULL || sym_arr->arr == NULL)
+    {
+        return;
+    }
 
     /*
     E (
@@ -496,76 +511,79 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
     symstack_data_t data;
     data.token.type = TOKEN_UNDEFINED;
 
-    // if (is_operand(sym_arr->arr[0]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
-    if (is_operand(sym_arr->arr[0]))
+    if (sym_arr != NULL && sym_arr->arr == NULL)
     {
+        // if (is_operand(sym_arr->arr[0]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
+        if (is_operand(sym_arr->arr[0]))
+        {
 
-        data.token.type = sym_arr->arr[0].token.type;
-        // E )
-        if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
-        {
-            print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
-        }
-        // E E
-        // else if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
-        else if (is_operand(sym_arr->arr[1]))
-        {
-            // if 2 operand types are not equal
-            if (sym_arr->arr[0].token.type != sym_arr->arr[1].token.type)
+            data.token.type = sym_arr->arr[0].token.type;
+            // E )
+            if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
             {
-                // if both operands are not strings
-                if (sym_arr->arr[0].token.type != TOKEN_STRING && sym_arr->arr[1].token.type != TOKEN_DT_STRING)
+                print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
+            }
+            // E E
+            // else if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
+            else if (is_operand(sym_arr->arr[1]))
+            {
+                // if 2 operand types are not equal
+                if (sym_arr->arr[0].token.type != sym_arr->arr[1].token.type)
                 {
-                    // if one of them is double
-                    if (sym_arr->arr[0].token.type == TOKEN_DBL || sym_arr->arr[1].token.type == TOKEN_DBL)
+                    // if both operands are not strings
+                    if (sym_arr->arr[0].token.type != TOKEN_STRING && sym_arr->arr[1].token.type != TOKEN_DT_STRING)
                     {
-                        data.token.type = TOKEN_DBL;
-                    }
-                    else
-                    {
-                        data.token.type = TOKEN_INT;
+                        // if one of them is double
+                        if (sym_arr->arr[0].token.type == TOKEN_DBL || sym_arr->arr[1].token.type == TOKEN_DBL)
+                        {
+                            data.token.type = TOKEN_DBL;
+                        }
+                        else
+                        {
+                            data.token.type = TOKEN_INT;
+                        }
                     }
                 }
+                data.token.type = sym_arr->arr[1].token.type;
+                print_error(ERR_SYNTAX, "Missing operator.\n");
             }
-            data.token.type = sym_arr->arr[1].token.type;
-            print_error(ERR_SYNTAX, "Missing operator.\n");
+            // E (
+            else if (sym_arr->arr[1].token.type == TOKEN_L_PAR)
+            {
+                print_error(ERR_SYNTAX, "Missing operator.\n");
+            }
+            else if (is_binary_operator(sym_arr->arr[1]))
+            {
+                print_error(ERR_SYNTAX, "Missing second operand.\n");
+            }
         }
-        // E (
-        else if (sym_arr->arr[1].token.type == TOKEN_L_PAR)
+        // first (
+        else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
         {
-            print_error(ERR_SYNTAX, "Missing operator.\n");
+            // ( E
+            // if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
+            if (is_operand(sym_arr->arr[1]))
+            {
+                data.token.type = sym_arr->arr[1].token.type;
+                print_error(ERR_SYNTAX, "Missing right parenthesis.\n");
+            }
+            // ( )
+            else if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
+            {
+                print_error(ERR_SYNTAX, "Missing operand2.\n");
+            }
+            // ( TERM
+            else
+            {
+                print_error(ERR_SYNTAX, "Unexpected terminal.\n");
+            }
         }
-        else if (is_binary_operator(sym_arr->arr[1]))
-        {
-            print_error(ERR_SYNTAX, "Missing second operand.\n");
-        }
-    }
-    // first (
-    else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
-    {
-        // ( E
-        // if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
-        if (is_operand(sym_arr->arr[1]))
-        {
-            data.token.type = sym_arr->arr[1].token.type;
-            print_error(ERR_SYNTAX, "Missing right parenthesis.\n");
-        }
-        // ( )
-        else if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
-        {
-            print_error(ERR_SYNTAX, "Missing operand2.\n");
-        }
-        // ( TERM
+        // else first TERM
         else
         {
-            print_error(ERR_SYNTAX, "Unexpected terminal.\n");
+            printf("operator types: %d %d\n", sym_arr->arr[0].token.type, sym_arr->arr[1].token.type);
+            print_error(ERR_SYNTAX, "Missing operand3.\n");
         }
-    }
-    // else first TERM
-    else
-    {
-        printf("operator types: %d %d\n", sym_arr->arr[0].token.type, sym_arr->arr[1].token.type);
-        print_error(ERR_SYNTAX, "Missing operand3.\n");
     }
 
     data.isHandleBegin = false;
@@ -672,7 +690,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     symstack_data_t expr_symbol;
     if (first_operand.type == TOKEN_STRING || second_operand.type == TOKEN_STRING)
     {
-        expr_symbol = process_contcatenation(sym_arr);
+        expr_symbol = process_concatenation(sym_arr);
         return expr_symbol;
     }
 
@@ -716,10 +734,6 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     error_code_handler(ERR_UNCOMPATIBILE_TYPE);
 
-    // }
-
-    error_code_handler(ERR_UNCOMPATIBILE_TYPE);
-    print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     expr_symbol.token.type = TOKEN_UNDEFINED;
     return expr_symbol;
 }
@@ -753,7 +767,7 @@ symstack_data_t process_divsion(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_contcatenation(symbol_arr_t *sym_arr)
+symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 {
     symstack_data_t expr_symbol;
     expr_symbol.isHandleBegin = false;
