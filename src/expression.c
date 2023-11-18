@@ -14,13 +14,18 @@
 #include "error.h"
 #include "debug.h"
 #include "parser.h"
+#include "symtable.h"
+#include "scope.h"
 
 #define GENERATE_CODE(...)                                \
     if (error_code_handler(EXIT_SUCCESS) == EXIT_SUCCESS) \
         printf(__VA_ARGS__);
 
-#define CURRENT_TOKEN \
-    parser_defined ? token : p->curr_tok
+#ifdef SHOW_STACK
+#define PRINT_STACK(stack) print_stack(stack, 1);
+#else
+#define PRINT_STACK(stack)
+#endif
 
 /**
  * @brief Methods to write
@@ -219,7 +224,7 @@ bool is_binary_operator(symstack_data_t symbol)
     case TOKEN_DIV:
 
     // relational
-    case TOKEN_ASS:
+    // case TOKEN_ASS:
     case TOKEN_EQ:
     case TOKEN_NEQ:
     case TOKEN_GT:
@@ -255,7 +260,7 @@ prec_tab_index_t convert_token_to_index(token_T token)
         // maybe not necessary according to they are the same
         return INDEX_IDENTIFIER;
     // maybe not necessary according, depends on assingment support, dont think so
-    case TOKEN_ASS:
+    // case TOKEN_ASS:
     case TOKEN_EQ:
     case TOKEN_NEQ:
     case TOKEN_GT:
@@ -313,6 +318,7 @@ void equal_shift(symstack_t *stack, token_T *token)
     DEBUG_PRINT("equal shift\n");
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
+    PRINT_STACK(stack);
     // print_stack(stack, 1);
 }
 
@@ -323,6 +329,7 @@ void shift(symstack_t *stack, token_T *token)
     peek->data.isHandleBegin = true;
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
+    PRINT_STACK(stack);
     // print_stack(stack, 1);
 }
 
@@ -427,6 +434,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
 {
     // see expression types
     symstack_data_t expr_symbol;
+    expr_symbol.isTerminal = false;
 
     DEBUG_PRINT("RULE %d\n", rule);
 
@@ -453,8 +461,12 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_MUL_E:
     case RULE_E_DIV_E:
         expr_symbol = process_arithmetic_operation(sym_arr);
-        sym_arr->arr[0].isTerminal = false;
-        symstack_push(stack, sym_arr->arr[0]);
+        // printf("EXPR DATA:\n");
+        // printf("\tEXPR type: %d\n", expr_symbol.token.type);
+        // printf("\tEXPR terminal: %d\n", expr_symbol.isTerminal);
+        // printf("\tEXPR handle: %d\n", expr_symbol.isHandleBegin);
+        expr_symbol.isHandleBegin = false;
+        symstack_push(stack, expr_symbol);
         return;
 
     // relational operations
@@ -465,7 +477,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_EQ_E:
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
-        process_relational_operation(sym_arr);
+        expr_symbol = process_relational_operation(sym_arr);
+        expr_symbol.isTerminal = false;
+        symstack_push(stack, expr_symbol);
         break;
     default:
         break;
@@ -491,6 +505,8 @@ void reduce(symstack_t *stack)
     }
 
     push_reduced_symbol_on_stack(stack, &sym_arr, rule);
+    // print_symbol_arr(&sym_arr);
+    PRINT_STACK(stack);
     symbol_arr_free(&sym_arr);
 }
 
@@ -522,7 +538,6 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
                 print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
             }
             // E E
-            // else if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
             else if (is_operand(sym_arr->arr[1]))
             {
                 // if 2 operand types are not equal
@@ -631,7 +646,7 @@ void expr_error(symstack_t *stack)
  */
 int expr(Parser *p)
 {
-
+    (void)p;
     /* error handling */
     int error_code = EXIT_SUCCESS;
     bool parser_defined = p == NULL;
@@ -645,53 +660,65 @@ int expr(Parser *p)
 
     // get next symbol a
     token_T token;
-    tb_next(&p->buffer);
-    GET_TOKEN();
+    get_token(&token);
+    // tb_next(&p->buffer);
+    // GET_TOKEN();
 
-    symstack_data_t sym_data = convert_token_to_data(p->curr_tok);
+    // symstack_data_t sym_data = convert_token_to_data(p->curr_tok);
+    symstack_data_t sym_data = convert_token_to_data(token);
 
     // print_stack(&stack, 1);
     do
     {
-        switch (get_prec_table_operation(&stack, p->curr_tok))
+        // switch (get_prec_table_operation(&stack, p->curr_tok))
+        switch (get_prec_table_operation(&stack, token))
         {
         case E:
-            equal_shift(&stack, &p->curr_tok);
-            tb_next(&p->buffer);
-            GET_TOKEN();
-            // get_token(&p->curr_tok);
+            // equal_shift(&stack, &p->curr_tok);
+            // tb_next(&p->buffer);
+            // GET_TOKEN();
+
+            equal_shift(&stack, &token);
+            get_token(&token);
             break;
         case S:
-            shift(&stack, &p->curr_tok);
-            tb_next(&p->buffer);
-            GET_TOKEN();
-            // get_token(&p->curr_tok);
+            // shift(&stack, &p->curr_tok);
+            // tb_next(&p->buffer);
+            // GET_TOKEN();
+            shift(&stack, &token);
+            get_token(&token);
             break;
         case R:
             reduce(&stack);
-            // print_stack(&stack, 1);
+            PRINT_STACK(&stack);
             break;
         case X:
-            sym_data = convert_token_to_data(p->curr_tok);
+            // sym_data = convert_token_to_data(p->curr_tok);
+            sym_data = convert_token_to_data(token);
             symstack_push(&stack, sym_data);
 
             expr_error(&stack);
 
-            // get_token(&p->curr_tok);
-            tb_next(&p->buffer);
-            GET_TOKEN();
+            // tb_next(&p->buffer);
+            // GET_TOKEN();
+            get_token(&token);
             break;
         default:
             print_error(ERR_INTERNAL, "Unknown precedense table operation.\n");
             return ERR_INTERNAL;
         }
-    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
+        // } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
+    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(token) == INDEX_DOLLAR)));
+
+    // print_stack(&stack, 1);
+    symstack_data_t final_expr = symstack_pop(&stack);
+    // print_stack(&stack, 1);
+    // printf("token type: %s\n", final_expr.token.value.string_val.str);
     if (!symstack_is_empty(&stack))
     {
         symstack_dispose(&stack);
     };
-    // p->curr_tok = token;
-    // delete_token(&token);
+    p->curr_tok = token;
 
     return error_code_handler(EXIT_SUCCESS);
 }
@@ -711,13 +738,14 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     if (operator.type == TOKEN_DIV)
     {
-        expr_symbol = process_divsion(sym_arr);
+        expr_symbol = process_division(sym_arr);
         return expr_symbol;
     }
 
     // if adding same types
     if (first_operand.type == second_operand.type)
     {
+        // printf("\tsame types\n");
         if (first_operand.type == TOKEN_INT || first_operand.type == TOKEN_DBL)
         {
             expr_symbol.token.type = first_operand.type;
@@ -727,20 +755,23 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
             print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
             error_code_handler(ERR_UNCOMPATIBILE_TYPE);
             expr_symbol.token.type = TOKEN_UNDEFINED;
+            return expr_symbol;
         }
     }
 
     // if one of the operands is double need to convert it
     if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
     {
+        // printf("\tone of them is double\n");
         int2double(&first_operand, &second_operand);
         generate_float_arithmetic_by_operator(operator, first_operand.value.double_val, second_operand.value.double_val);
         expr_symbol.token.type = TOKEN_DBL;
         return expr_symbol;
     }
-    // if one of the operands is double need to convert it
+    // if both are double
     else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
     {
+        // printf("\tBoth are int\n");
         generate_int_arithmetic_by_operator(operator, first_operand.value.int_val, second_operand.value.int_val);
         expr_symbol.token.type = TOKEN_INT;
         return expr_symbol;
@@ -753,7 +784,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_divsion(symbol_arr_t *sym_arr)
+symstack_data_t process_division(symbol_arr_t *sym_arr)
 {
     symstack_data_t expr_symbol;
     token_T first_operand = sym_arr->arr[0].token;
@@ -795,7 +826,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 
     if (operator.type != TOKEN_ADD)
     {
-        print_error(ERR_UNCOMPATIBILE_TYPE, "Unknwon string operation.\n");
+        print_error(ERR_UNCOMPATIBILE_TYPE, "Unknown string operation.\n");
         return expr_symbol;
     }
 
@@ -814,12 +845,14 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     symstack_data_t expr_symbol;
     expr_symbol.isHandleBegin = false;
     expr_symbol.isTerminal = false;
+    // expr_symbol.isTerminal = BOOL;
 
     token_T first_operand = sym_arr->arr[0].token;
     token_T second_operand = sym_arr->arr[2].token;
 
     if (first_operand.type != second_operand.type)
     {
+        expr_symbol.token.type = TOKEN_UNDEFINED;
         error_code_handler(ERR_UNCOMPATIBILE_TYPE);
         print_error(ERR_UNCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
         return expr_symbol;
@@ -829,25 +862,25 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     switch (sym_arr->arr[1].token.type)
     {
     case TOKEN_EQ:
-        GENERATE_CODE("Genereate == comparation\n");
+        GENERATE_CODE("Generate == comparation\n");
         break;
     case TOKEN_GEQ:
-        GENERATE_CODE("Genereate >= comparation\n");
+        GENERATE_CODE("Generate >= comparation\n");
         break;
     case TOKEN_LEQ:
-        GENERATE_CODE("Genereate <= comparation\n");
+        GENERATE_CODE("Generate <= comparation\n");
         break;
     case TOKEN_NEQ:
-        GENERATE_CODE("Genereate != comparation\n");
+        GENERATE_CODE("Generate != comparation\n");
         break;
     case TOKEN_LT:
-        GENERATE_CODE("Genereate < comparation\n");
+        GENERATE_CODE("Generate < comparation\n");
         break;
     case TOKEN_GT:
-        GENERATE_CODE("Genereate > comparation\n");
+        GENERATE_CODE("Generate > comparation\n");
         break;
     case TOKEN_NIL_CHECK:
-        GENERATE_CODE("Genereate ?? check\n");
+        GENERATE_CODE("Generate ?? check\n");
         break;
 
     default:
@@ -861,13 +894,15 @@ void int2double(token_T *first_operand, token_T *second_operand)
 {
     if (first_operand->type == TOKEN_INT)
     {
-        GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
-        first_operand->value.double_val = (double)first_operand->value.int_val;
+        // GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
+        GENERATE_CODE("int2double FIRST\n")
+        // first_operand->value.double_val = (double)first_operand->value.int_val;
     }
     else
     {
-        GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
-        second_operand->value.double_val = (double)second_operand->value.int_val;
+        // GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
+        GENERATE_CODE("int2double SECOND\n")
+        // second_operand->value.double_val = (double)second_operand->value.int_val;
     }
 }
 
@@ -876,13 +911,15 @@ void generate_float_arithmetic_by_operator(token_T operator, double first_operan
     switch (operator.type)
     {
     case TOKEN_ADD:
-        GENERATE_CODE("Generate ADDITION %f + %f\n", first_operand, second_operand);
+        GENERATE_CODE("Generate ADDITION\n");
         break;
     case TOKEN_SUB:
-        GENERATE_CODE("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
+        // GENERATE_CODE("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
+        GENERATE_CODE("Generate SUBSTRACTION\n");
         break;
     case TOKEN_MUL:
-        GENERATE_CODE("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
+        // GENERATE_CODE("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
+        GENERATE_CODE("Generate MULTIPLICATION\n");
         break;
     default:
         break;
@@ -894,13 +931,16 @@ void generate_int_arithmetic_by_operator(token_T operator, int first_operand, in
     switch (operator.type)
     {
     case TOKEN_ADD:
-        GENERATE_CODE("Generate ADDITION %d + %d\n", first_operand, second_operand);
+        // GENERATE_CODE("Generate ADDITION %d + %d\n", first_operand, second_operand);
+        GENERATE_CODE("Generate ADDITION\n");
         break;
     case TOKEN_SUB:
-        GENERATE_CODE("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
+        // GENERATE_CODE("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
+        GENERATE_CODE("Generate SUBSTRACTION\n");
         break;
     case TOKEN_MUL:
-        GENERATE_CODE("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
+        // GENERATE_CODE("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
+        GENERATE_CODE("Generate MULTIPLICATION\n");
         break;
     default:
         break;
@@ -935,9 +975,63 @@ void generate_division(token_T first_operand, token_T second_operand)
 
 void generate_comparison();
 
-/**
- * E + bar(x: " ") \n let -> E + E
+/*
+ * SPRACOVANIE FUNKCII
+ * Rule expr_type(Parser* p);
  * bar -> ID ? –> E + E()
  * bar -> FUNC_ID ? -> function_call(x: <expr>)
 
  */
+
+/**
+ * @brief
+ *
+ *
+ * let foo: Int  = 3
+ *
+ * MOVE LF@foo 3
+ *
+ * function ...
+ * foo = 12
+ * MOVE LF@foo 12
+ *
+ * var vr : Int = foo
+ * MOVE LF@vr LF@foo
+ *
+ */
+
+// symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id, unsigned int *error);
+
+// note : problem->bar(x : <expr>) !!
+
+// curr_token = bar E + bar(x:) \n let->E + E
+
+// curr_token = bar;
+// if (curr_token.type == TOKEN_IDENTIFIER)
+// {
+//     prev_token = curret_token
+//     GET_NEXT();
+//     if (curr_token = TOKEN_L_PAR)
+//     {
+//         if (p->current_id)
+//         {
+//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
+//         }
+//         if (p->current_id.type == function)
+//         {
+//             next == TOKEN_L_PAR ? expr_type()
+//         }
+//         else
+//         {
+//             undefined function : ID(x : aasffsfa asf fa sa fasf a)->E
+//         }
+//     }
+//     else
+//     {
+//         p->current_id = search_scopes(local, bar, err);
+//         if (p->current - id == NULL)
+//         {
+//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
+//         }
+//     }
+// }

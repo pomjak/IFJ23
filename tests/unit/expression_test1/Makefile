@@ -48,6 +48,10 @@ localdebug:
 	$(CC) -g -D DEBUG -D DEBUGL=2  -I../../../include $(SRC)/lexical_analyzer.c $(SRC)/error.c $(SRC)/dyn_string.c $(SRC)/expression.c $(SRC)/symstack.c main.c -o $(NAME)
 	./$(NAME) < input.txt
 
+localstack:
+	$(CC) -DSHOW_STACK -I../../../include $(SRC)/lexical_analyzer.c $(SRC)/error.c $(SRC)/dyn_string.c $(SRC)/expression.c $(SRC)/symstack.c main.c -o $(NAME)
+	./$(NAME) < input.txt
+
 localclean:
 	rm -rf *.dSYM  $(NAME)
 

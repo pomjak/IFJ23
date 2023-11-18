@@ -11,7 +11,8 @@ int main(void)
     int return_code = expr(&parser);
 
     printf("Return code: %d\n", return_code);
-    delete_token(&parser.curr_tok);
+    print_token(parser.curr_tok);
+    // delete_token(&parser.curr_tok);
     fclose(stdinput);
 
     return 0;

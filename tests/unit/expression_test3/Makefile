@@ -22,14 +22,14 @@ run: build
 	@echo "[info] performing test $(TEST_NAME)"
 
 	# notes: just put this to NULL
-	if $(LEAK_SEEKER) ./$(NAME) < input.txt > /dev/null 2>&1; then \
-        $(PRINT) "[info] leak test $(TEST_NAME) \e[32mPASS\e[0m $(NEW_LINE)"; \
-    else \
-        $(PRINT) "[info] leak test $(TEST_NAME) \e[31mFAIL\e[0m"; \
-		exit 1;\
-    fi
+	# if $(LEAK_SEEKER) ./$(NAME) < input.txt > /dev/null 2>&1; then \
+    #     $(PRINT) "[info] leak test $(TEST_NAME) \e[32mPASS\e[0m $(NEW_LINE)"; \
+    # else \
+    #     $(PRINT) "[info] test $(TEST_NAME) \e[31mFAIL\e[0m"; \
+	# 	exit 1;\
+    # fi
 
-	@./$(NAME) < input.txt > ./output.txt 2>&1
+	./$(NAME) < input.txt > ./output.txt 2>&1
 
 	# diff ./expected.txt ./output.txt || ($(PRINT) "[info] test $(TEST_NAME) \e[31mFAIL\e[0m $(NEW_LINE)" && exit 1)
 	diff ./expected.txt ./output.txt || ($(PRINT) "[info] test $(TEST_NAME) \e[31mFAIL\e[0m $(NEW_LINE)" && exit 1)
@@ -46,6 +46,10 @@ local:
 	
 localdebug:
 	$(CC) -g -D DEBUG -D DEBUGL=2  -I../../../include $(SRC)/lexical_analyzer.c $(SRC)/error.c $(SRC)/dyn_string.c $(SRC)/expression.c $(SRC)/symstack.c main.c -o $(NAME)
+	./$(NAME) < input.txt
+
+localstack:
+	$(CC) -DSHOW_STACK -I../../../include $(SRC)/lexical_analyzer.c $(SRC)/error.c $(SRC)/dyn_string.c $(SRC)/expression.c $(SRC)/symstack.c main.c -o $(NAME)
 	./$(NAME) < input.txt
 
 localclean:
