@@ -15,7 +15,8 @@
 #define ERR_SYNTAX 2
 #define ERR_UNDEFINED_FUNCTION 3
 #define ERR_REDEFINING_VARIABLE 3
-#define ERR_FUNCTION_PARAMETER 4  //wrong function parameter type, number of prameter, wrong return type
+#define ERR_RETURN_TYPE 4
+#define ERR_FUNCTION_PARAMETER 4  //wrong function parameter type, number of prameter
 #define ERR_UNDEFINED_VARIABLE 5
 #define ERR_FUNCTION_RETURN 6 // missing/useless  expression
 #define ERR_UNCOMPATIBILE_TYPE 7
