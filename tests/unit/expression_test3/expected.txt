@@ -1,4 +1,0 @@
-[31mError [2][0m: Missing operator.
-[31mError [7][0m: Unknown string operation.
-[31mError [7][0m: Concatenation with uncompatibile types.
-Return code: 2

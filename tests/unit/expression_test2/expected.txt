@@ -1,5 +1,0 @@
-Generate concatenation
-Generate concatenation
-Return code: 0
-
-<EOF>
