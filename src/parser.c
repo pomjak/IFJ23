@@ -1054,6 +1054,7 @@ bool parser_init(Parser* p) {
     p->in_function = false;
     p->in_loop = false;
     p->in_param = false;
+    p->type_expr = undefined;
     return true;
 }
 
