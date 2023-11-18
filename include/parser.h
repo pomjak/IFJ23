@@ -21,8 +21,8 @@
 typedef struct parser_t {
     bool in_function;            // Parser is inside a function call
     bool in_declaration;         // Parser is inside a function declaration
-    bool in_cond;                // Parser is inside a condition statement
-    bool in_loop;                // Parser is inside a while loop
+    uint32_t in_cond;                // Parser is inside a condition statement
+    uint32_t in_loop;                // Parser is inside a while loop
     bool in_param;               // Parser should set param type
     param_t* current_arg;        // Current function argument list
     token_T curr_tok;            // Currently processed token
