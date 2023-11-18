@@ -1,7 +1,0 @@
-//int func -> return must be found
-//void func -> does not need return 
-func function(this num1 : Int, plus num2 : Int) -> Int
-{
-    var sum : Int // = num1 + num2
-    return
-}
