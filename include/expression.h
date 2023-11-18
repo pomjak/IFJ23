@@ -10,6 +10,7 @@
 #include "error.h"
 #include "lexical_analyzer.h"
 #include "symstack.h"
+#include "parser.h"
 
 #define PREC_TABLE_SIZE 10
 #define MAX_EXPR_SIZE 3
@@ -265,7 +266,7 @@ void expr_error(symstack_t *stack);
  *
  * @return int error code
  */
-int expr();
+int expr(Parser *parser_data);
 
 /****************************
  * Reduction rule functions *

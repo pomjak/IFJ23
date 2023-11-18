@@ -13,6 +13,7 @@
 #include "symstack.h"
 #include "error.h"
 #include "debug.h"
+#include "parser.h"
 
 #define GENERATE_CODE(...)                                \
     if (error_code_handler(EXIT_SUCCESS) == EXIT_SUCCESS) \
@@ -625,8 +626,9 @@ void expr_error(symstack_t *stack)
  *
  * return idea: token after expr
  */
-int expr()
+int expr(Parser *parser_data)
 {
+
     /* error handling */
     int error_code = EXIT_SUCCESS;
     bool is_end_of_expression = false;
@@ -641,6 +643,7 @@ int expr()
     // get next symbol a
     token_T token;
     get_token(&token);
+
     symstack_data_t sym_data = convert_token_to_data(token);
 
     // print_stack(&stack, 1);
@@ -677,7 +680,8 @@ int expr()
     {
         symstack_dispose(&stack);
     };
-    delete_token(&token);
+    parser_data->curr_tok = token;
+    // delete_token(&token);
 
     return error_code_handler(EXIT_SUCCESS);
 }
