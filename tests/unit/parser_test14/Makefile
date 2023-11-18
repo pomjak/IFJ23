@@ -11,7 +11,7 @@ run: build
 	./$(NAME) < ./input.txt > ./output.txt 2>./debug_output.txt || (echo -e "[info] test parser 14 - semantics - return in func ok [RET_CODE] \e[31mFAIL\e[0m" && exit 1)
 	diff ./expected_debug.txt ./debug_output.txt || (echo -e "[info] test parser 14 - semantics - return in func ok [RULE_PRINT] \e[31mFAIL\e[0m" && exit 1)
 	diff ./expected.txt ./output.txt || (echo -e "[info] test parser 14 - semantics - return in func ok [INSTR]\e[31mFAIL\e[0m" && exit 1)
-	echo -e "[info] test parser 14 - semantics - undefined functions \e[32mPASS\e[0m"
+	echo -e "[info] test parser 14 - semantics - return in func ok \e[32mPASS\e[0m"
 
 	if $(VALGRIND) ./$(NAME)< ./input.txt > ./valgrind_output.txt 2>&1; then \
         echo -e "[info] valgrind test parser 14 \e[32mOK\e[0m"; \

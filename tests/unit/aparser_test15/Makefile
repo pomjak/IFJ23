@@ -4,14 +4,14 @@ VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s
 
 build:
 	@echo "[info] starting CC build for test parser 15"
-	$(CC) *.c -o $(NAME) -D RULEDEBUG -D DEBUGL=2
+	$(CC) *.c -o $(NAME) -D RULEDEBUG -D DEBUG -D DEBUGL=2
 run: build
 	@echo "[info] performing test parser 15"
 	
-	./$(NAME) < ./input.txt > ./output.txt 2>./debug_output.txt || (echo -e "[info] test parser 15 - semantics - return in func ok [RET_CODE] \e[31mFAIL\e[0m" && exit 1)
-	diff ./expected_debug.txt ./debug_output.txt || (echo -e "[info] test parser 15 - semantics - return in func ok [RULE_PRINT] \e[31mFAIL\e[0m" && exit 1)
-	diff ./expected.txt ./output.txt || (echo -e "[info] test parser 15 - semantics - return in func ok [INSTR]\e[31mFAIL\e[0m" && exit 1)
-	echo -e "[info] test parser 15 - semantics - undefined functions \e[32mPASS\e[0m"
+	./$(NAME) < ./input.txt > ./output.txt 2>./debug_output.txt || (echo -e "[info] test parser 15 - if in if [RET_CODE] \e[31mFAIL\e[0m" && exit 1)
+	diff ./expected_debug.txt ./debug_output.txt || (echo -e "[info] test parser 15 - if in if [RULE_PRINT] \e[31mFAIL\e[0m" && exit 1)
+	diff ./expected.txt ./output.txt || (echo -e "[info] test parser 15 - if in if [INSTR]\e[31mFAIL\e[0m" && exit 1)
+	echo -e "[info] test parser 15 - if in if \e[32mPASS\e[0m"
 
 	if $(VALGRIND) ./$(NAME)< ./input.txt > ./valgrind_output.txt 2>&1; then \
         echo -e "[info] valgrind test parser 15 \e[32mOK\e[0m"; \
