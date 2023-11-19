@@ -25,6 +25,7 @@ Rule prog(Parser* p) {
     case TOKEN_EOF:
         break;
     case TOKEN_FUNC:
+        CHECK_NEWLINE();
         p->in_declaration = true;
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
@@ -41,15 +42,18 @@ Rule prog(Parser* p) {
 
         GET_TOKEN();
         add_scope(&p->stack, &err);
+        p->first_stmt = true;
         NEXT_RULE(func_body);
         pop_scope(&p->stack, &err);
 
         p->in_declaration = false;
+        p->first_stmt = false;
         GET_TOKEN();
         NEXT_RULE(prog);
         break;
     default:
         NEXT_RULE(stmt);
+        p->first_stmt = false;
         NEXT_RULE(prog);
         break;
     }
@@ -69,16 +73,19 @@ Rule stmt(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_VAR: /* var <define> */
+        CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = true;
         break;
     case TOKEN_LET: /* let <define> */
+        CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = false;
         break;
     case TOKEN_IDENTIFIER: /* ID<expression_type> */
+        CHECK_NEWLINE();
         if (peek_scope(p->stack)) {
             p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
@@ -93,6 +100,7 @@ Rule stmt(Parser* p) {
         NEXT_RULE(expr_type);
         break;
     case TOKEN_WHILE: /* while EXP { <block_body> */
+        CHECK_NEWLINE();
         p->in_loop++;
 
         if ((res = expr(p))) {
@@ -103,12 +111,14 @@ Rule stmt(Parser* p) {
 
         GET_TOKEN();
         add_scope(&p->stack, &err);
+        p->first_stmt = true;
         NEXT_RULE(block_body);
         pop_scope(&p->stack, &err);
         GET_TOKEN();
         p->in_loop--;
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
+        CHECK_NEWLINE();
         p->in_cond++;
         GET_TOKEN();
         NEXT_RULE(cond_clause);
@@ -117,6 +127,7 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
+        p->first_stmt = true;
         NEXT_RULE(block_body);
 
         GET_TOKEN();
@@ -127,6 +138,7 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
+        p->first_stmt = true;
         NEXT_RULE(block_body);
         pop_scope(&p->stack, &err);
         GET_TOKEN();
@@ -694,6 +706,7 @@ Rule block_body(Parser* p) {
     }
     else {
         NEXT_RULE(stmt);
+        p->first_stmt = false;
         NEXT_RULE(block_body);
     }
     return EXIT_SUCCESS;
@@ -718,6 +731,7 @@ Rule func_body(Parser* p) {
     }
     else {
         NEXT_RULE(func_stmt);
+        p->first_stmt = false;
         NEXT_RULE(func_body);
     }
 
@@ -738,16 +752,19 @@ Rule func_stmt(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_VAR:
+        CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = true;
         break;
     case TOKEN_LET:
+        CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = false;
         break;
     case TOKEN_IDENTIFIER:
+        CHECK_NEWLINE();
         if (peek_scope(p->stack)) {
             p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
@@ -762,6 +779,7 @@ Rule func_stmt(Parser* p) {
         NEXT_RULE(expr_type);
         break;
     case TOKEN_WHILE:
+        CHECK_NEWLINE();
         p->in_loop++;
         if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] Invalid expression in while loop\n", res);
@@ -775,6 +793,7 @@ Rule func_stmt(Parser* p) {
         p->in_loop--;
         break;
     case TOKEN_IF:
+        CHECK_NEWLINE();
         p->in_cond++;
         add_scope(&p->stack, &err);
         GET_TOKEN();
@@ -799,6 +818,7 @@ Rule func_stmt(Parser* p) {
         p->in_cond--;
         break;
     case TOKEN_RETURN:
+        CHECK_NEWLINE();
         p->return_found = true;
         NEXT_RULE(opt_ret);
         break;
@@ -1227,6 +1247,7 @@ bool parser_init(Parser* p) {
     p->in_declaration = false;
     p->in_function = false;
     p->return_found = false;
+    p->first_stmt = true;
     p->in_loop = 0;
     p->in_param = false;
     p->type_expr = undefined;

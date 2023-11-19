@@ -24,6 +24,7 @@ typedef struct parser_t {
     bool in_declaration;         // Parser is inside a function declaration
     bool in_param;               // Parser should set param type
     bool return_found;
+    bool first_stmt;            
     uint32_t in_cond;                // Parser is inside a condition statement
     uint32_t in_loop;                // Parser is inside a while loop
     param_t* current_arg;        // Current function argument list
@@ -99,6 +100,13 @@ typedef struct parser_t {
 #define NEXT_RULE(_rule)                                                                                               \
     if ((res = _rule(p)) != ERR_NO_ERR)                                                                                \
     return res
+
+/* Check if a new statement is on a separate line from the previous one */
+#define CHECK_NEWLINE()                                                                                                \
+    if ((!p->first_stmt) && (!p->curr_tok.preceding_eol)) {                                                            \
+        fprintf(stderr, "[ERROR %d] New statement not on a separate line\n", ERR_SYNTAX);                              \
+        return ERR_SYNTAX;                                                                                             \
+    }
 
 /* ================================================================================================================== */
 
