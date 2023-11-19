@@ -751,8 +751,8 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         }
         else
         {
-            print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
-            error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+            print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
             expr_symbol.token.type = TOKEN_UNDEFINED;
             return expr_symbol;
         }
@@ -776,8 +776,8 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         return expr_symbol;
     }
 
-    print_error(ERR_UNCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
-    error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+    print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
+    error_code_handler(ERR_INCOMPATIBILE_TYPE);
 
     expr_symbol.token.type = TOKEN_UNDEFINED;
     return expr_symbol;
@@ -825,7 +825,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 
     if (operator.type != TOKEN_ADD)
     {
-        print_error(ERR_UNCOMPATIBILE_TYPE, "Unknown string operation.\n");
+        print_error(ERR_INCOMPATIBILE_TYPE, "Unknown string operation.\n");
         return expr_symbol;
     }
 
@@ -834,8 +834,8 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
         GENERATE_CODE("Generate concatenation\n");
         return expr_symbol;
     }
-    print_error(ERR_UNCOMPATIBILE_TYPE, "Concatenation with uncompatibile types.\n");
-    error_code_handler(ERR_UNCOMPATIBILE_TYPE);
+    print_error(ERR_INCOMPATIBILE_TYPE, "Concatenation with uncompatibile types.\n");
+    error_code_handler(ERR_INCOMPATIBILE_TYPE);
     return expr_symbol;
 }
 
@@ -852,8 +852,8 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     if (first_operand.type != second_operand.type)
     {
         expr_symbol.token.type = TOKEN_UNDEFINED;
-        error_code_handler(ERR_UNCOMPATIBILE_TYPE);
-        print_error(ERR_UNCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+        error_code_handler(ERR_INCOMPATIBILE_TYPE);
+        print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
         return expr_symbol;
     }
 
