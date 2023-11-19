@@ -685,13 +685,11 @@ int expr(Parser *p)
         {
         case E:
             equal_shift(&stack, &p->curr_tok);
-            tb_next(&p->buffer);
             GET_TOKEN();
 
             break;
         case S:
             shift(&stack, &p->curr_tok);
-            tb_next(&p->buffer);
             GET_TOKEN();
             break;
         case R:
@@ -704,7 +702,6 @@ int expr(Parser *p)
 
             expr_error(&stack);
 
-            tb_next(&p->buffer);
             GET_TOKEN();
             break;
         default:
