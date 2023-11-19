@@ -201,6 +201,46 @@ Rule var_def_cont(Parser* p) {
         NEXT_RULE(opt_assign);
         break;
     case TOKEN_ASS:
+        /* Check if the right side of the assignment is a function call */
+        GET_TOKEN();
+        if (p->curr_tok.type == TOKEN_IDENTIFIER) {
+            /* Look for the ID in global table, where all functions are stored */
+            if ((p->rhs_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err))) {
+                if (p->rhs_id->type == function) {
+                    if (p->rhs_id->return_type == nil) {
+                        fprintf(stderr, "[ERROR %d] Invalid assignment of void function '%s' to variable '%s' \n", ERR_INCOMPATIBILE_TYPE, p->rhs_id->name.str, p->current_id->name.str);
+                        return ERR_INCOMPATIBILE_TYPE;
+                    }
+                    /* If the variable does not have a specified type, implicitly set it to the return type of rhs function */
+                    if (p->current_id->type == undefined) {
+                        p->current_id->type = p->rhs_id->return_type;
+                        p->current_id->is_nillable = p->rhs_id->is_nillable;
+                    }
+
+
+                    //func call here
+
+                }
+                /* ID found in global symtab was not a function */
+                else {
+                    GET_TOKEN();
+                    if (p->curr_tok.type == TOKEN_L_PAR) {
+                        fprintf(stderr, "[ERROR %d] Undefined function '%s'\n", ERR_UNDEFINED_FUNCTION, p->rhs_id->name.str);
+                        return ERR_UNDEFINED_FUNCTION;
+                    }
+                    tb_prev(&p->buffer);
+                    tb_prev(&p->buffer);
+                }
+            }
+            /* ID not found in global symtab */
+            else {
+                tb_prev(&p->buffer);
+            }
+        }
+        else {
+            tb_prev(&p->buffer);
+        }
+
         if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] expression procesing failed\n", res);
             return res;
@@ -211,6 +251,7 @@ Rule var_def_cont(Parser* p) {
             break;
         }
         break;
+
     default:
         fprintf(stderr, "[ERROR %d] Unexpected token after variable identifier '%s'\n", ERR_SYNTAX, p->current_id->name.str);
         return ERR_SYNTAX;
@@ -226,6 +267,52 @@ Rule opt_assign(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_ASS) {
+        /* Check if the right side of the assignment is a function call */
+        GET_TOKEN();
+        if (p->curr_tok.type == TOKEN_IDENTIFIER) {
+            /* Look for the ID in global table, where all functions are stored */
+            if ((p->rhs_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err))) {
+                if (p->rhs_id->type == function) {
+                    if (p->rhs_id->return_type == nil) {
+                        fprintf(stderr, "[ERROR %d] Invalid assignment of void function '%s' to variable '%s' \n", ERR_INCOMPATIBILE_TYPE, p->rhs_id->name.str, p->current_id->name.str);
+                        return ERR_INCOMPATIBILE_TYPE;
+                    }
+                    /* Check type compatibility */
+                    else {
+                        if (p->current_id->type != p->rhs_id->return_type) {
+                            fprintf(stderr, "[ERROR %d] Incompatible types when assigning function '%s' to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->rhs_id->name.str, p->current_id->name.str);
+                            return ERR_INCOMPATIBILE_TYPE;
+                        }
+                        if ((!p->current_id->is_nillable) && (p->rhs_id->is_nillable)) {
+                            fprintf(stderr, "[ERROR %d] Cannot assign a nillable function to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
+                            return ERR_INCOMPATIBILE_TYPE;
+                        }
+                    }
+
+                    //func call here
+
+                }
+                /* ID found in global symtab was not a function */
+                else {
+                    /* Check if the id isnt attempted to be called as a function */
+                    GET_TOKEN();
+                    if (p->curr_tok.type == TOKEN_L_PAR) {
+                        fprintf(stderr, "[ERROR %d] Undefined function '%s'\n", ERR_UNDEFINED_FUNCTION, p->rhs_id->name.str);
+                        return ERR_UNDEFINED_FUNCTION;
+                    }
+                    tb_prev(&p->buffer);
+                    tb_prev(&p->buffer);
+                }
+            }
+            /* ID not found in global symtab */
+            else {
+                tb_prev(&p->buffer);
+            }
+        }
+        else {
+            tb_prev(&p->buffer);
+        }
+
         if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
             return res;
@@ -234,6 +321,7 @@ Rule opt_assign(Parser* p) {
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
         }
+        p->current_id->is_var_initialized = true;
     }
 
     return EXIT_SUCCESS;
@@ -257,6 +345,53 @@ Rule expr_type(Parser* p) {
             fprintf(stderr, "[ERROR %d] Assigning a new value to immutable variable %s\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
+        /* Check if the right side of the assignment is a function call */
+        GET_TOKEN();
+        if (p->curr_tok.type == TOKEN_IDENTIFIER) {
+            /* Look for the ID in global table, where all functions are stored */
+            if ((p->rhs_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err))) {
+                if (p->rhs_id->type == function) {
+                    if (p->rhs_id->return_type == nil) {
+                        fprintf(stderr, "[ERROR %d] Invalid assignment of void function '%s' to variable '%s' \n", ERR_INCOMPATIBILE_TYPE, p->rhs_id->name.str, p->current_id->name.str);
+                        return ERR_INCOMPATIBILE_TYPE;
+                    }
+                    /* Check type compatibility */
+                    else {
+                        if (p->current_id->type != p->rhs_id->return_type) {
+                            fprintf(stderr, "[ERROR %d] Incompatible types when assigning function '%s' to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->rhs_id->name.str, p->current_id->name.str);
+                            return ERR_INCOMPATIBILE_TYPE;
+                        }
+                        if ((!p->current_id->is_nillable) && (p->rhs_id->is_nillable)) {
+                            fprintf(stderr, "[ERROR %d] Cannot assign a nillable function to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
+                            return ERR_INCOMPATIBILE_TYPE;
+                        }
+                    }
+
+                    //func call here
+
+                }
+                /* ID found in global symtab was not a function */
+                else {
+                    /* Check if the id isnt attempted to be called as a function */
+                    GET_TOKEN();
+                    if (p->curr_tok.type == TOKEN_L_PAR) {
+                        fprintf(stderr, "[ERROR %d] Undefined function '%s'\n", ERR_UNDEFINED_FUNCTION, p->rhs_id->name.str);
+                        return ERR_UNDEFINED_FUNCTION;
+                    }
+                    tb_prev(&p->buffer);
+                    tb_prev(&p->buffer);
+                }
+            }
+            /* ID not found in global symtab */
+            else {
+                tb_prev(&p->buffer);
+            }
+        }
+        /* Loaded token was not an identifier, roll back and process it as an expression */
+        else {
+            tb_prev(&p->buffer);
+        }
+        /* Expression processing */
         if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
             return res;
