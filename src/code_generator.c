@@ -296,5 +296,6 @@ void code_generator_function_end(char* name){
 
 void code_generator_return(token_T token){
     code_generator_push(token);
-    code_generator_function_end();
+    code_generator_popframe();
+    printf("RETURN\n");
 }
