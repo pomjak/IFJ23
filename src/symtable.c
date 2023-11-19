@@ -394,41 +394,6 @@ bool get_func_definition(symtab_t *symtab, dstring_t *id, unsigned int *error)
     return item->is_func_defined;
 }
 
-void set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared, unsigned int *error)
-{
-    symtab_item_t *item = symtable_search(symtab, id, error);
-    if (!item)
-    {
-        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
-        return;
-    }
-
-    if (item->type == function)
-    {
-        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
-        return;
-    }
-
-    item->is_var_declared = is_var_declared;
-}
-
-bool get_var_declaration(symtab_t *symtab, dstring_t *id, unsigned int *error)
-{
-    symtab_item_t *item = symtable_search(symtab, id, error);
-    if (!item)
-    {
-        report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
-        return false;
-    }
-
-    if (item->type == function)
-    {
-        report_error(error, SYMTAB_ERR_ITEM_IS_FUNCTION);
-        return false;
-    }
-
-    return item->is_var_declared;
-}
 
 void set_return_type(symtab_t *symtab, dstring_t *id, Type return_type, unsigned int *error)
 {
