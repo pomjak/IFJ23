@@ -150,8 +150,9 @@ symtab_item_t *item_init(dstring_t *id, unsigned int *error)
     new->type = undefined;
     new->is_mutable = false;
     new->is_func_defined = false;
-    new->is_var_declared = false;
+    new->is_var_initialized = false;
     new->is_nillable = false;
+    new->variadic_param = false;
     new->parameters = NULL;
     new->return_type = undefined;
 

@@ -62,8 +62,9 @@ typedef struct symtab_item
     Type type;            // func,int,dbl,str,nil,undefined
     bool is_mutable;      // true for var, false for let
     bool is_func_defined; // true if func was already defined, else false
-    bool is_var_declared; // true if item was already declared, else false
+    bool is_var_initialized; // true if item was assigned a value
     bool is_nillable;     // true if item can be nil
+    bool variadic_param;  // true if a function can be passed whatever number of parameters
     param_t *parameters;  // pointer to param_t struct
     Type return_type;     // anything but func
 } symtab_item_t;
