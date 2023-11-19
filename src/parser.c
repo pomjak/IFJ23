@@ -228,17 +228,20 @@ Rule var_def_cont(Parser* p) {
                     }
                     tb_prev(&p->buffer);
                     tb_prev(&p->buffer);
+                    p->curr_tok = tb_get_token(&p->buffer);
                 }
             }
             /* ID not found in global symtab */
             else {
                 tb_prev(&p->buffer);
+                p->curr_tok = tb_get_token(&p->buffer);
             }
         }
         else {
             tb_prev(&p->buffer);
+            p->curr_tok = tb_get_token(&p->buffer);
         }
-
+        DEBUG_PRINT("before expr :: %d", p->curr_tok.type);
         if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] expression procesing failed\n", res);
             return res;
@@ -265,6 +268,7 @@ Rule opt_assign(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_ASS) {
+
         /* Check if the right side of the assignment is a function call */
         GET_TOKEN();
         if (p->curr_tok.type == TOKEN_IDENTIFIER) {
@@ -299,17 +303,20 @@ Rule opt_assign(Parser* p) {
                     }
                     tb_prev(&p->buffer);
                     tb_prev(&p->buffer);
+                    p->curr_tok = tb_get_token(&p->buffer);
                 }
             }
             /* ID not found in global symtab */
             else {
                 tb_prev(&p->buffer);
+                p->curr_tok = tb_get_token(&p->buffer);
             }
         }
         else {
             tb_prev(&p->buffer);
+            p->curr_tok = tb_get_token(&p->buffer);
         }
-
+        DEBUG_PRINT("token before expr() : %d", p->curr_tok.type);
         if ((res = expr(p))) {
             fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
             return res;
@@ -376,16 +383,19 @@ Rule expr_type(Parser* p) {
                     }
                     tb_prev(&p->buffer);
                     tb_prev(&p->buffer);
+                    p->curr_tok = tb_get_token(&p->buffer);
                 }
             }
             /* ID not found in global symtab */
             else {
                 tb_prev(&p->buffer);
+                p->curr_tok = tb_get_token(&p->buffer);
             }
         }
         /* Loaded token was not an identifier, roll back and process it as an expression */
         else {
             tb_prev(&p->buffer);
+            p->curr_tok = tb_get_token(&p->buffer);
         }
         /* Expression processing */
         if ((res = expr(p))) {
@@ -1018,8 +1028,6 @@ Rule literal(Parser* p) {
     }
     return EXIT_SUCCESS;
 }
-
-
 
 /**
  * @brief Rule to fill out global symtab with function declarations
