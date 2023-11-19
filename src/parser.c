@@ -231,8 +231,8 @@ Rule opt_assign(Parser* p) {
             return res;
         }
         if (p->current_id->type != p->type_expr) {
-            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
-            return ERR_UNCOMPATIBILE_TYPE;
+            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
+            return ERR_INCOMPATIBILE_TYPE;
         }
     }
 
@@ -262,8 +262,8 @@ Rule expr_type(Parser* p) {
             return res;
         }
         if (p->current_id->type != p->type_expr) {
-            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_UNCOMPATIBILE_TYPE, p->current_id->name.str);
-            return ERR_UNCOMPATIBILE_TYPE;
+            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
+            return ERR_INCOMPATIBILE_TYPE;
         }
         break;
     /* If the loaded ID is followed by opening parentheses the ID should have been a function */
