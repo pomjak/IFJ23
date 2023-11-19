@@ -191,8 +191,9 @@ void code_generator_function_label(char* name);
 
 /**
  * Closes function
+ * @param name name of function
 */
-void code_generator_function_end();
+void code_generator_function_end(char* name);
 
 /**
  * Creates return from function

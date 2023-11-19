@@ -283,16 +283,19 @@ void code_generator_function_label_token(token_T token){
 }
 
 void code_generator_function_label(char* name){
+    printf("\nJUMP $$FUNCTION_END_%s\n", name);
     printf("\nLABEL $$FUNCTION_%s\n", name);
     code_generator_pushframe();
 }
 
-void code_generator_function_end(){
+void code_generator_function_end(char* name){
     code_generator_popframe();
     printf("RETURN\n");
+    printf("\nLABEL $$FUNCTION_END_%s\n", name);
 }
 
 void code_generator_return(token_T token){
     code_generator_push(token);
-    code_generator_function_end();
+    code_generator_popframe();
+    printf("RETURN\n");
 }
