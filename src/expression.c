@@ -673,7 +673,6 @@ int expr(Parser *p)
     push_initial_sym(&stack);
 
     // get next symbol a
-    tb_next(&p->buffer);
     GET_TOKEN();
 
     symstack_data_t sym_data = convert_token_to_data(p->curr_tok);
