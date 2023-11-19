@@ -1,7 +1,0 @@
-let aaa : Int
-if let aaa {
-    var bbb : Int?
-}
-else {
-    let ccc : Double
-}

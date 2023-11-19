@@ -1,6 +1,0 @@
-func aaa(_ a: Int, with b: Int) -> Int? {
-}
-aaa(50, with: 60)
-let bbb: Int 
-aaa(50, with: bbb)
-aaa()
