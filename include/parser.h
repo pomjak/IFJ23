@@ -134,6 +134,7 @@ Rule func_ret_type_skip(Parser* p);
 Rule param_list_skip(Parser* p);
 Rule param_next_skip(Parser* p);
 Rule param_skip(Parser* p);
+Rule funccall(Parser* p);
 bool parser_init(Parser* p);
 bool add_builtins(Parser* p);
 void parser_dispose(Parser* p);

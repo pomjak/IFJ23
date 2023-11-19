@@ -216,10 +216,8 @@ Rule var_def_cont(Parser* p) {
                         p->current_id->type = p->rhs_id->return_type;
                         p->current_id->is_nillable = p->rhs_id->is_nillable;
                     }
-
-
-                    //func call here
-
+                    NEXT_RULE(funccall);
+                    return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
                 else {
@@ -288,9 +286,8 @@ Rule opt_assign(Parser* p) {
                             return ERR_INCOMPATIBILE_TYPE;
                         }
                     }
-
-                    //func call here
-
+                    NEXT_RULE(funccall);
+                    return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
                 else {
@@ -366,9 +363,8 @@ Rule expr_type(Parser* p) {
                             return ERR_INCOMPATIBILE_TYPE;
                         }
                     }
-
-                    //func call here
-
+                    NEXT_RULE(funccall);
+                    return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
                 else {
@@ -1176,6 +1172,26 @@ Rule skip(Parser* p) {
     The purpose of the above skip rules is to be able to parse only function headers during the first run through tok buf
     without the risk of 'redefine' error during the second run
 */
+
+/**
+ * @brief Rule to parse function calls on the rhs of assignments
+ */
+Rule funccall(Parser* p) {
+    RULE_PRINT("funccall");
+    uint32_t res, err;
+    symtab_item_t* temp;
+
+    /* Current token must be an identifier stored in p->rhs_id (already parsed in the rule calling this function) */
+    GET_TOKEN();
+    ASSERT_TOK_TYPE(TOKEN_L_PAR);
+
+    temp = p->last_func_id;
+    p->last_func_id = p->rhs_id;
+    GET_TOKEN();
+    NEXT_RULE(arg_list);
+    p->last_func_id = temp;
+    return EXIT_SUCCESS;
+}
 
 /* ======================================================== */
 
