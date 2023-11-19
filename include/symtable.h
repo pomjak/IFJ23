@@ -62,8 +62,9 @@ typedef struct symtab_item
     Type type;            // func,int,dbl,str,nil,undefined
     bool is_mutable;      // true for var, false for let
     bool is_func_defined; // true if func was already defined, else false
-    bool is_var_declared; // true if item was already declared, else false
+    bool is_var_initialized; // true if item was assigned a value
     bool is_nillable;     // true if item can be nil
+    bool variadic_param;  // true if a function can be passed whatever number of parameters
     param_t *parameters;  // pointer to param_t struct
     Type return_type;     // anything but func
 } symtab_item_t;
@@ -282,25 +283,6 @@ void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined, 
  */
 bool get_func_definition(symtab_t *symtab, dstring_t *id, unsigned int *error);
 
-/**
- * @brief Set the var declaration object
- *
- * @param symtab            ptr to symtable
- * @param id                id of item
- * @param is_var_declared   desired value to be set for declaration of item
- * @param error             err flag
- */
-void set_var_declaration(symtab_t *symtab, dstring_t *id, bool is_var_declared, unsigned int *error);
-
-/**
- * @brief Get the var declaration object
- *
- * @param symtab        ptr to symtable
- * @param id            id of item
- * @param error         err flag
- * @return bool         var_declaration if success, false and err flag is raised
- */
-bool get_var_declaration(symtab_t *symtab, dstring_t *id, unsigned int *error);
 
 /**
  * @brief Set the return type of item if type is function

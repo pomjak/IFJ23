@@ -55,14 +55,6 @@ int main()
     assert(get_func_definition(&global_sym_table, &item1, &error) == true);
     assert(error == SYMTAB_OK);
 
-    // again item is function, not var
-    set_var_declaration(&global_sym_table, &item1, true, &error);
-    assert(error == SYMTAB_ERR_ITEM_IS_FUNCTION);
-    // so var declarations cannot be set
-    assert(get_var_declaration(&global_sym_table, &item1, &error) == false);
-    // thus error flag is raised
-    assert(error == SYMTAB_ERR_ITEM_IS_FUNCTION);
-
     symtab_t local_symtable;
 
     symtable_init(&local_symtable, &error);

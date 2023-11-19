@@ -156,38 +156,6 @@ int main()
     assert(error == SYMTAB_ERR_ITEM_NOT_FUNCTION);
 
     /**
-     * @brief set declaration of variable (fails with function)
-     *
-     */
-    set_var_declaration(&global_sym_table, &item1, true, &error);
-    assert(error == SYMTAB_ERR_ITEM_IS_FUNCTION);
-
-    set_var_declaration(&global_sym_table, &item2, true, &error);
-    assert(error == SYMTAB_OK);
-
-    set_var_declaration(&global_sym_table, &item3, true, &error);
-    assert(error == SYMTAB_OK);
-
-    set_var_declaration(&global_sym_table, &item4, true, &error);
-    assert(error == SYMTAB_OK);
-
-    /**
-     * @brief get declaration of variable (fails with function)
-     *
-     */
-    assert(get_var_declaration(&global_sym_table, &item1, &error) == false);
-    assert(error == SYMTAB_ERR_ITEM_IS_FUNCTION);
-
-    assert(get_var_declaration(&global_sym_table, &item2, &error) == true);
-    assert(error == SYMTAB_OK);
-
-    assert(get_var_declaration(&global_sym_table, &item3, &error) == true);
-    assert(error == SYMTAB_OK);
-
-    assert(get_var_declaration(&global_sym_table, &item4, &error) == true);
-    assert(error == SYMTAB_OK);
-
-    /**
      * @brief set nullability of variable (okay)
      *
      */
