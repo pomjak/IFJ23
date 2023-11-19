@@ -28,7 +28,7 @@ Rule prog(Parser* p) {
         p->in_declaration = true;
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-        p->last_func_id = symtable_search(&p->global_symtab,&p->curr_tok.value.string_val, &err);
+        p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
 
@@ -357,17 +357,23 @@ Rule arg_list(Parser* p) {
     uint32_t res, err;
     p->current_arg = p->last_func_id->parameters;
     if (p->curr_tok.type == TOKEN_R_PAR) {
+        /* Only check argument count if func has a set number of parameters */
+        if (!p->last_func_id->variadic_param) {
         /* Function had parameters declared but no arguments were passed while calling */
-        if (p->current_arg != NULL) {
-            fprintf(stderr, "[ERROR %d] Missing arguments in function '%s' \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
-            return ERR_FUNCTION_PARAMETER;
+            if (p->current_arg != NULL) {
+                fprintf(stderr, "[ERROR %d] Missing arguments in function '%s' \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
         }
         GET_TOKEN();
         return EXIT_SUCCESS;
     }
-    if (p->current_arg == NULL) {
-        fprintf(stderr, "[ERROR %d] Too many arguments in function '%s'\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
-        return ERR_FUNCTION_PARAMETER;
+    /* Only check argument count if func has a set number of parameters */
+    if (!p->last_func_id->variadic_param) {
+        if (p->current_arg == NULL) {
+            fprintf(stderr, "[ERROR %d] Too many arguments in function '%s'\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
+        }
     }
     NEXT_RULE(arg);
     GET_TOKEN();
@@ -385,20 +391,24 @@ Rule arg_next(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_COMMA:
-        if (p->current_arg->next == NULL) {
-            fprintf(stderr, "[ERROR %d] Too many arguments in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
-            return ERR_FUNCTION_PARAMETER;
+        if (!p->last_func_id->variadic_param) {
+            if (p->current_arg->next == NULL) {
+                fprintf(stderr, "[ERROR %d] Too many arguments in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
+            p->current_arg = p->current_arg->next;
         }
-        p->current_arg = p->current_arg->next;
         GET_TOKEN();
         NEXT_RULE(arg);
         GET_TOKEN();
         NEXT_RULE(arg_next);
         break;
     case TOKEN_R_PAR:
-        if (p->current_arg->next != NULL) {
-            fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
-            return ERR_FUNCTION_PARAMETER;
+        if (!p->last_func_id->variadic_param) {
+            if (p->current_arg->next != NULL) {
+                fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
         }
         GET_TOKEN();
         return EXIT_SUCCESS;
@@ -558,8 +568,8 @@ Rule func_body(Parser* p) {
     if (p->curr_tok.type == TOKEN_R_BKT) {
         if (p->last_func_id->return_type != nil) {
             if (p->return_found == false) {
-                fprintf(stderr, "[ERROR %d] Missing return statement in function '%s'\n", ERR_SEMANTIC, p->last_func_id->name.str);
-                return ERR_SEMANTIC;
+                fprintf(stderr, "[ERROR %d] Missing return statement in function '%s'\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
+                return ERR_RETURN_TYPE;
             }
         }
         p->return_found = false;
@@ -1084,6 +1094,7 @@ void parser_dispose(Parser* p) {
  */
 bool add_builtins(Parser* p) {
     uint32_t st_err;
+    symtab_item_t* item;
     dstring_t builtin_id;
     dstring_t param_name;
     dstring_t label_name;
@@ -1099,6 +1110,10 @@ bool add_builtins(Parser* p) {
     SET_BUILTIN("readDouble", double_, true);
     // write() // TODO params maybe
     SET_BUILTIN("write", nil, false);
+    /* Allow the write function to have any number of parameters passed to it */
+    item = symtable_search(&p->global_symtab, &builtin_id, &st_err);
+    item->variadic_param = true;
+
     // Int2Double(_ term : Int) -> Double
     SET_BUILTIN("Int2Double", double_, false);
     ADD_BUILTIN_PARAM("_", "term", integer, false);
