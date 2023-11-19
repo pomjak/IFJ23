@@ -102,8 +102,9 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
+        add_scope(&p->stack, &err);
         NEXT_RULE(block_body);
-
+        pop_scope(&p->stack, &err);
         GET_TOKEN();
         p->in_loop--;
         break;
@@ -127,7 +128,7 @@ Rule stmt(Parser* p) {
 
         GET_TOKEN();
         NEXT_RULE(block_body);
-
+        pop_scope(&p->stack, &err);
         GET_TOKEN();
         p->in_cond--; // condition should be fully parsed by the time we're exiting the switch statement
         break;
