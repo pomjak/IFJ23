@@ -26,31 +26,25 @@ Rule prog(Parser* p) {
         break;
     case TOKEN_FUNC:
         p->in_declaration = true;
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(param_list_skip);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(func_ret_type_skip);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
         pop_scope(&p->stack, &err);
 
         p->in_declaration = false;
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(prog);
         break;
@@ -75,13 +69,11 @@ Rule stmt(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_VAR: /* var <define> */
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = true;
         break;
     case TOKEN_LET: /* let <define> */
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = false;
@@ -97,7 +89,6 @@ Rule stmt(Parser* p) {
         if (!p->current_id) {
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         }
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(expr_type);
         break;
@@ -110,41 +101,33 @@ Rule stmt(Parser* p) {
         }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(block_body);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         p->in_loop--;
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
         p->in_cond++;
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
         DEBUG_PRINT("cond_clause finished");
 
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(block_body);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* adding scope for else */
         add_scope(&p->stack, &err);
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(block_body);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         p->in_cond--; // condition should be fully parsed by the time we're exiting the switch statement
         break;
@@ -197,7 +180,6 @@ Rule define(Parser* p) {
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     NEXT_RULE(var_def_cont);
 
@@ -213,7 +195,6 @@ Rule var_def_cont(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_COL:
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(type);
         NEXT_RULE(opt_assign);
@@ -299,7 +280,6 @@ Rule expr_type(Parser* p) {
         p->current_id = NULL;
         p->in_function = true;
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(arg_list);
         break;
@@ -319,7 +299,6 @@ Rule cond_clause(Parser* p) {
 
     /* if let id */
     if (p->curr_tok.type == TOKEN_LET) {
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
         DEBUG_PRINT("if let %s ", p->curr_tok.value.string_val.str);
@@ -353,7 +332,6 @@ Rule cond_clause(Parser* p) {
         set_mutability(p->stack->local_sym, &p->current_id->name, false, &err);
         DEBUG_PRINT("%s inserted into local if scope", p->current_id->name.str);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
     }
     /* if (EXPR) */
@@ -383,7 +361,6 @@ Rule arg_list(Parser* p) {
             fprintf(stderr, "[ERROR %d] Missing arguments in function '%s' \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
         }
-        tb_next(&p->buffer);
         GET_TOKEN();
         return EXIT_SUCCESS;
     }
@@ -392,7 +369,6 @@ Rule arg_list(Parser* p) {
         return ERR_FUNCTION_PARAMETER;
     }
     NEXT_RULE(arg);
-    tb_next(&p->buffer);
     GET_TOKEN();
 
     NEXT_RULE(arg_next);
@@ -413,10 +389,8 @@ Rule arg_next(Parser* p) {
             return ERR_FUNCTION_PARAMETER;
         }
         p->current_arg = p->current_arg->next;
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(arg);
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(arg_next);
         break;
@@ -425,7 +399,6 @@ Rule arg_next(Parser* p) {
             fprintf(stderr, "[ERROR %d] Missing arguments in function %s \n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
         }
-        tb_next(&p->buffer);
         GET_TOKEN();
         return EXIT_SUCCESS;
     default:
@@ -469,7 +442,6 @@ Rule arg(Parser* p) {
             return ERR_SEMANTIC;
         }
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(opt_arg);
     }
@@ -505,7 +477,6 @@ Rule param_next(Parser* p) {
     switch (p->curr_tok.type) {
     case TOKEN_R_PAR: p->in_param = false; break;
     case TOKEN_COMMA:
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(param);
         NEXT_RULE(param_next);
@@ -539,7 +510,6 @@ Rule param(Parser* p) {
         return ERR_SYNTAX;
     }
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     NEW_PARAM();
@@ -549,11 +519,9 @@ Rule param(Parser* p) {
     dstring_clear(&p->tmp);
     dstring_copy(&p->curr_tok.value.string_val, &p->tmp);
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     NEXT_RULE(type);
 
@@ -618,13 +586,11 @@ Rule func_stmt(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_VAR:
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = true;
         break;
     case TOKEN_LET:
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(define);
         p->current_id->is_mutable = false;
@@ -640,7 +606,6 @@ Rule func_stmt(Parser* p) {
         if (!p->current_id) {
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         }
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(expr_type);
         break;
@@ -651,39 +616,31 @@ Rule func_stmt(Parser* p) {
             return res;
         }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(func_body);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         p->in_loop--;
         break;
     case TOKEN_IF:
         p->in_cond++;
         add_scope(&p->stack, &err);
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(func_body);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         add_scope(&p->stack, &err);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
-        tb_next(&p->buffer);
         GET_TOKEN();
         add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
@@ -708,7 +665,6 @@ Rule func_ret_type(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_RET_VAL) {
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(type);
     }
@@ -726,7 +682,6 @@ Rule opt_ret(Parser* p) {
     uint32_t res, err;
 
     if (p->last_func_id->return_type == nil) {
-        tb_next(&p->buffer);
         GET_TOKEN();
 
         if (p->curr_tok.type != TOKEN_R_BKT) {
@@ -755,7 +710,6 @@ Rule opt_type(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(type);
     }
@@ -789,7 +743,6 @@ Rule type(Parser* p) {
             p->current_id->type = integer;
             p->current_id->is_nillable = p->curr_tok.value.is_nilable;
         }
-        tb_next(&p->buffer);
         GET_TOKEN();
         break;
 
@@ -810,7 +763,6 @@ Rule type(Parser* p) {
             p->current_id->type = double_;
             p->current_id->is_nillable = p->curr_tok.value.is_nilable;
         }
-        tb_next(&p->buffer);
         GET_TOKEN();
         break;
 
@@ -837,7 +789,6 @@ Rule type(Parser* p) {
             p->current_id->type = string;
             p->current_id->is_nillable = p->curr_tok.value.is_nilable;
         }
-        tb_next(&p->buffer);
         GET_TOKEN();
         break;
     default:
@@ -855,7 +806,6 @@ Rule opt_arg(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_COL) {
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(term);
     }
@@ -938,7 +888,6 @@ Rule func_header(Parser* p) {
     uint32_t res, err;
 
     p->in_declaration = true;
-    tb_next(&p->buffer);
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
 
@@ -950,15 +899,12 @@ Rule func_header(Parser* p) {
     p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     p->last_func_id->type = function;
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_L_PAR);
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     NEXT_RULE(param_list);
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     NEXT_RULE(func_ret_type);
     p->in_declaration = false;
@@ -977,7 +923,6 @@ Rule type_skip(Parser* p) {
     case TOKEN_DT_INT:
     case TOKEN_DT_DOUBLE:
     case TOKEN_DT_STRING:
-        tb_next(&p->buffer);
         GET_TOKEN();
         break;
     default:
@@ -998,15 +943,12 @@ Rule param_skip(Parser* p) {
         fprintf(stderr, "[ERROR %d] Parameter label expected\n", ERR_SYNTAX);
         return ERR_SYNTAX;
     }
-    tb_next(&p->buffer);
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
 
-    tb_next(&p->buffer);
     GET_TOKEN();
     NEXT_RULE(type_skip);
     return EXIT_SUCCESS;
@@ -1024,7 +966,6 @@ Rule param_next_skip(Parser* p) {
     case TOKEN_R_PAR:
         break;
     case TOKEN_COMMA:
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(param_skip);
         NEXT_RULE(param_next_skip);
@@ -1059,7 +1000,6 @@ Rule func_ret_type_skip(Parser* p) {
     uint32_t res;
 
     if (p->curr_tok.type == TOKEN_RET_VAL) {
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(type_skip);
     }
@@ -1077,13 +1017,11 @@ Rule skip(Parser* p) {
     }
     if (p->curr_tok.type == TOKEN_FUNC) {
         NEXT_RULE(func_header);
-        tb_next(&p->buffer);
         GET_TOKEN();
         NEXT_RULE(skip);
         return EXIT_SUCCESS;
     }
     DEBUG_PRINT("skipping token: %d", p->curr_tok.type);
-    tb_next(&p->buffer);
     GET_TOKEN();
     NEXT_RULE(skip);
 }
