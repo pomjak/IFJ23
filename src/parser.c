@@ -120,9 +120,9 @@ Rule stmt(Parser* p) {
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
         CHECK_NEWLINE();
         p->in_cond++;
+        add_scope(&p->stack, &err);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
-        DEBUG_PRINT("cond_clause finished");
 
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
@@ -138,6 +138,7 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
+        add_scope(&p->stack, &err);
         p->first_stmt = true;
         NEXT_RULE(block_body);
         pop_scope(&p->stack, &err);
@@ -718,7 +719,7 @@ Rule block_body(Parser* p) {
 Rule func_body(Parser* p) {
     RULE_PRINT("func_body");
     uint32_t res, err;
-
+    DEBUG_PRINT("token::%d", p->curr_tok.type);
     if (p->curr_tok.type == TOKEN_R_BKT) {
         if (p->last_func_id->return_type != nil) {
             if (p->return_found == false) {
@@ -727,6 +728,8 @@ Rule func_body(Parser* p) {
             }
         }
         p->return_found = false;
+        pop_scope(&p->stack, &err);
+        DEBUG_PRINT("Closing body");
         return EXIT_SUCCESS;
     }
     else {
@@ -787,8 +790,8 @@ Rule func_stmt(Parser* p) {
         }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
+        p->first_stmt = true;
         NEXT_RULE(func_body);
-
         GET_TOKEN();
         p->in_loop--;
         break;
@@ -799,10 +802,10 @@ Rule func_stmt(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(cond_clause);
 
-        GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
+        p->first_stmt = true;
         NEXT_RULE(func_body);
 
         GET_TOKEN();
@@ -814,7 +817,10 @@ Rule func_stmt(Parser* p) {
 
         GET_TOKEN();
         add_scope(&p->stack, &err);
+        p->first_stmt = true;
         NEXT_RULE(func_body);
+        pop_scope(&p->stack, &err);
+        GET_TOKEN();
         p->in_cond--;
         break;
     case TOKEN_RETURN:
