@@ -1,0 +1,7 @@
+prog
+stmt
+define
+var_def_cont
+type
+opt_assign
+[ERROR 2] Assigning an invalid expression to variable c

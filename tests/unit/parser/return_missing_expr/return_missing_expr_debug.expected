@@ -1,0 +1,11 @@
+func_header
+param_list
+func_ret_type
+type
+prog
+param_list_skip
+func_ret_type_skip
+type_skip
+func_body
+func_stmt
+opt_ret

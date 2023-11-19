@@ -1,0 +1,3 @@
+prog
+stmt
+[ERROR 2] Unexpected token, var/let/while/if/identifier expected

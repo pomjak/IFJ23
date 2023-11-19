@@ -1,0 +1,23 @@
+func_header
+param_list
+param
+type
+param_next
+func_ret_type
+type
+prog
+param_list_skip
+param_skip
+type_skip
+param_next_skip
+func_ret_type_skip
+type_skip
+func_body
+func_stmt
+opt_ret
+func_body
+prog
+stmt
+expr_type
+arg_list
+[ERROR 4] Missing arguments in function 'a' 
