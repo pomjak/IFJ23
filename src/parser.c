@@ -28,7 +28,7 @@ Rule prog(Parser* p) {
         p->in_declaration = true;
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-
+        p->last_func_id = symtable_search(&p->global_symtab,&p->curr_tok.value.string_val, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
 
