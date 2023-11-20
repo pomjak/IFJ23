@@ -1,3 +1,4 @@
+
 <STRING  value=''>
 <STRING  value='ahoj 123_"!*'>
 <STRING  value='ahoj *123_"!
