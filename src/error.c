@@ -10,7 +10,7 @@ void print_error(int err_code, const char *format, ...)
     va_list argument_list;
     va_start(argument_list, format);
 
-    fprintf(stderr, "%sError [%d]%s: ", RED, err_code, DEFAULT_COLOR);
+    fprintf(stderr, "Error [%d]: ", err_code);
     vfprintf(stderr, format, argument_list);
     va_end(argument_list);
 }
