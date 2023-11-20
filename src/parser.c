@@ -32,6 +32,7 @@ Rule prog(Parser* p) {
         p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
+        add_scope(&p->stack, &err);
 
         GET_TOKEN();
         NEXT_RULE(param_list_skip);
@@ -41,7 +42,6 @@ Rule prog(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
-        add_scope(&p->stack, &err);
         p->first_stmt = true;
         NEXT_RULE(func_body);
         pop_scope(&p->stack, &err);
@@ -104,7 +104,6 @@ Rule stmt(Parser* p) {
         p->in_loop++;
 
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] Invalid expression in while loop\n", res);
             return res;
         }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
@@ -256,7 +255,6 @@ Rule var_def_cont(Parser* p) {
         }
         DEBUG_PRINT("before expr :: %d", p->curr_tok.type);
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] expression procesing failed\n", res);
             return res;
         }
         /* Implicit setting of variable type */
@@ -331,7 +329,6 @@ Rule opt_assign(Parser* p) {
         }
         DEBUG_PRINT("token before expr() : %d", p->curr_tok.type);
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
             return res;
         }
         if (p->current_id->type != p->type_expr) {
@@ -412,7 +409,6 @@ Rule expr_type(Parser* p) {
         }
         /* Expression processing */
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] Assigning an invalid expression to variable %s\n", res, p->current_id->name.str);
             return res;
         }
         if (p->current_id->type != p->type_expr) {
@@ -495,7 +491,6 @@ Rule cond_clause(Parser* p) {
         /* Move to previous token since expression func expects loading parentheses */
         tb_prev(&p->buffer);
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] Invalid expression in conditional\n", res);
             return res;
         }
     }
@@ -595,7 +590,7 @@ Rule arg(Parser* p) {
             }
             /* Check if the variable is the same type as function parameter */
             if (p->current_id->type != p->current_arg->type) {
-                fprintf(stderr, "[ERROR %d] Function '%s': Invalid argument type in %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
+                fprintf(stderr, "[ERROR %d] Function '%s': argument '%s' - invalid type\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
                 return ERR_FUNCTION_PARAMETER;
             }
             // TODO maybe get token here
@@ -785,7 +780,6 @@ Rule func_stmt(Parser* p) {
         CHECK_NEWLINE();
         p->in_loop++;
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] Invalid expression in while loop\n", res);
             return res;
         }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
@@ -869,7 +863,6 @@ Rule opt_ret(Parser* p) {
     }
     else {
         if ((res = expr(p))) {
-            fprintf(stderr, "[ERROR %d] Invalid expression in return statement\n", res);
             return res;
         }
         if (p->last_func_id->return_type != p->type_expr) {
@@ -1092,13 +1085,20 @@ Rule func_header(Parser* p) {
  */
 Rule type_skip(Parser* p) {
     RULE_PRINT("type_skip");
-    uint32_t res;
+    uint32_t res, err;
 
     switch (p->curr_tok.type)
     {
     case TOKEN_DT_INT:
+        set_type(p->stack->local_sym, &p->current_id->name, integer, &err);
+        GET_TOKEN();
+        break;
     case TOKEN_DT_DOUBLE:
+        set_type(p->stack->local_sym, &p->current_id->name, double_, &err);
+        GET_TOKEN();
+        break;
     case TOKEN_DT_STRING:
+        set_type(p->stack->local_sym, &p->current_id->name, string, &err);
         GET_TOKEN();
         break;
     default:
@@ -1113,7 +1113,7 @@ Rule type_skip(Parser* p) {
  */
 Rule param_skip(Parser* p) {
     RULE_PRINT("param_skip");
-    uint32_t res;
+    uint32_t res, err;
 
     if (p->curr_tok.type != TOKEN_UND_SCR && p->curr_tok.type != TOKEN_IDENTIFIER) {
         fprintf(stderr, "[ERROR %d] Parameter label expected\n", ERR_SYNTAX);
@@ -1121,6 +1121,8 @@ Rule param_skip(Parser* p) {
     }
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
+    symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
+    p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
 
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
