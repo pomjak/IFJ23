@@ -4,7 +4,7 @@
  * @brief Lexical analyzer
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
  * @author Jakub Pomsar <xpomsa00@stud.fit.vutbr.cz>
- * @date 08.10.2023
+ * @date 20.11.2023
  **/
 
 #include <stdio.h>
@@ -736,7 +736,10 @@ state_T line_c(char read) {
     DEBUG_PRINT("read char is %c", read);
     
     if (read == EOF) eof(read);
-    if (read != '\n') NEXT_STATE(line_c);
+    if (read != '\n'){
+        set_eol = true;
+        NEXT_STATE(line_c);
+        }
 
     NEXT_STATE(start);   
 }
