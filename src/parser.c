@@ -32,6 +32,7 @@ Rule prog(Parser* p) {
         p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
+        /* new scope for parameters */
         add_scope(&p->stack, &err);
 
         GET_TOKEN();
@@ -43,9 +44,11 @@ Rule prog(Parser* p) {
 
         GET_TOKEN();
         p->first_stmt = true;
+        /* new scope for body */
+        add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
+        /* pop the parameter scope */
         pop_scope(&p->stack, &err);
-
         p->in_declaration = false;
         p->first_stmt = false;
         GET_TOKEN();
@@ -112,32 +115,27 @@ Rule stmt(Parser* p) {
         add_scope(&p->stack, &err);
         p->first_stmt = true;
         NEXT_RULE(block_body);
-        pop_scope(&p->stack, &err);
         GET_TOKEN();
         p->in_loop--;
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
         CHECK_NEWLINE();
         p->in_cond++;
+        /* scope for if body */
         add_scope(&p->stack, &err);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
-
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-
         GET_TOKEN();
         p->first_stmt = true;
         NEXT_RULE(block_body);
-
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* adding scope for else */
         add_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-
         GET_TOKEN();
-        add_scope(&p->stack, &err);
         p->first_stmt = true;
         NEXT_RULE(block_body);
         pop_scope(&p->stack, &err);
@@ -796,6 +794,7 @@ Rule func_stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
+        add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
         GET_TOKEN();
         p->in_loop--;
@@ -803,6 +802,7 @@ Rule func_stmt(Parser* p) {
     case TOKEN_IF:
         CHECK_NEWLINE();
         p->in_cond++;
+        /* scope for if body */
         add_scope(&p->stack, &err);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
@@ -815,16 +815,15 @@ Rule func_stmt(Parser* p) {
 
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
+        /* else body scope */
         add_scope(&p->stack, &err);
 
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
-        add_scope(&p->stack, &err);
         p->first_stmt = true;
         NEXT_RULE(func_body);
-        pop_scope(&p->stack, &err);
         GET_TOKEN();
         p->in_cond--;
         break;
@@ -873,6 +872,10 @@ Rule opt_ret(Parser* p) {
         }
     }
     else {
+        if (p->buffer.runner->next->token.type == TOKEN_R_BKT) {
+            fprintf(stderr, "[ERROR %d] Missing expression in return statement\n", ERR_FUNCTION_RETURN);
+            return ERR_FUNCTION_RETURN;
+        }
         if ((res = expr(p))) {
             return res;
         }
@@ -1114,15 +1117,15 @@ Rule type_skip(Parser* p) {
     switch (p->curr_tok.type)
     {
     case TOKEN_DT_INT:
-        set_type(p->stack->local_sym, &p->current_id->name, integer, &err);
+        if (p->in_param) set_type(p->stack->local_sym, &p->current_id->name, integer, &err);
         GET_TOKEN();
         break;
     case TOKEN_DT_DOUBLE:
-        set_type(p->stack->local_sym, &p->current_id->name, double_, &err);
+        if (p->in_param) set_type(p->stack->local_sym, &p->current_id->name, double_, &err);
         GET_TOKEN();
         break;
     case TOKEN_DT_STRING:
-        set_type(p->stack->local_sym, &p->current_id->name, string, &err);
+        if (p->in_param) set_type(p->stack->local_sym, &p->current_id->name, string, &err);
         GET_TOKEN();
         break;
     default:
@@ -1167,6 +1170,7 @@ Rule param_next_skip(Parser* p) {
     switch (p->curr_tok.type)
     {
     case TOKEN_R_PAR:
+        p->in_param = false;
         break;
     case TOKEN_COMMA:
         GET_TOKEN();
@@ -1186,8 +1190,9 @@ Rule param_next_skip(Parser* p) {
 Rule param_list_skip(Parser* p) {
     RULE_PRINT("param_list_skip");
     uint32_t res;
-
+    p->in_param = true;
     if (p->curr_tok.type == TOKEN_R_PAR) {
+        p->in_param = false;
         return EXIT_SUCCESS;
     }
     NEXT_RULE(param_skip);
