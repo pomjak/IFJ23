@@ -3,9 +3,6 @@ CFLAGS := -std=c99 -g -lm
 NAME := test
 VALGRIND := valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s --error-exitcode=1
 
-SRC := $(wildcard *.c)
-OBJ := $(SRC:.c=.o)
-
 DIRECTORIES := $(filter-out %/., $(wildcard */))
 
 .PHONY: run 
@@ -15,21 +12,20 @@ build: $(OBJ)
 	@echo "		parser"
 	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test parser"
-	$(CC) $(OBJ) -o $(NAME) -D RULEDEBUG -D DEBUGL=2 $(CFLAGS)
+	$(CC) *.c -o $(NAME) -D RULEDEBUG -D DEBUGL=2 $(CFLAGS)
 
-%.o: %.c
-	$(CC) -c $< -o $@ $(CFLAGS)
 
 run: build
 	@$(foreach dir,$(DIRECTORIES), \
 		if [ -d "$(dir)" -a "$$(echo -n "$(dir)" | tail -c 1)" != "-" ]; then \
 			FILENAME=$$(basename $(dir)); \
 			./$(NAME) < "$(dir)/$${FILENAME}".swift > ./output.txt 2>debug_output.txt; \
+			{ [[ "$$?" -eq "$$(cat "$(dir)/$${FILENAME}".ret)" ]]; } || \
+				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" && exit 1;}; \
+			echo -e "ret:"$$?" exp:"$$(cat "$(dir)/$${FILENAME}".ret)""; \
 			cp output.txt ../test_artifacts/units_test_parser_"$${FILENAME}".txt; \
 			cp debug_output.txt ../test_artifacts/units_test_parser_"$${FILENAME}"_debug.txt; \
-			{ [[ "$?" -eq "$$($(cat "$(dir)/$${FILENAME}".ret))" ]]; } || \
-				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" && exit 1;}; \
-			{ diff "$(dir)/$${FILENAME}"_debug.expected ./debug_output.txt; } || \
+			{ diff "./$(dir)$${FILENAME}_debug.expected" ./debug_output.txt; } || \
 				{ echo -e "[info] test parser $${FILENAME} [RULE] \e[31mFAIL\e[0m" && exit 1; }; \
 			{ diff "$(dir)/$${FILENAME}".expected ./output.txt; } || \
 				{ echo -e "[info] test parser $${FILENAME} [INSTR] \e[31mFAIL\e[0m" && exit 1; }; \
