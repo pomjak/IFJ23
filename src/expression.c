@@ -562,7 +562,6 @@ void reduce(symstack_t *stack, Parser *p)
             reduce_to_eol(stack, p);
             // remove token from stack and move back pointer to token
             return_token_handler(symstack_pop(stack).token);
-            tb_prev(&p->buffer);
 
             // set the end of the expression
             token_T empty = EMPTY_TOKEN;
@@ -763,6 +762,20 @@ int expr(Parser *p)
         case X:
             sym_data = convert_token_to_data(p->curr_tok);
             symstack_push(&stack, sym_data);
+
+            int eol_pos = find_closest_eol(&stack);
+
+            if (eol_pos != -1)
+            {
+                reduce_to_eol(&stack, p);
+                // remove token from stack and move back pointer to token
+                return_token_handler(symstack_pop(&stack).token);
+                // tb_prev(&p->buffer);
+
+                // set the end of the expression
+                token_T empty = EMPTY_TOKEN;
+                p->curr_tok = empty;
+            }
 
             expr_error(&stack);
 
