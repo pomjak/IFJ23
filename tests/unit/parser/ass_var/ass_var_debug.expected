@@ -5,4 +5,3 @@ var_def_cont
 type
 opt_assign
 Error [2]: Missing operator.
-[ERROR 2] Assigning an invalid expression to variable x
