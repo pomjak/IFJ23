@@ -7,6 +7,6 @@
  * neinicializované proměnné způsobí chybu 5.
 */
 func a(_ arg :String?){}
-var x : String
+var x : String?
 a(x) //should be okey
 //ERROR 0

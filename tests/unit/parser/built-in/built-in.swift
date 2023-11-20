@@ -1,15 +1,15 @@
 readString()
 readInt()
 readDouble()
-//write("hello", "world") //might be problematic
+write("hello", "world") //might be problematic
 
-var integer : Int 
+var integer : Int = 1
 Int2Double(integer)
 
-var double : Double 
+var double : Double = 2.0
 Double2Int(double)
 
-var string : String 
+var string : String = "hello"
 length(string)
 
 length(string)
