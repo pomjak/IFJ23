@@ -27,8 +27,8 @@ run: build
 			./$(NAME) < "$(dir)/$${FILENAME}".swift > ./output.txt 2>debug_output.txt; \
 			cp output.txt ../test_artifacts/units_test_parser_"$${FILENAME}".txt; \
 			cp debug_output.txt ../test_artifacts/units_test_parser_"$${FILENAME}"_debug.txt; \
-			{ [[ "$$?" -eq "$$($(cat "$(dir)/$${FILENAME}".ret))" ]]; } || \
-				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" && exit 1; }; \
+			{ [[ "$?" -eq "$$($(cat "$(dir)/$${FILENAME}".ret))" ]]; } || \
+				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" && exit 1;}; \
 			{ diff "$(dir)/$${FILENAME}"_debug.expected ./debug_output.txt; } || \
 				{ echo -e "[info] test parser $${FILENAME} [RULE] \e[31mFAIL\e[0m" && exit 1; }; \
 			{ diff "$(dir)/$${FILENAME}".expected ./output.txt; } || \
