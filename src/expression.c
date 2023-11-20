@@ -153,13 +153,13 @@ void symbol_arr_reverse(symbol_arr_t *sym_arr)
 
 void symbol_arr_free(symbol_arr_t *sym_arr)
 {
-    for (int i = 0; i < sym_arr->size; i++)
-    {
-        if (sym_arr->arr[i].isTerminal)
-        {
-            delete_token(&sym_arr->arr[i].token);
-        }
-    }
+    // for (int i = 0; i < sym_arr->size; i++)
+    // {
+    //     if (sym_arr->arr[i].isTerminal)
+    //     {
+    //         delete_token(&sym_arr->arr[i].token);
+    //     }
+    // }
 
     free(sym_arr->arr);
     sym_arr->size = 0;
@@ -724,7 +724,7 @@ int expr(Parser *p)
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 {
     token_T first_operand = sym_arr->arr[0].token;
-    token_T operator= sym_arr->arr[1].token;
+    token_T op = sym_arr->arr[1].token;
     token_T second_operand = sym_arr->arr[2].token;
 
     symstack_data_t expr_symbol;
@@ -734,7 +734,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         return expr_symbol;
     }
 
-    if (operator.type == TOKEN_DIV)
+    if (op.type == TOKEN_DIV)
     {
         expr_symbol = process_division(sym_arr);
         return expr_symbol;
@@ -762,7 +762,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     {
         // printf("\tone of them is double\n");
         int2double(&first_operand, &second_operand);
-        generate_float_arithmetic_by_operator(operator, first_operand.value.double_val, second_operand.value.double_val);
+        generate_float_arithmetic_by_operator(op, first_operand.value.double_val, second_operand.value.double_val);
         expr_symbol.token.type = TOKEN_DBL;
         return expr_symbol;
     }
@@ -770,7 +770,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
     {
         // printf("\tBoth are int\n");
-        generate_int_arithmetic_by_operator(operator, first_operand.value.int_val, second_operand.value.int_val);
+        generate_int_arithmetic_by_operator(op, first_operand.value.int_val, second_operand.value.int_val);
         expr_symbol.token.type = TOKEN_INT;
         return expr_symbol;
     }
@@ -904,9 +904,9 @@ void int2double(token_T *first_operand, token_T *second_operand)
     }
 }
 
-void generate_float_arithmetic_by_operator(token_T operator, double first_operand, double second_operand)
+void generate_float_arithmetic_by_operator(token_T op, double first_operand, double second_operand)
 {
-    switch (operator.type)
+    switch (op.type)
     {
     case TOKEN_ADD:
         GENERATE_CODE("Generate ADDITION\n");
@@ -924,9 +924,9 @@ void generate_float_arithmetic_by_operator(token_T operator, double first_operan
     }
 }
 
-void generate_int_arithmetic_by_operator(token_T operator, int first_operand, int second_operand)
+void generate_int_arithmetic_by_operator(token_T op, int first_operand, int second_operand)
 {
-    switch (operator.type)
+    switch (op.type)
     {
     case TOKEN_ADD:
         // GENERATE_CODE("Generate ADDITION %d + %d\n", first_operand, second_operand);

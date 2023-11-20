@@ -31,12 +31,12 @@ typedef struct SYMSTACK
     size_t size;
 } symstack_t;
 
-/**
- * @brief safely deletes token from memory
- *
- * @param token - token to be deleted
- */
-void delete_token(token_T *token);
+// /**
+//  * @brief safely deletes token from memory
+//  *
+//  * @param token - token to be deleted
+//  */
+// void delete_token(token_T *token);
 
 /**
  * @brief converts token to data

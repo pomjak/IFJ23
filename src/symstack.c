@@ -13,13 +13,13 @@
 
 #define MIN_WIDTH 10
 
-void delete_token(token_T *token)
-{
-    if (token->type == TOKEN_STRING || token->type == TOKEN_IDENTIFIER)
-    {
-        dstring_free(&token->value.string_val);
-    }
-}
+// void delete_token(token_T *token)
+// {
+//     if (token->type == TOKEN_STRING || token->type == TOKEN_IDENTIFIER)
+//     {
+//         dstring_free(&token->value.string_val);
+//     }
+// }
 
 symstack_data_t convert_token_to_data(token_T token)
 {
@@ -83,7 +83,7 @@ bool symstack_dispose(symstack_t *stack)
     while (!symstack_is_empty(stack))
     {
         symstack_data_t data = symstack_pop(stack);
-        delete_token(&data.token);
+        // delete_token(&data.token);
     }
     return symstack_is_empty(stack);
 }
