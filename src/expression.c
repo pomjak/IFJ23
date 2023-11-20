@@ -240,7 +240,110 @@ bool is_binary_operator(symstack_data_t symbol)
     return false;
 }
 
-prec_tab_index_t convert_token_to_index(token_T token)
+int find_closest_eol(symstack_t *stack)
+{
+    node_t *current_node = stack->top;
+    int distance = 0;
+    bool eol_found = false;
+
+    while (current_node != NULL)
+    {
+        if (current_node->data.token.preceding_eol)
+        {
+            eol_found = true;
+            break;
+        }
+        current_node = current_node->previous;
+        distance += 1;
+    }
+    return (eol_found ? distance : -1);
+}
+
+// need parser data here
+bool id_is_defined(token_T token, Parser *p)
+{
+    unsigned int error = EXIT_SUCCESS;
+    if (token.type == TOKEN_IDENTIFIER)
+    {
+        p->current_id = search_scopes(p->stack, &token.value.string_val, &error);
+        if (p->current_id)
+        {
+            return true;
+        }
+        else
+        {
+            p->current_id = symtable_search(&p->global_symtab, &token.value.string_val, &error);
+            if (p->current_id)
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+    return false;
+}
+
+/*
+ * SPRACOVANIE FUNKCII
+ * Rule expr_type(Parser* p);
+ * bar -> ID ? –> E + E()
+ * bar -> FUNC_ID ? -> function_call(x: <expr>)
+
+ */
+
+/**
+ * @brief
+ *
+ *
+ * let foo: Int  = 3
+ *
+ * MOVE LF@foo 3
+ *
+ * function ...
+ * foo = 12
+ * MOVE LF@foo 12
+ *
+ * var vr : Int = foo
+ * MOVE LF@vr LF@foo
+ *
+ */
+
+// symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id, unsigned int *error);
+
+// note : problem->bar(x : <expr>) !!
+
+// curr_token = bar E + bar(x:) \n let->E + E
+
+// curr_token = bar;
+// if (curr_token.type == TOKEN_IDENTIFIER)
+// {
+//     prev_token = curret_token
+//     GET_NEXT();
+//     if (curr_token = TOKEN_L_PAR)
+//     {
+//         if (p->current_id)
+//         {
+//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
+//         }
+//         if (p->current_id.type == function)
+//         {
+//             next == TOKEN_L_PAR ? expr_type()
+//         }
+//         else
+//         {
+//             undefined function : ID(x : aasffsfa asf fa sa fasf a)->E
+//         }
+//     }
+//     else
+//     {
+//         p->current_id = search_scopes(local, bar, err);
+//         if (p->current - id == NULL)
+//         {
+//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
+//         }
+//     }
+
+prec_tab_index_t convert_token_to_index(token_T token, Parser *p)
 {
     switch (token.type)
     {
@@ -256,12 +359,15 @@ prec_tab_index_t convert_token_to_index(token_T token)
     case TOKEN_INT:
     case TOKEN_DBL:
     case TOKEN_STRING:
-        // if next token == (
-        // return INDEX_FUNC_CALL
-        // maybe not necessary according to they are the same
+        if (token.type == TOKEN_IDENTIFIER)
+        {
+            if (!id_is_defined(token, p))
+            {
+                print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
+                error_code_handler(ERR_UNDEFINED_VARIABLE);
+            }
+        }
         return INDEX_IDENTIFIER;
-    // maybe not necessary according, depends on assingment support, dont think so
-    // case TOKEN_ASS:
     case TOKEN_EQ:
     case TOKEN_NEQ:
     case TOKEN_GT:
@@ -281,9 +387,9 @@ prec_tab_index_t convert_token_to_index(token_T token)
     }
 }
 
-prec_tab_index_t convert_term_to_index(symstack_data_t data)
+prec_tab_index_t convert_term_to_index(symstack_data_t data, Parser *p)
 {
-    return convert_token_to_index(data.token);
+    return convert_token_to_index(data.token, p);
 }
 
 node_t *get_closest_terminal(symstack_t *stack)
@@ -301,15 +407,15 @@ node_t *get_closest_terminal(symstack_t *stack)
     return current_node;
 }
 
-prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token)
+prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token, Parser *p)
 {
     node_t *closest_terminal = get_closest_terminal(stack);
     if (closest_terminal == NULL)
     {
         return X;
     }
-    prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
-    DEBUG_PRINT("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token), prec_op);
+    prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data, p)][convert_token_to_index(token, p)];
+    DEBUG_PRINT("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data, p), convert_token_to_index(token, p), prec_op);
     return prec_op;
 }
 
@@ -680,7 +786,7 @@ int expr(Parser *p)
     // print_stack(&stack, 1);
     do
     {
-        switch (get_prec_table_operation(&stack, p->curr_tok))
+        switch (get_prec_table_operation(&stack, p->curr_tok, p))
         {
         case E:
             equal_shift(&stack, &p->curr_tok);
@@ -707,7 +813,7 @@ int expr(Parser *p)
             print_error(ERR_INTERNAL, "Unknown precedence table operation.\n");
             return ERR_INTERNAL;
         }
-    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
+    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data, p) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok, p) == INDEX_DOLLAR)));
 
     // print_stack(&stack, 1);
     symstack_data_t final_expr = symstack_pop(&stack);
@@ -972,64 +1078,3 @@ void generate_division(token_T first_operand, token_T second_operand)
 }
 
 void generate_comparison();
-
-/*
- * SPRACOVANIE FUNKCII
- * Rule expr_type(Parser* p);
- * bar -> ID ? –> E + E()
- * bar -> FUNC_ID ? -> function_call(x: <expr>)
-
- */
-
-/**
- * @brief
- *
- *
- * let foo: Int  = 3
- *
- * MOVE LF@foo 3
- *
- * function ...
- * foo = 12
- * MOVE LF@foo 12
- *
- * var vr : Int = foo
- * MOVE LF@vr LF@foo
- *
- */
-
-// symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id, unsigned int *error);
-
-// note : problem->bar(x : <expr>) !!
-
-// curr_token = bar E + bar(x:) \n let->E + E
-
-// curr_token = bar;
-// if (curr_token.type == TOKEN_IDENTIFIER)
-// {
-//     prev_token = curret_token
-//     GET_NEXT();
-//     if (curr_token = TOKEN_L_PAR)
-//     {
-//         if (p->current_id)
-//         {
-//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
-//         }
-//         if (p->current_id.type == function)
-//         {
-//             next == TOKEN_L_PAR ? expr_type()
-//         }
-//         else
-//         {
-//             undefined function : ID(x : aasffsfa asf fa sa fasf a)->E
-//         }
-//     }
-//     else
-//     {
-//         p->current_id = search_scopes(local, bar, err);
-//         if (p->current - id == NULL)
-//         {
-//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
-//         }
-//     }
-// }

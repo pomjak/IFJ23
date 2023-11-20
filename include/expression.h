@@ -22,12 +22,6 @@ typedef enum PREC_TABLE_OPERATIONS
     X  // error
 } prec_table_operation_t;
 
-/**
- * @brief TODO:
- * 1) check and discuss precedence table
- * 2) prototpye function
- */
-
 typedef enum PREC_TAB_INDEX
 {
     INDEX_MUL_DIV = 0,
@@ -164,20 +158,40 @@ bool is_operand(symstack_data_t symbol);
 bool is_binary_operator(symstack_data_t symbol);
 
 /**
+ * @brief Finds the closest token with preceding_eol flag set
+ *
+ * @param stack
+ * @return int - distance from stack top; returns -1 if eol was not found
+ */
+int find_closest_eol(symstack_t *stack);
+
+/**
+ * @brief Finds if id is defined
+ *
+ * @param token
+ * @param p - pointer to parser data
+ * @return true - identifier is defined
+ * @return false - identifier is not defined, or token is not identifier
+ */
+bool id_is_defined(token_T token, Parser *p);
+
+/**
  * @brief convert token to precedence table index based on it's data
  *
  * @param token
+ * @param p - pointer to parser state
  * @return prec_tab_index_t - index
  */
-prec_tab_index_t convert_token_to_index(token_T token);
+prec_tab_index_t convert_token_to_index(token_T token, Parser *p);
 
 /**
  * @brief converts term to precedence table index based on it's data
  *
  * @param data
+ * @param p - pointer to parser state
  * @return prec_tab_index_t - index
  */
-prec_tab_index_t convert_term_to_index(symstack_data_t data);
+prec_tab_index_t convert_term_to_index(symstack_data_t data, Parser *p);
 
 /**
  * @brief Finds and returns the closest terminal from top of the stack
@@ -190,9 +204,12 @@ node_t *get_closest_terminal(symstack_t *stack);
 /**
  * @brief Get the prec table operation object
  *
+ * @param stack
+ * @param token
+ * @param p - pointer to parser data
  * @return prec_table_operation_t
  */
-prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token);
+prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token, Parser *p);
 
 /**
  * @brief pushes symbol on stack
