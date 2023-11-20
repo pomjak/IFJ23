@@ -11,7 +11,7 @@
 #include "symstack.h"
 #include "parser.h"
 
-#define PREC_TABLE_SIZE 10
+#define PREC_TABLE_SIZE 9
 #define MAX_EXPR_SIZE 3
 
 typedef enum PREC_TABLE_OPERATIONS
@@ -28,7 +28,6 @@ typedef enum PREC_TAB_INDEX
     INDEX_ADD_SUB,
     INDEX_NILL_CHECK,
     INDEX_IDENTIFIER,
-    INDEX_FUNCTION_CALL,
     INDEX_RELATIONAL_OP,
     INDEX_LPAR,
     INDEX_RPAR,
@@ -57,7 +56,6 @@ typedef enum PREC_RULES
 
     RULE_PARL_E_PARR, // E -> (E)
     RULE_OPERAND,     // E -> id
-    RULE_FUNC_CALL,   // E -> id(params)
     RULE_NO_RULE
 } prec_rule_t;
 
@@ -126,11 +124,19 @@ void print_symbol_arr(symbol_arr_t *sym_arr);
  **********************************/
 
 /**
- * @brief sets first found error code, else nothing
+ * @brief Sets first found error code, else nothing
  *
  * @return new error code
  */
 int error_code_handler(int error_code);
+
+/**
+ * @brief Sets and returns return token
+ *
+ * @param token
+ * @return token_T
+ */
+token_T return_token_handler(token_T token);
 
 /**
  * @brief pushes dollar on stack
@@ -166,10 +172,18 @@ bool is_binary_operator(symstack_data_t symbol);
 int find_closest_eol(symstack_t *stack);
 
 /**
+ * @brief Deletes stack tokens until token with preceding_el flag set
+ *
+ * @param p - pointer to parser state
+ * @param stack
+ */
+void reduce_to_eol(symstack_t *stack, Parser *p);
+
+/**
  * @brief Finds if id is defined
  *
  * @param token
- * @param p - pointer to parser data
+ * @param p - pointer to parser state
  * @return true - identifier is defined
  * @return false - identifier is not defined, or token is not identifier
  */
@@ -179,19 +193,17 @@ bool id_is_defined(token_T token, Parser *p);
  * @brief convert token to precedence table index based on it's data
  *
  * @param token
- * @param p - pointer to parser state
  * @return prec_tab_index_t - index
  */
-prec_tab_index_t convert_token_to_index(token_T token, Parser *p);
+prec_tab_index_t convert_token_to_index(token_T token);
 
 /**
  * @brief converts term to precedence table index based on it's data
  *
  * @param data
- * @param p - pointer to parser state
  * @return prec_tab_index_t - index
  */
-prec_tab_index_t convert_term_to_index(symstack_data_t data, Parser *p);
+prec_tab_index_t convert_term_to_index(symstack_data_t data);
 
 /**
  * @brief Finds and returns the closest terminal from top of the stack
@@ -206,10 +218,9 @@ node_t *get_closest_terminal(symstack_t *stack);
  *
  * @param stack
  * @param token
- * @param p - pointer to parser data
  * @return prec_table_operation_t
  */
-prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token, Parser *p);
+prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token);
 
 /**
  * @brief pushes symbol on stack
@@ -237,10 +248,10 @@ prec_rule_t choose_operator_rule(symstack_data_t data);
 /**
  * @brief Get the rule based of symbols on stack
  *
- * @param stack
+ * @param p - pointer to parser data
  * @return prec_rule_t
  */
-prec_rule_t get_rule(symbol_arr_t *sym_arr);
+prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p);
 
 /**
  * @brief sets the isTerminal to false of chosen terminal
@@ -259,9 +270,10 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
 /**
  * @brief reduce symbols on stack
  *
+ * @param p - pointer to parser data
  * @param sym_arr
  */
-void reduce(symstack_t *stack);
+void reduce(symstack_t *stack, Parser *p);
 
 /**
  * @brief report err in expression

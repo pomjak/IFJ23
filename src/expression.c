@@ -28,35 +28,25 @@
 #define PRINT_STACK(stack)
 #endif
 
-/**
- * @brief Methods to write
- * 0) equal_shift()
- * 1) shift()
- * 2) reduce()
- * 3) reduce_error()
- */
+#define EMPTY_TOKEN            \
+    {                          \
+        false, TOKEN_UNDEFINED \
+    }
 
-/**
- * QUESTIONABLE:
- * 1) convert token to index function
- * |- if function call is necessary
- * |- if token assignment is necessary
- */
-
+token_T token;
 // RO - Relational Operators , FC - Function Call
 const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
     {
         /*      | / * | + - | ?? | i | FC | RO | ( | ) | ! | $ | */
-        /* / * */ {R, R, R, S, S, R, R, R, R, R},
-        /* + - */ {S, R, R, S, S, R, S, R, R, R},
-        /* ??  */ {S, S, S, S, S, S, S, R, R, R},
-        /* i   */ {R, R, R, X, X, R, X, R, R, R},
-        /* FC  */ {R, R, R, X, X, R, X, R, R, R},
-        /* RO  */ {S, S, R, S, S, E, S, R, R, R},
-        /* (   */ {S, S, S, S, S, S, S, E, X, X},
-        /* )   */ {R, R, R, X, X, R, X, R, R, R},
-        /* !   */ {X, X, X, X, X, X, X, X, X, X},
-        /* $   */ {S, S, S, S, S, S, S, X, R, R}};
+        /* / * */ {R, R, R, S, R, R, R, R, R},
+        /* + - */ {S, R, R, S, R, S, R, R, R},
+        /* ??  */ {S, S, S, S, S, S, R, R, R},
+        /* i   */ {R, R, R, X, R, X, R, R, R},
+        /* RO  */ {S, S, R, S, E, S, R, R, R},
+        /* (   */ {S, S, S, S, S, S, E, X, X},
+        /* )   */ {R, R, R, X, R, X, R, R, R},
+        /* !   */ {X, X, X, X, X, X, X, X, X},
+        /* $   */ {S, S, S, S, S, S, X, R, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
 {
@@ -190,6 +180,17 @@ int error_code_handler(int error_code)
     return err;
 }
 
+token_T return_token_handler(token_T token)
+{
+    static token_T return_token = EMPTY_TOKEN;
+    if (token.type == TOKEN_UNDEFINED)
+    {
+        return return_token;
+    }
+    return_token = token;
+    return return_token;
+}
+
 void push_initial_sym(symstack_t *stack)
 {
     symstack_data_t data;
@@ -259,7 +260,21 @@ int find_closest_eol(symstack_t *stack)
     return (eol_found ? distance : -1);
 }
 
-// need parser data here
+void reduce_to_eol(symstack_t *stack, Parser *p)
+{
+    node_t *current_node = symstack_peek(stack);
+    while (current_node != NULL)
+    {
+        if (current_node->data.token.preceding_eol)
+        {
+            break;
+        }
+        tb_prev(&p->buffer);
+        symstack_pop(stack);
+        current_node = symstack_peek(stack);
+    }
+}
+
 bool id_is_defined(token_T token, Parser *p)
 {
     unsigned int error = EXIT_SUCCESS;
@@ -283,67 +298,7 @@ bool id_is_defined(token_T token, Parser *p)
     return false;
 }
 
-/*
- * SPRACOVANIE FUNKCII
- * Rule expr_type(Parser* p);
- * bar -> ID ? –> E + E()
- * bar -> FUNC_ID ? -> function_call(x: <expr>)
-
- */
-
-/**
- * @brief
- *
- *
- * let foo: Int  = 3
- *
- * MOVE LF@foo 3
- *
- * function ...
- * foo = 12
- * MOVE LF@foo 12
- *
- * var vr : Int = foo
- * MOVE LF@vr LF@foo
- *
- */
-
-// symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id, unsigned int *error);
-
-// note : problem->bar(x : <expr>) !!
-
-// curr_token = bar E + bar(x:) \n let->E + E
-
-// curr_token = bar;
-// if (curr_token.type == TOKEN_IDENTIFIER)
-// {
-//     prev_token = curret_token
-//     GET_NEXT();
-//     if (curr_token = TOKEN_L_PAR)
-//     {
-//         if (p->current_id)
-//         {
-//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
-//         }
-//         if (p->current_id.type == function)
-//         {
-//             next == TOKEN_L_PAR ? expr_type()
-//         }
-//         else
-//         {
-//             undefined function : ID(x : aasffsfa asf fa sa fasf a)->E
-//         }
-//     }
-//     else
-//     {
-//         p->current_id = search_scopes(local, bar, err);
-//         if (p->current - id == NULL)
-//         {
-//             p->current_id = symtable_search(global, prev_token.value.string_val, err);
-//         }
-//     }
-
-prec_tab_index_t convert_token_to_index(token_T token, Parser *p)
+prec_tab_index_t convert_token_to_index(token_T token)
 {
     switch (token.type)
     {
@@ -359,14 +314,6 @@ prec_tab_index_t convert_token_to_index(token_T token, Parser *p)
     case TOKEN_INT:
     case TOKEN_DBL:
     case TOKEN_STRING:
-        if (token.type == TOKEN_IDENTIFIER)
-        {
-            if (!id_is_defined(token, p))
-            {
-                print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
-                error_code_handler(ERR_UNDEFINED_VARIABLE);
-            }
-        }
         return INDEX_IDENTIFIER;
     case TOKEN_EQ:
     case TOKEN_NEQ:
@@ -387,9 +334,9 @@ prec_tab_index_t convert_token_to_index(token_T token, Parser *p)
     }
 }
 
-prec_tab_index_t convert_term_to_index(symstack_data_t data, Parser *p)
+prec_tab_index_t convert_term_to_index(symstack_data_t data)
 {
-    return convert_token_to_index(data.token, p);
+    return convert_token_to_index(data.token);
 }
 
 node_t *get_closest_terminal(symstack_t *stack)
@@ -407,14 +354,14 @@ node_t *get_closest_terminal(symstack_t *stack)
     return current_node;
 }
 
-prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token, Parser *p)
+prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token)
 {
     node_t *closest_terminal = get_closest_terminal(stack);
     if (closest_terminal == NULL)
     {
         return X;
     }
-    prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data, p)][convert_token_to_index(token, p)];
+    prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
     DEBUG_PRINT("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data, p), convert_token_to_index(token, p), prec_op);
     return prec_op;
 }
@@ -474,7 +421,7 @@ prec_rule_t choose_operator_rule(symstack_data_t data)
     }
 }
 
-prec_rule_t get_rule(symbol_arr_t *sym_arr)
+prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
 {
     if (sym_arr->arr == NULL)
     {
@@ -487,14 +434,14 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
         // question of function handling here
         if (is_operand(sym_arr->arr[0]))
         {
-            // find id in symtable
-
-            // if id.type == func {
-            //  rule = RULE_FUNC_CALL
-            //  check function call syntax
-            // }
-
-            // else RULE_OPERAND
+            if (sym_arr->arr[0].token.type == TOKEN_IDENTIFIER)
+            {
+                if (!id_is_defined(sym_arr->arr[0].token, p))
+                {
+                    print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
+                    error_code_handler(ERR_UNDEFINED_VARIABLE);
+                }
+            }
             rule = RULE_OPERAND;
             break;
         }
@@ -568,10 +515,6 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_MUL_E:
     case RULE_E_DIV_E:
         expr_symbol = process_arithmetic_operation(sym_arr);
-        // printf("EXPR DATA:\n");
-        // printf("\tEXPR type: %d\n", expr_symbol.token.type);
-        // printf("\tEXPR terminal: %d\n", expr_symbol.isTerminal);
-        // printf("\tEXPR handle: %d\n", expr_symbol.isHandleBegin);
         expr_symbol.isHandleBegin = false;
         symstack_push(stack, expr_symbol);
         return;
@@ -593,7 +536,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     }
 }
 
-void reduce(symstack_t *stack)
+void reduce(symstack_t *stack, Parser *p)
 {
     // maybe load only 3 top symbols
     symbol_arr_t sym_arr;
@@ -601,13 +544,30 @@ void reduce(symstack_t *stack)
     symbol_arr_move_expr_to_arr(stack, &sym_arr);
     symbol_arr_reverse(&sym_arr);
 
-    prec_rule_t rule = get_rule(&sym_arr);
+    prec_rule_t rule = get_rule(&sym_arr, p);
 
     if (rule == RULE_NO_RULE)
     {
-        reduce_error(stack, &sym_arr);
-        error_code_handler(ERR_SYNTAX);
-        symbol_arr_free(&sym_arr);
+
+        int eol_pos = find_closest_eol(stack);
+
+        if (eol_pos == -1)
+        {
+            reduce_error(stack, &sym_arr);
+            error_code_handler(ERR_SYNTAX);
+            symbol_arr_free(&sym_arr);
+        }
+        else
+        {
+            reduce_to_eol(stack, p);
+            // remove token from stack and move back pointer to token
+            return_token_handler(symstack_pop(stack).token);
+            tb_prev(&p->buffer);
+
+            // set the end of the expression
+            token_T empty = EMPTY_TOKEN;
+            p->curr_tok = empty;
+        }
         return;
     }
 
@@ -768,7 +728,6 @@ Type convert_to_expr_type(token_type_T type)
  */
 int expr(Parser *p)
 {
-    (void)p;
     /* error handling */
     int error_code = EXIT_SUCCESS;
     bool parser_defined = p == NULL;
@@ -786,7 +745,7 @@ int expr(Parser *p)
     // print_stack(&stack, 1);
     do
     {
-        switch (get_prec_table_operation(&stack, p->curr_tok, p))
+        switch (get_prec_table_operation(&stack, p->curr_tok))
         {
         case E:
             equal_shift(&stack, &p->curr_tok);
@@ -798,7 +757,7 @@ int expr(Parser *p)
             GET_TOKEN();
             break;
         case R:
-            reduce(&stack);
+            reduce(&stack, p);
             PRINT_STACK(&stack);
             break;
         case X:
@@ -813,17 +772,23 @@ int expr(Parser *p)
             print_error(ERR_INTERNAL, "Unknown precedence table operation.\n");
             return ERR_INTERNAL;
         }
-    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data, p) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok, p) == INDEX_DOLLAR)));
+    } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
 
-    // print_stack(&stack, 1);
     symstack_data_t final_expr = symstack_pop(&stack);
-    // print_stack(&stack, 1);
     if (!symstack_is_empty(&stack))
     {
         symstack_dispose(&stack);
     };
-    p->type_expr = convert_to_expr_type(final_expr.token.type);
 
+    // if there was stored token due to multiline expression
+    token_T ret_token = EMPTY_TOKEN;
+    ret_token = return_token_handler(ret_token);
+    if (!(ret_token.type == TOKEN_UNDEFINED))
+    {
+        p->curr_tok = ret_token;
+    }
+
+    p->type_expr = convert_to_expr_type(final_expr.token.type);
     return error_code_handler(EXIT_SUCCESS);
 }
 
