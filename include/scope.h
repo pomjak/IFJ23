@@ -20,11 +20,11 @@ typedef struct scope_element
     symtab_t *local_sym;
     struct scope_element *next;
 
-}*scope_t;
+} *scope_t;
 
 /**
  * @brief init scope
- * 
+ *
  * @param first ptr to stack of scopes [use in argument as "&scope"]
  */
 void init_scope(scope_t *first);
@@ -62,6 +62,16 @@ void dispose_scope(scope_t *first, unsigned int *error);
  * @return ptr to found data
  */
 symtab_item_t *search_scopes(scope_t stack, dstring_t *id, unsigned int *error);
+
+/**
+ * @brief return ptr to first initialized variable in the closest scope
+ *
+ * @param stack stack of symtables
+ * @param id id to search for
+ * @param error error
+ * @return symtab_item_t*
+ */
+symtab_item_t *search_scopes_initialized_var(scope_t stack, dstring_t *id, unsigned int *error);
 
 /**
  * @brief peek to stack and find out if it is safe to use stack->local_sym (e.g. with  symtable_insert)
