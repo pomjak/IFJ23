@@ -229,6 +229,7 @@ Rule var_def_cont(Parser* p) {
                         p->current_id->is_nillable = p->rhs_id->is_nillable;
                     }
                     NEXT_RULE(funccall);
+                    p->current_id->is_var_initialized = true;
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -257,11 +258,12 @@ Rule var_def_cont(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
+
         /* Implicit setting of variable type */
         if (p->current_id->type == undefined) {
             p->current_id->type = p->type_expr;
-            break;
         }
+        p->current_id->is_var_initialized = true;
         break;
 
     default:
@@ -302,6 +304,7 @@ Rule opt_assign(Parser* p) {
                         }
                     }
                     NEXT_RULE(funccall);
+                    p->current_id->is_var_initialized = true;
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -381,6 +384,7 @@ Rule expr_type(Parser* p) {
                         }
                     }
                     NEXT_RULE(funccall);
+                    p->current_id->is_var_initialized = true;
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -415,6 +419,7 @@ Rule expr_type(Parser* p) {
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
         }
+        p->current_id->is_var_initialized = true;
         break;
     /* If the loaded ID is followed by opening parentheses the ID should have been a function */
     case TOKEN_L_PAR:
@@ -526,7 +531,7 @@ Rule arg_list(Parser* p) {
     }
     NEXT_RULE(arg);
     GET_TOKEN();
-
+    DEBUG_PRINT("current::%d",p->curr_tok.type);
     NEXT_RULE(arg_next);
     return EXIT_SUCCESS;
 }
@@ -577,7 +582,8 @@ Rule arg(Parser* p) {
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
         /* If the current parameter's label is set to _ the loaded identifier must be a variable passed as an argument */
-        if (!dstring_cmp_const_str(&p->current_arg->label, "_")) {
+        DEBUG_PRINT("%s(%s : %s)\n", p->last_func_id->name.str, p->current_arg->label.str, p->current_arg->name.str);
+        if (dstring_cmp_const_str(&p->current_arg->label, "_") == 0) {
             if (peek_scope(p->stack)) {
                 p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
             }
@@ -586,6 +592,10 @@ Rule arg(Parser* p) {
             }
             if (!p->current_id) {
                 fprintf(stderr, "[ERROR %d] Unknown identifier %s\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
+                return ERR_UNDEFINED_VARIABLE;
+            }
+            if (!p->current_id->is_var_initialized) {
+                fprintf(stderr, "[ERROR %d] Use of uninitialized variable '%s'\n", ERR_UNDEFINED_VARIABLE, p->current_id->name.str);
                 return ERR_UNDEFINED_VARIABLE;
             }
             /* Check if the variable is the same type as function parameter */
@@ -607,6 +617,7 @@ Rule arg(Parser* p) {
     }
     else {
         NEXT_RULE(literal);
+        DEBUG_PRINT("after literal::%d", p->curr_tok.type);
     }
     return EXIT_SUCCESS;
 }
@@ -913,6 +924,8 @@ Rule type(Parser* p) {
             DEBUG_PRINT("Set var type");
             p->current_id->type = integer;
             p->current_id->is_nillable = p->curr_tok.value.is_nilable;
+            /* Implicitly set variable to initalized (to nil) if nillable */
+            if (p->current_id->is_nillable) p->current_id->is_var_initialized = true;
         }
         GET_TOKEN();
         break;
@@ -933,6 +946,8 @@ Rule type(Parser* p) {
         else {
             p->current_id->type = double_;
             p->current_id->is_nillable = p->curr_tok.value.is_nilable;
+             /* Implicitly set variable to initalized (to nil) if nillable */
+            if (p->current_id->is_nillable) p->current_id->is_var_initialized = true;
         }
         GET_TOKEN();
         break;
@@ -959,6 +974,8 @@ Rule type(Parser* p) {
         else {
             p->current_id->type = string;
             p->current_id->is_nillable = p->curr_tok.value.is_nilable;
+             /* Implicitly set variable to initalized (to nil) if nillable */
+            if (p->current_id->is_nillable) p->current_id->is_var_initialized = true;
         }
         GET_TOKEN();
         break;
@@ -1021,29 +1038,36 @@ Rule term(Parser* p) {
 Rule literal(Parser* p) {
     RULE_PRINT("literal");
     uint32_t res, err;
-
+    DEBUG_PRINT("Before switch::%d", p->curr_tok.type);
     switch (p->curr_tok.type) {
     case TOKEN_INT:
-        if (p->current_arg->type != integer) {
-            fprintf(stderr, "[ERROR %d] Invalid argument type(int) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
-            return ERR_FUNCTION_PARAMETER;
+        if (!p->last_func_id->variadic_param) {
+            if (p->current_arg->type != integer) {
+                fprintf(stderr, "[ERROR %d] Invalid argument type(int) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
         }
         /* generate term value */
         break;
     case TOKEN_DBL:
-
-        if (p->current_arg->type != double_) {
-            fprintf(stderr, "[ERROR %d] Invalid argument type(double) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
-            return ERR_FUNCTION_PARAMETER;
+        if (!p->last_func_id->variadic_param) {
+            if (p->current_arg->type != double_) {
+                fprintf(stderr, "[ERROR %d] Invalid argument type(double) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
         }
         break;
     case TOKEN_STRING:
-        if (p->current_arg->type != string) {
-            fprintf(stderr, "[ERROR %d] Invalid argument type(string) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
-            return ERR_FUNCTION_PARAMETER;
+        if (!p->last_func_id->variadic_param) {
+            if (p->current_arg->type != string) {
+                fprintf(stderr, "[ERROR %d] Invalid argument type(string) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
         }
         break;
-    default: return ERR_SYNTAX;
+    default: 
+        fprintf(stderr, "[ERROR 2] Invalid literal\n");
+        return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
 }
@@ -1123,6 +1147,7 @@ Rule param_skip(Parser* p) {
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
     p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
+    p->current_id->is_var_initialized = true;
 
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
