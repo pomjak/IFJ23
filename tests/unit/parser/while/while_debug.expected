@@ -1,5 +1,3 @@
 prog
 stmt
-Error [2]: Missing right parenthesis.
-Error [2]: Missing left parenthesis.
-[ERROR 2] Invalid expression in while loop
+[ERROR 7] Invalid expression in while condition
