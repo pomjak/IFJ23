@@ -30,6 +30,7 @@ typedef struct parser_t {
     uint32_t in_loop;                // Parser is inside a while loop
     param_t* current_arg;        // Current function argument list
     token_T curr_tok;            // Currently processed token
+    symtab_item_t* lhs_id;       // Identifier on the left hand side of assignment
     symtab_item_t* current_id;   // Identifier of currently processed function
     symtab_item_t* last_func_id; // Identifier of the last loaded function
     symtab_item_t* rhs_id;       // Identifier in the right hand side of assignment
@@ -105,6 +106,7 @@ typedef struct parser_t {
 /* Check if a new statement is on a separate line from the previous one */
 #define CHECK_NEWLINE()                                                                                                \
     if ((!p->first_stmt) && (!p->curr_tok.preceding_eol)) {                                                            \
+        DEBUG_PRINT("first:%d | precEOL : %d", p->first_stmt, p->curr_tok.preceding_eol);                              \
         fprintf(stderr, "[ERROR %d] New statement not on a separate line\n", ERR_SYNTAX);                              \
         return ERR_SYNTAX;                                                                                             \
     }

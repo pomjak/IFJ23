@@ -80,13 +80,13 @@ Rule stmt(Parser* p) {
         CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
-        p->current_id->is_mutable = true;
+        p->lhs_id->is_mutable = true;
         break;
     case TOKEN_LET: /* let <define> */
         CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
-        p->current_id->is_mutable = false;
+        p->lhs_id->is_mutable = false;
         break;
     case TOKEN_IDENTIFIER: /* ID<expression_type> */
         CHECK_NEWLINE();
@@ -100,6 +100,7 @@ Rule stmt(Parser* p) {
         if (!p->current_id) {
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         }
+        p->lhs_id = p->current_id;
         GET_TOKEN();
         NEXT_RULE(expr_type);
         break;
@@ -191,6 +192,8 @@ Rule define(Parser* p) {
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
 
+    /* save variable id to p.lhs_id for later */
+    p->lhs_id = p->current_id;
     GET_TOKEN();
     NEXT_RULE(var_def_cont);
 
@@ -222,13 +225,13 @@ Rule var_def_cont(Parser* p) {
                         return ERR_INCOMPATIBILE_TYPE;
                     }
                     /* If the variable does not have a specified type, implicitly set it to the return type of rhs function */
-                    if (p->current_id->type == undefined) {
-                        p->current_id->type = p->rhs_id->return_type;
-                        p->current_id->is_nillable = p->rhs_id->is_nillable;
+                    if (p->lhs_id->type == undefined) {
+                        p->lhs_id->type = p->rhs_id->return_type;
+                        p->lhs_id->is_nillable = p->rhs_id->is_nillable;
                     }
                     NEXT_RULE(funccall);
-                    DEBUG_PRINT("Setting %s to initialized", p->current_id->name.str);
-                    p->current_id->is_var_initialized = true;
+                    DEBUG_PRINT("Setting %s to initialized rettype: %d", p->lhs_id->name.str, p->lhs_id->type);
+                    p->lhs_id->is_var_initialized = true;
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -259,11 +262,11 @@ Rule var_def_cont(Parser* p) {
         }
 
         /* Implicit setting of variable type */
-        if (p->current_id->type == undefined) {
-            p->current_id->type = p->type_expr;
+        if (p->lhs_id->type == undefined) {
+            p->lhs_id->type = p->type_expr;
         }
-        DEBUG_PRINT("Setting %s to initialized", p->current_id->name.str);
-        p->current_id->is_var_initialized = true;
+        DEBUG_PRINT("Setting %s to initialized", p->lhs_id->name.str);
+        p->lhs_id->is_var_initialized = true;
         break;
 
     default:
@@ -304,7 +307,7 @@ Rule opt_assign(Parser* p) {
                         }
                     }
                     NEXT_RULE(funccall);
-                    p->current_id->is_var_initialized = true;
+                    p->lhs_id->is_var_initialized = true;
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -338,7 +341,7 @@ Rule opt_assign(Parser* p) {
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
         }
-        p->current_id->is_var_initialized = true;
+        p->lhs_id->is_var_initialized = true;
     }
 
     return EXIT_SUCCESS;
@@ -358,7 +361,7 @@ Rule expr_type(Parser* p) {
             fprintf(stderr, "[ERROR %d] Assignment to undefined variable\n", ERR_UNDEFINED_VARIABLE);
             return ERR_UNDEFINED_VARIABLE;
         }
-        if (p->current_id->is_mutable == false) {
+        if (p->lhs_id->is_mutable == false) {
             fprintf(stderr, "[ERROR %d] Assigning a new value to immutable variable %s\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
@@ -384,7 +387,7 @@ Rule expr_type(Parser* p) {
                         }
                     }
                     NEXT_RULE(funccall);
-                    p->current_id->is_var_initialized = true;
+                    p->lhs_id->is_var_initialized = true;
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -415,12 +418,12 @@ Rule expr_type(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
-        if (p->current_id->type != p->type_expr) {
-            DEBUG_PRINT("expected type:%d got :%d", p->current_id->type, p->type_expr);
-            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
+        if (p->lhs_id->type != p->type_expr) {
+            DEBUG_PRINT("expected type:%d got :%d", p->lhs_id->type, p->type_expr);
+            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->lhs_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
         }
-        p->current_id->is_var_initialized = true;
+        p->lhs_id->is_var_initialized = true;
         break;
     /* If the loaded ID is followed by opening parentheses the ID should have been a function */
     case TOKEN_L_PAR:
@@ -812,6 +815,7 @@ Rule func_stmt(Parser* p) {
         if (!p->current_id) {
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         }
+        p->lhs_id = p->current_id;
         GET_TOKEN();
         NEXT_RULE(expr_type);
         break;
@@ -1339,6 +1343,8 @@ bool parser_init(Parser* p) {
     p->current_arg = NULL;
     p->current_id = NULL;
     p->last_func_id = NULL;
+    p->lhs_id = NULL;
+    p->rhs_id = NULL;
     p->in_cond = 0;
     p->in_func_head = false;
     p->in_func_body = false;
