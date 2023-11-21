@@ -39,7 +39,12 @@
     expr_symbol.isHandleBegin = false; \
     expr_symbol.expr_type = undefined;
 
-token_T token;
+bool is_multiline_expr = false;
+
+static void set_is_multiline_expr(bool value) { is_multiline_expr = value; }
+
+static bool get_is_multiline_expr() { return is_multiline_expr; }
+
 // RO - Relational Operators , FC - Function Call
 const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
     {
@@ -176,28 +181,6 @@ int error_code_handler(int error_code)
         err = error_code;
     }
     return err;
-}
-
-token_T return_token_handler(token_T token)
-{
-    static token_T return_token = EMPTY_TOKEN;
-    if (token.type == TOKEN_UNDEFINED)
-    {
-        return return_token;
-    }
-    return_token = token;
-    return return_token;
-}
-
-bool is_multiline_exrpession_handler(bool value)
-{
-    static bool is_multiline = false;
-    if (value == false)
-    {
-        return is_multiline;
-    }
-    is_multiline = value;
-    return is_multiline;
 }
 
 void push_initial_sym(symstack_t *stack)
@@ -565,7 +548,7 @@ void reduce(symstack_t *stack, Parser *p)
         else
         {
             reduce_to_eol(stack, p);
-            is_multiline_exrpession_handler(true);
+            set_is_multiline_expr(true);
             tb_prev(&p->buffer);
             PRINT_STACK(stack);
 
@@ -772,10 +755,8 @@ int expr(Parser *p)
             if (find_closest_eol(&stack))
             {
                 reduce_to_eol(&stack, p);
-                // remove token from stack and move back pointer to token
-                // return_token_handler(symstack_pop(&stack).token);
                 symstack_pop(&stack);
-                is_multiline_exrpession_handler(true);
+                set_is_multiline_expr(true);
                 tb_prev(&p->buffer);
 
                 // push_initial_sym(&stack);
@@ -804,8 +785,12 @@ int expr(Parser *p)
         symstack_dispose(&stack);
     };
 
-    if (is_multiline_exrpession_handler(false))
+    DEBUG_PRINT("before token type: %d", p->curr_tok.type);
+    DEBUG_PRINT("before expr type: %d", final_expr.expr_type);
+
+    if (get_is_multiline_expr())
     {
+        set_is_multiline_expr(false);
         GET_TOKEN();
     }
 
@@ -936,7 +921,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process concat");
     DEFINE_EXPR_SYMBOL;
-    // expr_symbol.token.type = TOKEN_STRING;
+
     expr_symbol.expr_type = string;
 
     token_T first_operand = sym_arr->arr[0].token;

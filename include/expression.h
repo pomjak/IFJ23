@@ -131,16 +131,6 @@ void print_symbol_arr(symbol_arr_t *sym_arr);
 int error_code_handler(int error_code);
 
 /**
- * @brief Sets and returns return token
- *
- * @param token
- * @return token_T
- */
-token_T return_token_handler(token_T token);
-
-bool is_multiline_exrpession_handler(bool value);
-
-/**
  * @brief pushes dollar on stack
  *
  * @param stack
