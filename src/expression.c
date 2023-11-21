@@ -58,7 +58,7 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* (   */ {S, S, S, S, S, S, E, X, X},
         /* )   */ {R, R, R, X, R, X, R, R, R},
         /* !   */ {X, X, X, X, X, X, X, X, X},
-        /* $   */ {S, S, S, S, S, S, X, R, R}};
+        /* $   */ {S, S, S, S, S, S, X, S, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
 {
@@ -470,12 +470,6 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
     return rule;
 }
 
-void push_non_term_on_stack(symstack_t *stack, symstack_data_t *term)
-{
-    term->isTerminal = false;
-    // symstack_push(stack, *term);
-}
-
 void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule, Parser *p)
 {
     // see expression types
@@ -502,7 +496,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         expr_symbol.token = sym_arr->arr[0].token;
         expr_symbol.expr_res.expr_type = convert_to_expr_type(sym_arr->arr[0].token.type);
         expr_symbol.expr_res.nilable = false;
-        push_non_term_on_stack(stack, &expr_symbol);
+        symstack_push(stack, expr_symbol);
         break;
 
     // binary operations
@@ -569,6 +563,7 @@ void reduce(symstack_t *stack, Parser *p)
         }
         return;
     }
+    printf("hello\n");
 
     push_reduced_symbol_on_stack(stack, &sym_arr, rule, p);
     // print_symbol_arr(&sym_arr);
