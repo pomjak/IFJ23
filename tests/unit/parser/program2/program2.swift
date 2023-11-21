@@ -6,25 +6,25 @@ let inp = readInt()
 
 // pomocna funkce pro dekrementaci celeho cisla o zadane cislo
 func decrement(of n: Int, by m: Int) -> Int {
-	return 1 //n - m 
+	return n - m 
 }
 
 // Definice funkce pro vypocet hodnoty faktorialu
 func factorial(_ n : Int) -> Int {
 	var result : Int?
-	if (1){		//(n < 2) {
+	if (n < 2) {
 		result = 1
 	} else {
 		let decremented_n = decrement(of: n, by: 1)
 		let temp_result = factorial(decremented_n)
-		result =  1	//n * temp_result
+		result = n * temp_result
 	}
-	return 1//result!
+	return result!
 }
 
 // pokracovani hlavniho tela programu
 if let inp {
-	if (1) {//(inp < 0)	{ // Pokracovani hlavniho tela programu
+	if (inp < 0)	{ // Pokracovani hlavniho tela programu
 		write("Faktorial nelze spocitat!")
 	} else {
 		let vysl = factorial(inp)

@@ -2,4 +2,4 @@ prog
 stmt
 define
 var_def_cont
-[ERROR 2] expression procesing failed
+[ERROR 8] 'c' - cannot implicitly set type from nil expression

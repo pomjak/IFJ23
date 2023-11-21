@@ -14,4 +14,4 @@
  * Pokud je typ proměnné zadán, lze část ’= výraz’ vynechat.
  */
 
-var c : Int? = nil //err 2
+var c : Int? = nil
