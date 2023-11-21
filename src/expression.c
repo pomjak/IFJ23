@@ -809,6 +809,7 @@ int expr(Parser *p)
     DEBUG_PRINT("final expr type: %d", final_expr.expr_type);
 
     p->expr_res = final_expr.expr_res;
+    printf("expr_type : %d | expr is nilable: %d\n", p->expr_res.expr_type, p->expr_res.nilable);
 
     return error_code_handler(EXIT_SUCCESS);
 }
@@ -841,12 +842,14 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process arithmetic op");
-    token_T first_operand = sym_arr->arr[0].token;
+
+    // same thing : do this with expr, not with tokens
+    symstack_data_t first_operand = sym_arr->arr[0];
     token_T op = sym_arr->arr[1].token;
-    token_T second_operand = sym_arr->arr[2].token;
+    symstack_data_t second_operand = sym_arr->arr[2];
 
     DEFINE_EXPR_SYMBOL;
-    if (first_operand.type == TOKEN_STRING || second_operand.type == TOKEN_STRING)
+    if (first_operand.expr_res.expr_type == string || second_operand.expr_res.expr_type == string)
     {
         expr_symbol = process_concatenation(sym_arr, p);
         return expr_symbol;
@@ -859,15 +862,16 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     }
 
     // if adding same types
-    if (first_operand.type == second_operand.type)
+    if (first_operand.expr_res.expr_type == second_operand.expr_res.expr_type)
     {
         // printf("\tsame types\n");
-        if (first_operand.type == TOKEN_INT || first_operand.type == TOKEN_DBL)
+        if (first_operand.expr_res.expr_type == integer || first_operand.expr_res.expr_type == double_)
         {
-            expr_symbol.token.type = first_operand.type;
+            expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
         }
         else
         {
+            printf("First op: %d | second op: %d\n", first_operand.expr_res.expr_type, second_operand.expr_res.expr_type);
             print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             return expr_symbol;
@@ -875,27 +879,29 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     }
 
     // if one of the operands is double need to convert it
-    if (first_operand.type == TOKEN_DBL || second_operand.type == TOKEN_DBL)
+    if (first_operand.expr_res.expr_type == double_ || second_operand.expr_res.expr_type == double_)
     {
         // printf("\tone of them is double\n");
-        int2double(&first_operand, &second_operand);
-        generate_float_arithmetic_by_operator(op, first_operand.value.double_val, second_operand.value.double_val);
+        int2double(&first_operand.token, &second_operand.token);
+        generate_float_arithmetic_by_operator(op, first_operand.token.value.double_val, second_operand.token.value.double_val);
         expr_symbol.expr_res.expr_type = double_;
         return expr_symbol;
     }
-    // if both are double
-    else if (first_operand.type == TOKEN_INT && second_operand.type == TOKEN_INT)
+    // if both are int
+    else if (first_operand.expr_res.expr_type == integer && second_operand.expr_res.expr_type == integer)
     {
         // printf("\tBoth are int\n");
-        generate_int_arithmetic_by_operator(op, first_operand.value.int_val, second_operand.value.int_val);
+        generate_int_arithmetic_by_operator(op, first_operand.token.value.int_val, second_operand.token.value.int_val);
         expr_symbol.expr_res.expr_type = integer;
         return expr_symbol;
     }
 
+    printf("First op: %d | second op: %d\n", first_operand.expr_res.expr_type, second_operand.expr_res.expr_type);
     print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     error_code_handler(ERR_INCOMPATIBILE_TYPE);
 
-    expr_symbol.token.type = TOKEN_UNDEFINED;
+    // expr_symbol.token.type = TOKEN_UNDEFINED;
+    expr_symbol.expr_res.expr_type = undefined;
     return expr_symbol;
 }
 
@@ -903,8 +909,9 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process division");
     DEFINE_EXPR_SYMBOL;
-    expr_symbol.token.type = TOKEN_DBL;
+    expr_symbol.expr_res.expr_type = double_;
 
+    // do this with expr_types
     token_T first_operand = sym_arr->arr[0].token;
     token_T second_operand = sym_arr->arr[2].token;
 
@@ -937,9 +944,9 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
 
     expr_symbol.expr_res.expr_type = string;
 
-    token_T first_operand = sym_arr->arr[0].token;
+    symstack_data_t first_operand = sym_arr->arr[0];
     token_T operator= sym_arr->arr[1].token;
-    token_T second_operand = sym_arr->arr[2].token;
+    symstack_data_t second_operand = sym_arr->arr[2];
 
     if (operator.type != TOKEN_ADD)
     {
@@ -947,7 +954,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
         return expr_symbol;
     }
 
-    if (first_operand.type == TOKEN_STRING && second_operand.type == TOKEN_STRING)
+    if (first_operand.expr_res.expr_type == string && second_operand.expr_res.expr_type == string)
     {
         GENERATE_CODE("Generate concatenation\n");
         return expr_symbol;
@@ -963,10 +970,10 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_res.expr_type = bool_;
 
-    token_T first_operand = sym_arr->arr[0].token;
-    token_T second_operand = sym_arr->arr[2].token;
+    symstack_data_t first_operand = sym_arr->arr[0];
+    symstack_data_t second_operand = sym_arr->arr[2];
 
-    if (first_operand.type != second_operand.type)
+    if (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type)
     {
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
