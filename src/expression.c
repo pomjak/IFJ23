@@ -516,9 +516,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         // set to non-terminal
         // push_non_term_on_stack(stack, &sym_arr->arr[0]);
         expr_symbol = process_operand(&sym_arr->arr[0], p);
-        printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_type);
-        printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        // printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_type);
+        // printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        // printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -817,19 +817,19 @@ int expr(Parser *p)
         symstack_dispose(&stack);
     };
 
-    if (is_multiline_exrpession_handler(false))
-    {
-        printf("TRUE\n");
-    }
+    // if (is_multiline_exrpession_handler(false))
+    // {
+    //     printf("TRUE\n");
+    // }
 
     GET_TOKEN();
-    printf("RETURN TOKEN: ");
-    print_token(p->curr_tok);
-    printf("\n");
+    // printf("RETURN TOKEN: ");
+    // print_token(p->curr_tok);
+    // printf("\n");
     // return curr token somehow
 
     p->type_expr = final_expr.expr_type;
-    printf("final type: %d\n", final_expr.expr_type);
+    // printf("final type: %d\n", final_expr.expr_type);
     return error_code_handler(EXIT_SUCCESS);
 }
 
