@@ -827,7 +827,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     if (operand->token.type == TOKEN_IDENTIFIER)
     {
         // find the operand
-        if (id_is_defined(token, p))
+        if (id_is_defined(operand->token, p))
         {
             expr_symbol.expr_type = p->current_id->type;
         }
