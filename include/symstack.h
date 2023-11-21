@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "lexical_analyzer.h"
-#include "symtable.h"
+#include "symstack.h"
 
 #define MAX_TOKEN_SYMBOL_SIZE 4
 typedef struct DATA
@@ -19,6 +19,7 @@ typedef struct DATA
     bool isTerminal;
     bool isHandleBegin;
     Type expr_type;
+    bool expr_is_nillable;
     char symbol[MAX_TOKEN_SYMBOL_SIZE];
 } symstack_data_t;
 typedef struct NODE
