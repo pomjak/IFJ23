@@ -33,10 +33,11 @@
         false, TOKEN_UNDEFINED \
     }
 
-#define DEFINE_EXPR_SYMBOL          \
-    symstack_data_t expr_symbol;    \
-    expr_symbol.isTerminal = false; \
-    expr_symbol.isHandleBegin = false;
+#define DEFINE_EXPR_SYMBOL             \
+    symstack_data_t expr_symbol;       \
+    expr_symbol.isTerminal = false;    \
+    expr_symbol.isHandleBegin = false; \
+    expr_symbol.expr_type = undefined;
 
 token_T token;
 // RO - Relational Operators , FC - Function Call
@@ -504,8 +505,7 @@ void push_non_term_on_stack(symstack_t *stack, symstack_data_t *term)
 void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule, Parser *p)
 {
     // see expression types
-    symstack_data_t expr_symbol;
-    expr_symbol.isTerminal = false;
+    DEFINE_EXPR_SYMBOL;
 
     DEBUG_PRINT("RULE %d\n", rule);
 
@@ -576,11 +576,8 @@ void reduce(symstack_t *stack, Parser *p)
         else
         {
             reduce_to_eol(stack, p);
-            // remove token from stack and move back pointer to token
-            // return_token_handler(symstack_pop(stack).token);
             is_multiline_exrpession_handler(true);
             tb_prev(&p->buffer);
-
             PRINT_STACK(stack);
 
             // set the end of the expression
@@ -792,10 +789,9 @@ int expr(Parser *p)
                 // return_token_handler(symstack_pop(&stack).token);
                 symstack_pop(&stack);
                 is_multiline_exrpession_handler(true);
-                // tb_prev(&p->buffer);
+                tb_prev(&p->buffer);
 
                 // push_initial_sym(&stack);
-                printf("ERR\n");
                 PRINT_STACK(&stack);
 
                 // set the end of the expression
@@ -826,8 +822,11 @@ int expr(Parser *p)
         printf("TRUE\n");
     }
 
-    // printf("RETURN TOKEN TYPE: %s\n", p->curr_tok.value.string_val.str);
-    // printf("\n");
+    GET_TOKEN();
+    printf("RETURN TOKEN: ");
+    print_token(p->curr_tok);
+    printf("\n");
+    // return curr token somehow
 
     p->type_expr = final_expr.expr_type;
     printf("final type: %d\n", final_expr.expr_type);
@@ -846,12 +845,15 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
         // find the operand
         if (id_is_defined(token, p))
         {
+            expr_symbol.expr_type = p->current_id->type;
         }
     }
     else if (is_operand(*operand))
     {
         expr_symbol.expr_type = convert_to_expr_type(operand->token.type);
     }
+
+    return expr_symbol;
 }
 
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
@@ -885,7 +887,6 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
         {
             print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
-            expr_symbol.expr_type = undefined;
             return expr_symbol;
         }
     }
@@ -927,7 +928,6 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
     {
         if (second_operand.value.int_val == 0)
         {
-            expr_symbol.expr_type = undefined;
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
@@ -937,7 +937,6 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
     {
         if (second_operand.value.double_val == 0.0)
         {
-            expr_symbol.expr_type = undefined;
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
@@ -983,7 +982,6 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
 
     if (first_operand.type != second_operand.type)
     {
-        expr_symbol.expr_type = undefined;
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
         return expr_symbol;
