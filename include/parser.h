@@ -15,6 +15,10 @@
 #include "symtable.h"
 #include "token_buffer.h"
 
+typedef struct expr_res {
+    Type expr_type;
+    bool nilable;
+} expr_res_t;
 
 /**
  * Structure containing the current state of the parser
@@ -38,7 +42,7 @@ typedef struct parser_t {
     scope_t stack;               // Stack of local symbol tables, HEAD = current scope
     dstring_t tmp;               // Temporary helper string
     token_buffer_t buffer;       // List of tokens
-    Type type_expr;              // Type of reduced expression 
+    expr_res_t expr_res;         // Type of reduced expression 
 } Parser;
 
 /* ============================================| MACROS |============================================================ */
