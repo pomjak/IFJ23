@@ -25,7 +25,7 @@ Rule prog(Parser* p) {
         break;
     case TOKEN_FUNC:
         CHECK_NEWLINE();
-        p->in_declaration = true;
+        p->in_func_head = true;
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
         p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
@@ -39,6 +39,8 @@ Rule prog(Parser* p) {
 
         GET_TOKEN();
         NEXT_RULE(func_ret_type_skip);
+        p->in_func_head = false;
+        p->in_func_body = true;
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
@@ -48,7 +50,7 @@ Rule prog(Parser* p) {
         NEXT_RULE(func_body);
         /* pop the parameter scope */
         pop_scope(&p->stack, &err);
-        p->in_declaration = false;
+        p->in_func_body = false;
         p->first_stmt = false;
         GET_TOKEN();
         NEXT_RULE(prog);
@@ -157,7 +159,7 @@ Rule define(Parser* p) {
     DEBUG_PRINT("%s %d", p->curr_tok.value.string_val.str, p->curr_tok.type);
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-    if ((p->in_cond > 0) || (p->in_loop > 0) || p->in_declaration) {
+    if ((p->in_cond > 0) || (p->in_loop > 0) || p->in_func_body) {
         DEBUG_PRINT("in cond, loop or decl");
         if (!peek_scope(p->stack)) {
             fprintf(stderr, "[ERROR %d] Missing local scope in body\n", ERR_INTERNAL);
@@ -225,6 +227,7 @@ Rule var_def_cont(Parser* p) {
                         p->current_id->is_nillable = p->rhs_id->is_nillable;
                     }
                     NEXT_RULE(funccall);
+                    DEBUG_PRINT("Setting %s to initialized", p->current_id->name.str);
                     p->current_id->is_var_initialized = true;
                     return EXIT_SUCCESS;
                 }
@@ -259,6 +262,7 @@ Rule var_def_cont(Parser* p) {
         if (p->current_id->type == undefined) {
             p->current_id->type = p->type_expr;
         }
+        DEBUG_PRINT("Setting %s to initialized", p->current_id->name.str);
         p->current_id->is_var_initialized = true;
         break;
 
@@ -412,6 +416,7 @@ Rule expr_type(Parser* p) {
             return res;
         }
         if (p->current_id->type != p->type_expr) {
+            DEBUG_PRINT("expected type:%d got :%d", p->current_id->type, p->type_expr);
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
         }
@@ -748,10 +753,12 @@ Rule func_body(Parser* p) {
     uint32_t res, err;
     DEBUG_PRINT("token::%d", p->curr_tok.type);
     if (p->curr_tok.type == TOKEN_R_BKT) {
-        if (p->last_func_id->return_type != nil) {
-            if (p->return_found == false) {
-                fprintf(stderr, "[ERROR %d] Missing return statement in function '%s'\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
-                return ERR_RETURN_TYPE;
+        if (p->in_cond == 0 && p->in_loop == 0 ) {
+            if (p->last_func_id->return_type != nil) {
+                if (p->return_found == false) {
+                    fprintf(stderr, "[ERROR %d] Missing return statement in function '%s'\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
+                    return ERR_RETURN_TYPE;
+                }
             }
         }
         p->return_found = false;
@@ -903,6 +910,7 @@ Rule opt_ret(Parser* p) {
             return res;
         }
         if (p->last_func_id->return_type != p->type_expr) {
+            DEBUG_PRINT("expected ret type: %d, got: %d", p->last_func_id->return_type, p->type_expr);
             fprintf(stderr, "[ERROR %d] Function %s: Invalid return expression type\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
             return ERR_RETURN_TYPE;
         }
@@ -934,7 +942,7 @@ Rule type(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_DT_INT:
-        if (p->in_declaration) {
+        if (p->in_func_head) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
                 set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, integer, &err);
@@ -958,7 +966,7 @@ Rule type(Parser* p) {
         break;
 
     case TOKEN_DT_DOUBLE:
-        if (p->in_declaration) {
+        if (p->in_func_head) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
                 set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, double_, &err);
@@ -981,7 +989,7 @@ Rule type(Parser* p) {
         break;
 
     case TOKEN_DT_STRING:
-        if (p->in_declaration) {
+        if (p->in_func_head) {
             if (p->in_param) {
                 DEBUG_PRINT("Set Param Label");
                 set_param_type(&p->global_symtab, &p->last_func_id->name, &p->tmp, string, &err);
@@ -1129,7 +1137,7 @@ Rule func_header(Parser* p) {
     RULE_PRINT("func_header");
     uint32_t res, err;
 
-    p->in_declaration = true;
+    p->in_func_head = true;
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
 
@@ -1149,7 +1157,7 @@ Rule func_header(Parser* p) {
 
     GET_TOKEN();
     NEXT_RULE(func_ret_type);
-    p->in_declaration = false;
+    p->in_func_head = false;
     return EXIT_SUCCESS;
 }
 
@@ -1332,7 +1340,8 @@ bool parser_init(Parser* p) {
     p->current_id = NULL;
     p->last_func_id = NULL;
     p->in_cond = 0;
-    p->in_declaration = false;
+    p->in_func_head = false;
+    p->in_func_body = false;
     p->in_function = false;
     p->return_found = false;
     p->first_stmt = true;

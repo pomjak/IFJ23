@@ -21,7 +21,8 @@
  */
 typedef struct parser_t {
     bool in_function;            // Parser is inside a function call
-    bool in_declaration;         // Parser is inside a function declaration
+    bool in_func_head;         // Parser is inside a function declaration
+    bool in_func_body;
     bool in_param;               // Parser should set param type
     bool return_found;
     bool first_stmt;            
