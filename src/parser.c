@@ -477,13 +477,13 @@ Rule cond_clause(Parser* p) {
             return ERR_SEMANTIC;
         }
         /* Add a local scope for the body of the if statement */
-        add_scope(&p->stack, &err);
         DEBUG_PRINT("Local scope for if created");
         /* And insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
         set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
         set_type(p->stack->local_sym, &p->current_id->name, p->current_id->type, &err);
         set_mutability(p->stack->local_sym, &p->current_id->name, false, &err);
+        symtable_search(p->stack->local_sym, &p->current_id->name, &err)->is_var_initialized = true;
         DEBUG_PRINT("%s inserted into local if scope", p->current_id->name.str);
 
         GET_TOKEN();
@@ -529,7 +529,6 @@ Rule arg_list(Parser* p) {
     }
     NEXT_RULE(arg);
     GET_TOKEN();
-    DEBUG_PRINT("current::%d",p->curr_tok.type);
     NEXT_RULE(arg_next);
     return EXIT_SUCCESS;
 }
@@ -577,13 +576,35 @@ Rule arg_next(Parser* p) {
 Rule arg(Parser* p) {
     RULE_PRINT("arg");
     uint32_t res, err;
-
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
         /* If the current parameter's label is set to _ the loaded identifier must be a variable passed as an argument */
-        DEBUG_PRINT("%s(%s : %s)\n", p->last_func_id->name.str, p->current_arg->label.str, p->current_arg->name.str);
-        if (dstring_cmp_const_str(&p->current_arg->label, "_") == 0) {
-            if (peek_scope(p->stack)) {
-                p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+        if (!dstring_cmp_const_str(&p->current_arg->label, "_")) {
+            /* In case of an expression like var x = foo(x) the x argument should be searched in previous scope, not the current one */
+            if (p->current_id) {
+                if ((!p->current_id->is_var_initialized) && (!dstring_cmp(&p->curr_tok.value.string_val, &p->current_id->name))) {
+                    if (peek_scope(p->stack->next)) {
+                        p->current_id = search_scopes(p->stack->next, &p->curr_tok.value.string_val, &err);
+                    }
+                    else {
+                        p->current_id = NULL;
+                    }
+                }
+                else {
+                    if (peek_scope(p->stack)) {
+                        p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+                    }
+                    else {
+                        p->current_id = NULL;
+                    }
+                }
+            }
+            else {
+                if (peek_scope(p->stack)) {
+                    p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+                }
+                else {
+                    p->current_id = NULL;
+                }
             }
             if (!p->current_id) {
                 p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
@@ -596,12 +617,13 @@ Rule arg(Parser* p) {
                 fprintf(stderr, "[ERROR %d] Use of uninitialized variable '%s'\n", ERR_UNDEFINED_VARIABLE, p->current_id->name.str);
                 return ERR_UNDEFINED_VARIABLE;
             }
+            if (!p->last_func_id->variadic_param) {
             /* Check if the variable is the same type as function parameter */
-            if (p->current_id->type != p->current_arg->type) {
-                fprintf(stderr, "[ERROR %d] Function '%s': argument '%s' - invalid type\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
-                return ERR_FUNCTION_PARAMETER;
+                if (p->current_id->type != p->current_arg->type) {
+                    fprintf(stderr, "[ERROR %d] Function '%s': argument '%s' - invalid type\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
+                    return ERR_FUNCTION_PARAMETER;
+                }
             }
-            // TODO maybe get token here
             return EXIT_SUCCESS;
         }
         /* Assert validity of the label */
@@ -1011,12 +1033,33 @@ Rule term(Parser* p) {
     uint32_t res, err;
 
     if (p->curr_tok.type == TOKEN_IDENTIFIER) {
-        if (peek_scope(p->stack)) {
-            DEBUG_PRINT("Searching %s in local scopes", p->curr_tok.value.string_val.str);
-            p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+        if (p->current_id) {
+            if ((!p->current_id->is_var_initialized) && (!dstring_cmp(&p->curr_tok.value.string_val, &p->current_id->name))) {
+                if (peek_scope(p->stack->next)) {
+                    p->current_id = search_scopes(p->stack->next, &p->curr_tok.value.string_val, &err);
+                }
+                else {
+                    p->current_id = NULL;
+                }
+            }
+            else {
+                if (peek_scope(p->stack)) {
+                    p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+                }
+                else {
+                    p->current_id = NULL;
+                }
+            }
+        }
+        else {
+            if (peek_scope(p->stack)) {
+                p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
+            }
+            else {
+                p->current_id = NULL;
+            }
         }
         if (!p->current_id) {
-            DEBUG_PRINT("Searching %s in global scope", p->curr_tok.value.string_val.str);
             p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         }
         if (!p->current_id) {
@@ -1068,7 +1111,7 @@ Rule literal(Parser* p) {
             }
         }
         break;
-    default: 
+    default:
         fprintf(stderr, "[ERROR 2] Invalid literal\n");
         return ERR_SYNTAX;
     }
@@ -1312,7 +1355,6 @@ void parser_dispose(Parser* p) {
  */
 bool add_builtins(Parser* p) {
     uint32_t st_err;
-    symtab_item_t* item;
     dstring_t builtin_id;
     dstring_t param_name;
     dstring_t label_name;
@@ -1329,9 +1371,8 @@ bool add_builtins(Parser* p) {
     // write() // TODO params maybe
     SET_BUILTIN("write", nil, false);
     /* Allow the write function to have any number of parameters passed to it */
-    item = symtable_search(&p->global_symtab, &builtin_id, &st_err);
-    item->variadic_param = true;
-
+    symtable_search(&p->global_symtab, &builtin_id, &st_err)->variadic_param = true;
+    ADD_BUILTIN_PARAM("_", "_", undefined, false);
     // Int2Double(_ term : Int) -> Double
     SET_BUILTIN("Int2Double", double_, false);
     ADD_BUILTIN_PARAM("_", "term", integer, false);
