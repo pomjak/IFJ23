@@ -563,7 +563,6 @@ void reduce(symstack_t *stack, Parser *p)
         }
         return;
     }
-    printf("hello\n");
 
     push_reduced_symbol_on_stack(stack, &sym_arr, rule, p);
     // print_symbol_arr(&sym_arr);
