@@ -266,13 +266,14 @@ Rule var_def_cont(Parser* p) {
         }
 
         /* Implicit setting of variable type */
-        if (p->lhs_id->type == undefined) {
-            if (p->expr_res.expr_type == nil) {
-                fprintf(stderr, "[ERROR %d] '%s' - cannot implicitly set type from nil expression", ERR_MISSING_TYPE, p->lhs_id->name.str);
-                return ERR_MISSING_TYPE;
-            }
-            p->lhs_id->type = p->expr_res.expr_type;
+        if (p->expr_res.expr_type == nil) {
+            fprintf(stderr, "[ERROR %d] '%s' - cannot implicitly set type from nil expression", ERR_MISSING_TYPE, p->lhs_id->name.str);
+            return ERR_MISSING_TYPE;
         }
+
+        p->lhs_id->type = p->expr_res.expr_type;
+        p->lhs_id->is_nillable = p->expr_res.nilable;
+
         DEBUG_PRINT("Setting %s to initialized", p->lhs_id->name.str);
         p->lhs_id->is_var_initialized = true;
         break;
@@ -346,14 +347,20 @@ Rule opt_assign(Parser* p) {
             return res;
         }
         if (p->lhs_id->type != p->expr_res.expr_type) {
-            if ((p->expr_res.expr_type != nil) || (p->lhs_id->is_nillable)) {
+            if ((p->lhs_id->is_nillable) && (p->expr_res.expr_type == nil)) {
                 p->lhs_id->is_var_initialized = true;
                 return EXIT_SUCCESS;
             }
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
         }
-        
+        else {
+            if ((!p->lhs_id->is_nillable) && (p->expr_res.nilable)) {
+                fprintf(stderr, "[ERROR %d] Invalid assign of nilable expression to '%s'\n", ERR_INCOMPATIBILE_TYPE, p->lhs_id->name.str);
+                return ERR_INCOMPATIBILE_TYPE;
+            }
+        }
+
         p->lhs_id->is_var_initialized = true;
     }
 
@@ -432,9 +439,18 @@ Rule expr_type(Parser* p) {
             return res;
         }
         if (p->lhs_id->type != p->expr_res.expr_type) {
-            DEBUG_PRINT("expected type:%d got :%d", p->lhs_id->type, p->type_expr);
-            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->lhs_id->name.str);
+            if ((p->lhs_id->is_nillable) && (p->expr_res.expr_type == nil)) {
+                p->lhs_id->is_var_initialized = true;
+                return EXIT_SUCCESS;
+            }
+            fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
+        }
+        else {
+            if ((!p->lhs_id->is_nillable) && (p->expr_res.nilable)) {
+                fprintf(stderr, "[ERROR %d] Invalid assign of nilable expression to '%s'\n", ERR_INCOMPATIBILE_TYPE, p->lhs_id->name.str);
+                return ERR_INCOMPATIBILE_TYPE;
+            }
         }
         p->lhs_id->is_var_initialized = true;
         break;
@@ -932,7 +948,6 @@ Rule opt_ret(Parser* p) {
             return res;
         }
         if (p->last_func_id->return_type != p->expr_res.expr_type) {
-            DEBUG_PRINT("expected ret type: %d, got: %d", p->last_func_id->return_type, p->type_expr);
             fprintf(stderr, "[ERROR %d] Function %s: Invalid return expression type\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
             return ERR_RETURN_TYPE;
         }
