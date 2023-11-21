@@ -69,3 +69,4 @@ test_build
 vgcore.*
 
 expr/*
+*.txt
