@@ -501,7 +501,7 @@ void push_non_term_on_stack(symstack_t *stack, symstack_data_t *term)
     // symstack_push(stack, *term);
 }
 
-void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule)
+void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule, Parser *p)
 {
     // see expression types
     symstack_data_t expr_symbol;
@@ -515,9 +515,8 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_OPERAND:
         // set to non-terminal
         // push_non_term_on_stack(stack, &sym_arr->arr[0]);
-
-        expr_symbol = process_operand(&sym_arr->arr[0]);
-        printf("\t EXPR_SYM tokent   : %d\n", expr_symbol.token.type);
+        expr_symbol = process_operand(&sym_arr->arr[0], p);
+        printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_type);
         printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
         printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
@@ -535,7 +534,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_MINUS_E:
     case RULE_E_MUL_E:
     case RULE_E_DIV_E:
-        expr_symbol = process_arithmetic_operation(sym_arr);
+        expr_symbol = process_arithmetic_operation(sym_arr, p);
         symstack_push(stack, expr_symbol);
         return;
 
@@ -547,7 +546,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_EQ_E:
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
-        expr_symbol = process_relational_operation(sym_arr);
+        expr_symbol = process_relational_operation(sym_arr, p);
         symstack_push(stack, expr_symbol);
         break;
     default:
@@ -591,7 +590,7 @@ void reduce(symstack_t *stack, Parser *p)
         return;
     }
 
-    push_reduced_symbol_on_stack(stack, &sym_arr, rule);
+    push_reduced_symbol_on_stack(stack, &sym_arr, rule, p);
     // print_symbol_arr(&sym_arr);
     PRINT_STACK(stack);
     symbol_arr_free(&sym_arr);
@@ -791,10 +790,12 @@ int expr(Parser *p)
                 reduce_to_eol(&stack, p);
                 // remove token from stack and move back pointer to token
                 // return_token_handler(symstack_pop(&stack).token);
+                symstack_pop(&stack);
                 is_multiline_exrpession_handler(true);
                 // tb_prev(&p->buffer);
 
                 // push_initial_sym(&stack);
+                printf("ERR\n");
                 PRINT_STACK(&stack);
 
                 // set the end of the expression
@@ -833,7 +834,7 @@ int expr(Parser *p)
     return error_code_handler(EXIT_SUCCESS);
 }
 
-symstack_data_t process_operand(symstack_data_t *operand)
+symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
 {
     // define expression symbol
     DEFINE_EXPR_SYMBOL;
@@ -843,18 +844,17 @@ symstack_data_t process_operand(symstack_data_t *operand)
     if (operand->token.type == TOKEN_IDENTIFIER)
     {
         // find the operand
+        if (id_is_defined(token, p))
+        {
+        }
     }
     else if (is_operand(*operand))
     {
         expr_symbol.expr_type = convert_to_expr_type(operand->token.type);
     }
-    else
-    {
-        expr_symbol.expr_type = undefined;
-    }
 }
 
-symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
+symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
 {
     token_T first_operand = sym_arr->arr[0].token;
     token_T op = sym_arr->arr[1].token;
@@ -863,13 +863,13 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     DEFINE_EXPR_SYMBOL;
     if (first_operand.type == TOKEN_STRING || second_operand.type == TOKEN_STRING)
     {
-        expr_symbol = process_concatenation(sym_arr);
+        expr_symbol = process_concatenation(sym_arr, p);
         return expr_symbol;
     }
 
     if (op.type == TOKEN_DIV)
     {
-        expr_symbol = process_division(sym_arr);
+        expr_symbol = process_division(sym_arr, p);
         return expr_symbol;
     }
 
@@ -915,7 +915,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_division(symbol_arr_t *sym_arr)
+symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
 {
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token.type = TOKEN_DBL;
@@ -947,7 +947,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
+symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEFINE_EXPR_SYMBOL;
     // expr_symbol.token.type = TOKEN_STRING;
@@ -973,7 +973,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_type = bool_;

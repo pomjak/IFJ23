@@ -268,7 +268,7 @@ void push_non_term_on_stack(symstack_t *stack, symstack_data_t *term);
  *
  * @param stack
  */
-void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule);
+void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule, Parser *p);
 
 /**
  * @brief reduce symbols on stack
@@ -311,15 +311,15 @@ int expr(Parser *parser_data);
  * Reduction rule functions *
  ****************************/
 
-symstack_data_t process_operand(symstack_data_t *operand);
+symstack_data_t process_operand(symstack_data_t *operand, Parser *p);
 
-symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr);
+symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p);
 
-symstack_data_t process_division(symbol_arr_t *sym_arr);
+symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p);
 
-symstack_data_t process_concatenation(symbol_arr_t *sym_arr);
+symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p);
 
-symstack_data_t process_relational_operation(symbol_arr_t *sym_arr);
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p);
 
 /*****************************
  * Generation code functions *
