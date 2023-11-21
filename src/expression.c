@@ -225,7 +225,7 @@ void push_initial_sym(symstack_t *stack)
 bool is_operand(symstack_data_t symbol)
 {
     token_type_T symbol_type = symbol.token.type;
-    if (symbol_type == TOKEN_IDENTIFIER || symbol_type == TOKEN_INT || symbol_type == TOKEN_DBL || symbol_type == TOKEN_STRING)
+    if (symbol_type == TOKEN_IDENTIFIER || symbol_type == TOKEN_INT || symbol_type == TOKEN_DBL || symbol_type == TOKEN_NIL || symbol_type == TOKEN_STRING)
     {
         return true;
     }
@@ -332,6 +332,7 @@ prec_tab_index_t convert_token_to_index(token_T token)
     case TOKEN_INT:
     case TOKEN_DBL:
     case TOKEN_STRING:
+    case TOKEN_NIL:
         return INDEX_IDENTIFIER;
     case TOKEN_EQ:
     case TOKEN_NEQ:
@@ -514,7 +515,6 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     // id reduction
     case RULE_OPERAND:
         // set to non-terminal
-        // push_non_term_on_stack(stack, &sym_arr->arr[0]);
         expr_symbol = process_operand(&sym_arr->arr[0], p);
         // printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_type);
         // printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
@@ -597,6 +597,8 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 {
     // error_code_handler(ERR_SYNTAX);
     // print_symbol_arr(sym_arr);
+
+    DEBUG_PRINT("Reduce error");
 
     /*
     E (
@@ -722,6 +724,8 @@ Type convert_to_expr_type(token_type_T type)
         return double_;
     case TOKEN_STRING:
         return string;
+    case TOKEN_NIL:
+        return nil;
     default:
         return undefined;
     }
@@ -746,6 +750,7 @@ int expr(Parser *p)
 {
 
     DEBUG_PRINT("EXPR\n");
+
     /* error handling */
     int error_code = EXIT_SUCCESS;
     bool parser_defined = p == NULL;
@@ -817,24 +822,18 @@ int expr(Parser *p)
         symstack_dispose(&stack);
     };
 
-    // if (is_multiline_exrpession_handler(false))
-    // {
-    //     printf("TRUE\n");
-    // }
-
     GET_TOKEN();
-    // printf("RETURN TOKEN: ");
-    // print_token(p->curr_tok);
-    // printf("\n");
-    // return curr token somehow
+
+    DEBUG_PRINT("recieved token type: %d", p->curr_tok.type);
+    DEBUG_PRINT("final expr type: %d", final_expr.expr_type);
 
     p->type_expr = final_expr.expr_type;
-    // printf("final type: %d\n", final_expr.expr_type);
     return error_code_handler(EXIT_SUCCESS);
 }
 
 symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
 {
+    DEBUG_PRINT("Process operand");
     // define expression symbol
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token = operand->token;
@@ -858,6 +857,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
 
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
 {
+    DEBUG_PRINT("Process arithmetic op");
     token_T first_operand = sym_arr->arr[0].token;
     token_T op = sym_arr->arr[1].token;
     token_T second_operand = sym_arr->arr[2].token;
@@ -918,6 +918,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
 
 symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
 {
+    DEBUG_PRINT("Process division");
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token.type = TOKEN_DBL;
 
@@ -948,6 +949,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
 
 symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
 {
+    DEBUG_PRINT("Process concat");
     DEFINE_EXPR_SYMBOL;
     // expr_symbol.token.type = TOKEN_STRING;
     expr_symbol.expr_type = string;
@@ -974,6 +976,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
 
 symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
 {
+    DEBUG_PRINT("Process relational op");
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_type = bool_;
 
