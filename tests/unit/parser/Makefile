@@ -2,7 +2,7 @@ CC := gcc
 CFLAGS := -std=c99 -g -lm
 NAME := test
 VALGRIND := valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s --error-exitcode=1
-
+ERROR=0
 DIRECTORIES := $(filter-out %/., $(wildcard */))
 
 .PHONY: run 
@@ -16,8 +16,7 @@ build: $(OBJ)
 
 
 run: build
-	ERROR=0
-	@$(foreach dir,$(DIRECTORIES), \
+	$(foreach dir,$(DIRECTORIES), \
 		if [ -d "$(dir)" -a "$$(echo -n "$(dir)" | tail -c 1)" != "-" ]; then \
 			FILENAME=$$(basename $(dir)); \
 			./$(NAME) < "$(dir)/$${FILENAME}".swift > ./output.txt 2>debug_output.txt; \
@@ -38,8 +37,9 @@ run: build
 			cp valgrind_output.txt ../test_artifacts/units_test_parser_"$${FILENAME}"_valgrind.txt; \
 			echo -e "----------------------------------------"; \
 		fi; \
-	)
-	{ [[ "$${ERROR}" -eq "1" ]]; } || {exit 1;}
+    ) \
+    [ $(ERROR) -eq 1 ] || exit 1;
+	
 
 artifacts:
 
