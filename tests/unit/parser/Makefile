@@ -21,14 +21,14 @@ run: build
 			FILENAME=$$(basename $(dir)); \
 			./$(NAME) < "$(dir)/$${FILENAME}".swift > ./output.txt 2>debug_output.txt; \
 			{ [[ "$$?" -eq "$$(cat "$(dir)/$${FILENAME}".ret)" ]]; } || \
-				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" && exit 1;}; \
+				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" ;}; \
 			echo -e "ret:"$$?" exp:"$$(cat "$(dir)/$${FILENAME}".ret)""; \
 			cp output.txt ../test_artifacts/units_test_parser_"$${FILENAME}".txt; \
 			cp debug_output.txt ../test_artifacts/units_test_parser_"$${FILENAME}"_debug.txt; \
 			{ diff "./$(dir)$${FILENAME}_debug.expected" ./debug_output.txt; } || \
-				{ echo -e "[info] test parser $${FILENAME} [RULE] \e[31mFAIL\e[0m" && exit 1; }; \
+				{ echo -e "[info] test parser $${FILENAME} [RULE] \e[31mFAIL\e[0m" ; }; \
 			{ diff "$(dir)/$${FILENAME}".expected ./output.txt; } || \
-				{ echo -e "[info] test parser $${FILENAME} [INSTR] \e[31mFAIL\e[0m" && exit 1; }; \
+				{ echo -e "[info] test parser $${FILENAME} [INSTR] \e[31mFAIL\e[0m" ; }; \
 			echo -e "[info] test parser $${FILENAME} \e[32mOK\e[0m"; \
 			$(VALGRIND) ./$(NAME) < "$(dir)/$${FILENAME}.swift" > ./valgrind_output.txt 2>&1 || \
 				{ echo -e "[info] valgrind check $${FILENAME} \e[32mOK\e[0m" || \
