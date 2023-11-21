@@ -797,7 +797,7 @@ int expr(Parser *p)
     };
 
     DEBUG_PRINT("before token type: %d", p->curr_tok.type);
-    DEBUG_PRINT("before expr type: %d", final_expr.expr_type);
+    DEBUG_PRINT("before expr type: %d", final_expr.expr_res.expr_type);
 
     if (get_is_multiline_expr())
     {
@@ -806,10 +806,10 @@ int expr(Parser *p)
     }
 
     DEBUG_PRINT("recieved token type: %d", p->curr_tok.type);
-    DEBUG_PRINT("final expr type: %d", final_expr.expr_type);
+    DEBUG_PRINT("final expr type: %d", final_expr.expr_res.expr_type);
 
     p->expr_res = final_expr.expr_res;
-    printf("expr_type : %d | expr is nilable: %d\n", p->expr_res.expr_type, p->expr_res.nilable);
+    DEBUG_PRINT("expr_type : %d | expr is nilable: %d\n", p->expr_res.expr_type, p->expr_res.nilable);
 
     return error_code_handler(EXIT_SUCCESS);
 }
