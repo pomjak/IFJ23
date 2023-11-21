@@ -519,8 +519,15 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
         expr_symbol = process_relational_operation(sym_arr, p);
+        // printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_type);
+        // printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        // printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
-        break;
+        return;
+    case RULE_PARL_E_PARR:
+        expr_symbol = process_parenthesis(sym_arr, p);
+        symstack_push(stack, expr_symbol);
+        return;
     default:
         break;
     }
@@ -988,6 +995,19 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     default:
         break;
     }
+    return expr_symbol;
+}
+
+symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p)
+{
+    DEFINE_EXPR_SYMBOL;
+
+    if (sym_arr->arr[1].expr_type == undefined)
+    {
+        expr_symbol.expr_type = convert_to_expr_type(sym_arr->arr[1].token.type);
+    }
+    expr_symbol.expr_type = sym_arr->arr[1].expr_type;
+
     return expr_symbol;
 }
 
