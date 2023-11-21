@@ -9,10 +9,10 @@ write("Zadejte serazenou posloupnost vsech malych pismen a-h, ")
 
 let newInput = readString()
 if let newInput {
-	str1 = 1//newInput
-	while(1){// (str1 != "abcdefgh") {
+	str1 = newInput
+	while(str1 != "abcdefgh") {
 		write("Spatne zadana posloupnost, zkuste znovu:\n")
 		let tmp = readString()
-		str1 = 1//tmp ?? ""
+		str1 = tmp ?? ""
 	}
 }else{}

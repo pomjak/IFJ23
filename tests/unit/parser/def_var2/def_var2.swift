@@ -14,4 +14,4 @@
  * Pokud je typ proměnné zadán, lze část ’= výraz’ vynechat.
  */
 
-var c = nil // Error 2
+var c = nil // Error 8
