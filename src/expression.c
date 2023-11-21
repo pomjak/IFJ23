@@ -498,7 +498,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     // E!
     case RULE_E_NOT_NIL:
         // change type nilable to false
-        push_non_term_on_stack(stack, &sym_arr->arr[0]);
+        expr_symbol = sym_arr->arr[0];
+        expr_symbol.expr_is_nillable = false;
+        push_non_term_on_stack(stack, &expr_symbol);
         break;
 
     // binary operations
@@ -804,7 +806,9 @@ int expr(Parser *p)
     DEBUG_PRINT("recieved token type: %d", p->curr_tok.type);
     DEBUG_PRINT("final expr type: %d", final_expr.expr_type);
 
-    p->type_expr = final_expr.expr_type;
+    p->expr_res.expr_type = final_expr.expr_type;
+    p->expr_res.nilable = final_expr.expr_is_nillable;
+
     return error_code_handler(EXIT_SUCCESS);
 }
 
@@ -822,6 +826,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
         if (id_is_defined(operand->token, p))
         {
             expr_symbol.expr_type = p->current_id->type;
+            expr_symbol.expr_is_nillable = p->current_id->is_nillable;
         }
     }
     else if (is_operand(*operand))
