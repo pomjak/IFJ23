@@ -4,4 +4,7 @@ define
 var_def_cont
 type
 opt_assign
-Error [2]: Missing operator.
+prog
+stmt
+expr_type
+[ERROR 9] Assigning a new value to immutable variable x
