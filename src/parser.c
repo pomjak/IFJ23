@@ -111,7 +111,7 @@ Rule stmt(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
-        if (p->type_expr != bool_) {
+        if (p->expr_res.expr_type != bool_) {
             fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
             return ERR_INCOMPATIBILE_TYPE;
         }
@@ -267,7 +267,11 @@ Rule var_def_cont(Parser* p) {
 
         /* Implicit setting of variable type */
         if (p->lhs_id->type == undefined) {
-            p->lhs_id->type = p->type_expr;
+            if (p->expr_res.expr_type == nil) {
+                fprintf(stderr, "[ERROR %d] '%s' - cannot implicitly set type from nil expression", ERR_MISSING_TYPE, p->lhs_id->name.str);
+                return ERR_MISSING_TYPE;
+            }
+            p->lhs_id->type = p->expr_res.expr_type;
         }
         DEBUG_PRINT("Setting %s to initialized", p->lhs_id->name.str);
         p->lhs_id->is_var_initialized = true;
@@ -341,10 +345,15 @@ Rule opt_assign(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
-        if (p->current_id->type != p->type_expr) {
+        if (p->lhs_id->type != p->expr_res.expr_type) {
+            if ((p->expr_res.expr_type != nil) || (p->lhs_id->is_nillable)) {
+                p->lhs_id->is_var_initialized = true;
+                return EXIT_SUCCESS;
+            }
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
         }
+        
         p->lhs_id->is_var_initialized = true;
     }
 
@@ -422,7 +431,7 @@ Rule expr_type(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
-        if (p->lhs_id->type != p->type_expr) {
+        if (p->lhs_id->type != p->expr_res.expr_type) {
             DEBUG_PRINT("expected type:%d got :%d", p->lhs_id->type, p->type_expr);
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->lhs_id->name.str);
             return ERR_INCOMPATIBILE_TYPE;
@@ -508,7 +517,7 @@ Rule cond_clause(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
-        if (p->type_expr != bool_) {
+        if (p->expr_res.expr_type != bool_) {
             fprintf(stderr, "[ERROR %d] Invalid expression type in condition\n", ERR_INCOMPATIBILE_TYPE);
             return ERR_INCOMPATIBILE_TYPE;
         }
@@ -765,7 +774,7 @@ Rule func_body(Parser* p) {
     uint32_t res, err;
     DEBUG_PRINT("token::%d", p->curr_tok.type);
     if (p->curr_tok.type == TOKEN_R_BKT) {
-        if (p->in_cond == 0 && p->in_loop == 0 ) {
+        if (p->in_cond == 0 && p->in_loop == 0) {
             if (p->last_func_id->return_type != nil) {
                 if (p->return_found == false) {
                     fprintf(stderr, "[ERROR %d] Missing return statement in function '%s'\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
@@ -922,7 +931,7 @@ Rule opt_ret(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
-        if (p->last_func_id->return_type != p->type_expr) {
+        if (p->last_func_id->return_type != p->expr_res.expr_type) {
             DEBUG_PRINT("expected ret type: %d, got: %d", p->last_func_id->return_type, p->type_expr);
             fprintf(stderr, "[ERROR %d] Function %s: Invalid return expression type\n", ERR_RETURN_TYPE, p->last_func_id->name.str);
             return ERR_RETURN_TYPE;
@@ -1362,7 +1371,8 @@ bool parser_init(Parser* p) {
     p->first_stmt = true;
     p->in_loop = 0;
     p->in_param = false;
-    p->type_expr = undefined;
+    p->expr_res.expr_type = undefined;
+    p->expr_res.nilable = false;
     return true;
 }
 
