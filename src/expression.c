@@ -33,11 +33,12 @@
         false, TOKEN_UNDEFINED \
     }
 
-#define DEFINE_EXPR_SYMBOL             \
-    symstack_data_t expr_symbol;       \
-    expr_symbol.isTerminal = false;    \
-    expr_symbol.isHandleBegin = false; \
-    expr_symbol.expr_type = undefined;
+#define DEFINE_EXPR_SYMBOL                      \
+    symstack_data_t expr_symbol;                \
+    expr_symbol.isTerminal = false;             \
+    expr_symbol.isHandleBegin = false;          \
+    expr_symbol.expr_res.expr_type = undefined; \
+    expr_symbol.expr_res.nilable = false;
 
 bool is_multiline_expr = false;
 
@@ -498,8 +499,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     // E!
     case RULE_E_NOT_NIL:
         // change type nilable to false
-        expr_symbol = sym_arr->arr[0];
-        expr_symbol.expr_is_nillable = false;
+        expr_symbol.token = sym_arr->arr[0].token;
+        expr_symbol.expr_res.expr_type = convert_to_expr_type(sym_arr->arr[0].token.type);
+        expr_symbol.expr_res.nilable = false;
         push_non_term_on_stack(stack, &expr_symbol);
         break;
 
@@ -806,8 +808,7 @@ int expr(Parser *p)
     DEBUG_PRINT("recieved token type: %d", p->curr_tok.type);
     DEBUG_PRINT("final expr type: %d", final_expr.expr_type);
 
-    p->expr_res.expr_type = final_expr.expr_type;
-    p->expr_res.nilable = final_expr.expr_is_nillable;
+    p->expr_res = final_expr.expr_res;
 
     return error_code_handler(EXIT_SUCCESS);
 }
@@ -825,13 +826,13 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
         // find the operand
         if (id_is_defined(operand->token, p))
         {
-            expr_symbol.expr_type = p->current_id->type;
-            expr_symbol.expr_is_nillable = p->current_id->is_nillable;
+            expr_symbol.expr_res.expr_type = p->current_id->type;
+            expr_symbol.expr_res.nilable = p->current_id->is_nillable;
         }
     }
     else if (is_operand(*operand))
     {
-        expr_symbol.expr_type = convert_to_expr_type(operand->token.type);
+        expr_symbol.expr_res.expr_type = convert_to_expr_type(operand->token.type);
     }
 
     return expr_symbol;
@@ -879,7 +880,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
         // printf("\tone of them is double\n");
         int2double(&first_operand, &second_operand);
         generate_float_arithmetic_by_operator(op, first_operand.value.double_val, second_operand.value.double_val);
-        expr_symbol.expr_type = double_;
+        expr_symbol.expr_res.expr_type = double_;
         return expr_symbol;
     }
     // if both are double
@@ -887,7 +888,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     {
         // printf("\tBoth are int\n");
         generate_int_arithmetic_by_operator(op, first_operand.value.int_val, second_operand.value.int_val);
-        expr_symbol.expr_type = integer;
+        expr_symbol.expr_res.expr_type = integer;
         return expr_symbol;
     }
 
@@ -934,7 +935,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
     DEBUG_PRINT("Process concat");
     DEFINE_EXPR_SYMBOL;
 
-    expr_symbol.expr_type = string;
+    expr_symbol.expr_res.expr_type = string;
 
     token_T first_operand = sym_arr->arr[0].token;
     token_T operator= sym_arr->arr[1].token;
@@ -960,7 +961,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process relational op");
     DEFINE_EXPR_SYMBOL;
-    expr_symbol.expr_type = bool_;
+    expr_symbol.expr_res.expr_type = bool_;
 
     token_T first_operand = sym_arr->arr[0].token;
     token_T second_operand = sym_arr->arr[2].token;
@@ -1007,11 +1008,11 @@ symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p)
 {
     DEFINE_EXPR_SYMBOL;
 
-    if (sym_arr->arr[1].expr_type == undefined)
+    if (sym_arr->arr[1].expr_res.expr_type == undefined)
     {
-        expr_symbol.expr_type = convert_to_expr_type(sym_arr->arr[1].token.type);
+        expr_symbol.expr_res.expr_type = convert_to_expr_type(sym_arr->arr[1].token.type);
     }
-    expr_symbol.expr_type = sym_arr->arr[1].expr_type;
+    expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
 
     return expr_symbol;
 }
