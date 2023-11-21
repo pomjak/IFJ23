@@ -111,6 +111,10 @@ Rule stmt(Parser* p) {
         if ((res = expr(p))) {
             return res;
         }
+        if (p->type_expr != bool_) {
+            fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
+            return ERR_INCOMPATIBILE_TYPE;
+        }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
@@ -500,8 +504,13 @@ Rule cond_clause(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
         /* Move to previous token since expression func expects loading parentheses */
         tb_prev(&p->buffer);
+        p->curr_tok = tb_get_token(&p->buffer);
         if ((res = expr(p))) {
             return res;
+        }
+        if (p->type_expr != bool_) {
+            fprintf(stderr, "[ERROR %d] Invalid expression type in condition\n", ERR_INCOMPATIBILE_TYPE);
+            return ERR_INCOMPATIBILE_TYPE;
         }
     }
 
