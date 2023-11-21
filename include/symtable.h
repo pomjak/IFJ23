@@ -38,6 +38,7 @@ typedef enum
     integer,
     double_,
     string,
+    bool_,
     nil
 } Type;
 
@@ -60,16 +61,16 @@ typedef struct param
  */
 typedef struct symtab_item
 {
-    bool active;          // active - 0 -> item was deleted (but kept in htab for path-finding[implicit synonyms])
-    dstring_t name;       // id
-    Type type;            // func,int,dbl,str,nil,undefined
-    bool is_mutable;      // true for var, false for let
-    bool is_func_defined; // true if func was already defined, else false
+    bool active;             // active - 0 -> item was deleted (but kept in htab for path-finding[implicit synonyms])
+    dstring_t name;          // id
+    Type type;               // func,int,dbl,str,nil,undefined
+    bool is_mutable;         // true for var, false for let
+    bool is_func_defined;    // true if func was already defined, else false
     bool is_var_initialized; // true if item was assigned a value
-    bool is_nillable;     // true if item can be nil
-    bool variadic_param;  // true if a function can be passed whatever number of parameters
-    param_t *parameters;  // pointer to param_t struct
-    Type return_type;     // anything but func
+    bool is_nillable;        // true if item can be nil
+    bool variadic_param;     // true if a function can be passed whatever number of parameters
+    param_t *parameters;     // pointer to param_t struct
+    Type return_type;        // anything but func
 } symtab_item_t;
 
 typedef struct symtab
@@ -92,7 +93,7 @@ void symtable_init(symtab_t *symtab, unsigned int *error);
 
 /**
  * @brief Create a local symtab object
- * 
+ *
  * @param error     error code
  * @return symtab*  pointer to created local symtab
  */
@@ -285,7 +286,6 @@ void set_func_definition(symtab_t *symtab, dstring_t *id, bool is_func_defined, 
  * @return bool         is_func_defined if success, false and err flag is raised
  */
 bool get_func_definition(symtab_t *symtab, dstring_t *id, unsigned int *error);
-
 
 /**
  * @brief Set the return type of item if type is function

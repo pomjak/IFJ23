@@ -138,6 +138,8 @@ int error_code_handler(int error_code);
  */
 token_T return_token_handler(token_T token);
 
+bool is_multiline_exrpession_handler(bool value);
+
 /**
  * @brief pushes dollar on stack
  *
@@ -167,9 +169,10 @@ bool is_binary_operator(symstack_data_t symbol);
  * @brief Finds the closest token with preceding_eol flag set
  *
  * @param stack
- * @return int - distance from stack top; returns -1 if eol was not found
+ * @return true - end of line was found
+ * @return false - end of line not found
  */
-int find_closest_eol(symstack_t *stack);
+bool find_closest_eol(symstack_t *stack);
 
 /**
  * @brief Deletes stack tokens until token with preceding_el flag set
@@ -307,6 +310,8 @@ int expr(Parser *parser_data);
 /****************************
  * Reduction rule functions *
  ****************************/
+
+symstack_data_t process_operand(symstack_data_t *operand);
 
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr);
 

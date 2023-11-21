@@ -33,6 +33,11 @@
         false, TOKEN_UNDEFINED \
     }
 
+#define DEFINE_EXPR_SYMBOL          \
+    symstack_data_t expr_symbol;    \
+    expr_symbol.isTerminal = false; \
+    expr_symbol.isHandleBegin = false;
+
 token_T token;
 // RO - Relational Operators , FC - Function Call
 const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
@@ -191,6 +196,17 @@ token_T return_token_handler(token_T token)
     return return_token;
 }
 
+bool is_multiline_exrpession_handler(bool value)
+{
+    static bool is_multiline = false;
+    if (value == false)
+    {
+        return is_multiline;
+    }
+    is_multiline = value;
+    return is_multiline;
+}
+
 void push_initial_sym(symstack_t *stack)
 {
     symstack_data_t data;
@@ -241,7 +257,7 @@ bool is_binary_operator(symstack_data_t symbol)
     return false;
 }
 
-int find_closest_eol(symstack_t *stack)
+bool find_closest_eol(symstack_t *stack)
 {
     node_t *current_node = stack->top;
     int distance = 0;
@@ -257,7 +273,8 @@ int find_closest_eol(symstack_t *stack)
         current_node = current_node->previous;
         distance += 1;
     }
-    return (eol_found ? distance : -1);
+
+    return eol_found;
 }
 
 void reduce_to_eol(symstack_t *stack, Parser *p)
@@ -362,7 +379,7 @@ prec_table_operation_t get_prec_table_operation(symstack_t *stack, token_T token
         return X;
     }
     prec_table_operation_t prec_op = prec_tab[convert_term_to_index(closest_terminal->data)][convert_token_to_index(token)];
-    DEBUG_PRINT("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data, p), convert_token_to_index(token, p), prec_op);
+    DEBUG_PRINT("[%d][%d]: %d\n", convert_term_to_index(closest_terminal->data), convert_token_to_index(token), prec_op);
     return prec_op;
 }
 
@@ -498,8 +515,12 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_OPERAND:
         // set to non-terminal
         // push_non_term_on_stack(stack, &sym_arr->arr[0]);
-        sym_arr->arr[0].isTerminal = false;
-        symstack_push(stack, sym_arr->arr[0]);
+
+        expr_symbol = process_operand(&sym_arr->arr[0]);
+        printf("\t EXPR_SYM tokent   : %d\n", expr_symbol.token.type);
+        printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        symstack_push(stack, expr_symbol);
         break;
 
     // unary operations
@@ -515,7 +536,6 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_MUL_E:
     case RULE_E_DIV_E:
         expr_symbol = process_arithmetic_operation(sym_arr);
-        expr_symbol.isHandleBegin = false;
         symstack_push(stack, expr_symbol);
         return;
 
@@ -528,7 +548,6 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
         expr_symbol = process_relational_operation(sym_arr);
-        expr_symbol.isTerminal = false;
         symstack_push(stack, expr_symbol);
         break;
     default:
@@ -549,9 +568,7 @@ void reduce(symstack_t *stack, Parser *p)
     if (rule == RULE_NO_RULE)
     {
 
-        int eol_pos = find_closest_eol(stack);
-
-        if (eol_pos == -1)
+        if (!find_closest_eol(stack))
         {
             reduce_error(stack, &sym_arr);
             error_code_handler(ERR_SYNTAX);
@@ -561,7 +578,11 @@ void reduce(symstack_t *stack, Parser *p)
         {
             reduce_to_eol(stack, p);
             // remove token from stack and move back pointer to token
-            return_token_handler(symstack_pop(stack).token);
+            // return_token_handler(symstack_pop(stack).token);
+            is_multiline_exrpession_handler(true);
+            tb_prev(&p->buffer);
+
+            PRINT_STACK(stack);
 
             // set the end of the expression
             token_T empty = EMPTY_TOKEN;
@@ -727,6 +748,8 @@ Type convert_to_expr_type(token_type_T type)
  */
 int expr(Parser *p)
 {
+
+    DEBUG_PRINT("EXPR\n");
     /* error handling */
     int error_code = EXIT_SUCCESS;
     bool parser_defined = p == NULL;
@@ -763,23 +786,27 @@ int expr(Parser *p)
             sym_data = convert_token_to_data(p->curr_tok);
             symstack_push(&stack, sym_data);
 
-            int eol_pos = find_closest_eol(&stack);
-
-            if (eol_pos != -1)
+            if (find_closest_eol(&stack))
             {
                 reduce_to_eol(&stack, p);
                 // remove token from stack and move back pointer to token
-                return_token_handler(symstack_pop(&stack).token);
+                // return_token_handler(symstack_pop(&stack).token);
+                is_multiline_exrpession_handler(true);
                 // tb_prev(&p->buffer);
+
+                // push_initial_sym(&stack);
+                PRINT_STACK(&stack);
 
                 // set the end of the expression
                 token_T empty = EMPTY_TOKEN;
                 p->curr_tok = empty;
             }
+            else
+            {
+                expr_error(&stack);
+                GET_TOKEN();
+            }
 
-            expr_error(&stack);
-
-            GET_TOKEN();
             break;
         default:
             print_error(ERR_INTERNAL, "Unknown precedence table operation.\n");
@@ -793,16 +820,38 @@ int expr(Parser *p)
         symstack_dispose(&stack);
     };
 
-    // if there was stored token due to multiline expression
-    token_T ret_token = EMPTY_TOKEN;
-    ret_token = return_token_handler(ret_token);
-    if (!(ret_token.type == TOKEN_UNDEFINED))
+    if (is_multiline_exrpession_handler(false))
     {
-        p->curr_tok = ret_token;
+        printf("TRUE\n");
     }
 
-    p->type_expr = convert_to_expr_type(final_expr.token.type);
+    // printf("RETURN TOKEN TYPE: %s\n", p->curr_tok.value.string_val.str);
+    // printf("\n");
+
+    p->type_expr = final_expr.expr_type;
+    printf("final type: %d\n", final_expr.expr_type);
     return error_code_handler(EXIT_SUCCESS);
+}
+
+symstack_data_t process_operand(symstack_data_t *operand)
+{
+    // define expression symbol
+    DEFINE_EXPR_SYMBOL;
+    expr_symbol.token = operand->token;
+
+    // get type of the expression
+    if (operand->token.type == TOKEN_IDENTIFIER)
+    {
+        // find the operand
+    }
+    else if (is_operand(*operand))
+    {
+        expr_symbol.expr_type = convert_to_expr_type(operand->token.type);
+    }
+    else
+    {
+        expr_symbol.expr_type = undefined;
+    }
 }
 
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
@@ -811,7 +860,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     token_T op = sym_arr->arr[1].token;
     token_T second_operand = sym_arr->arr[2].token;
 
-    symstack_data_t expr_symbol;
+    DEFINE_EXPR_SYMBOL;
     if (first_operand.type == TOKEN_STRING || second_operand.type == TOKEN_STRING)
     {
         expr_symbol = process_concatenation(sym_arr);
@@ -836,7 +885,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         {
             print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
-            expr_symbol.token.type = TOKEN_UNDEFINED;
+            expr_symbol.expr_type = undefined;
             return expr_symbol;
         }
     }
@@ -847,7 +896,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         // printf("\tone of them is double\n");
         int2double(&first_operand, &second_operand);
         generate_float_arithmetic_by_operator(op, first_operand.value.double_val, second_operand.value.double_val);
-        expr_symbol.token.type = TOKEN_DBL;
+        expr_symbol.expr_type = double_;
         return expr_symbol;
     }
     // if both are double
@@ -855,7 +904,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     {
         // printf("\tBoth are int\n");
         generate_int_arithmetic_by_operator(op, first_operand.value.int_val, second_operand.value.int_val);
-        expr_symbol.token.type = TOKEN_INT;
+        expr_symbol.expr_type = integer;
         return expr_symbol;
     }
 
@@ -868,15 +917,17 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
 symstack_data_t process_division(symbol_arr_t *sym_arr)
 {
-    symstack_data_t expr_symbol;
+    DEFINE_EXPR_SYMBOL;
+    expr_symbol.token.type = TOKEN_DBL;
+
     token_T first_operand = sym_arr->arr[0].token;
     token_T second_operand = sym_arr->arr[2].token;
-    expr_symbol.token.type = TOKEN_DBL;
 
     if (second_operand.type == TOKEN_INT)
     {
         if (second_operand.value.int_val == 0)
         {
+            expr_symbol.expr_type = undefined;
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
@@ -886,6 +937,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr)
     {
         if (second_operand.value.double_val == 0.0)
         {
+            expr_symbol.expr_type = undefined;
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
@@ -897,10 +949,9 @@ symstack_data_t process_division(symbol_arr_t *sym_arr)
 
 symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 {
-    symstack_data_t expr_symbol;
-    expr_symbol.isHandleBegin = false;
-    expr_symbol.isTerminal = false;
-    expr_symbol.token.type = TOKEN_STRING;
+    DEFINE_EXPR_SYMBOL;
+    // expr_symbol.token.type = TOKEN_STRING;
+    expr_symbol.expr_type = string;
 
     token_T first_operand = sym_arr->arr[0].token;
     token_T operator= sym_arr->arr[1].token;
@@ -924,17 +975,15 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 
 symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
 {
-    symstack_data_t expr_symbol;
-    expr_symbol.isHandleBegin = false;
-    expr_symbol.isTerminal = false;
-    // expr_symbol.isTerminal = BOOL;
+    DEFINE_EXPR_SYMBOL;
+    expr_symbol.expr_type = bool_;
 
     token_T first_operand = sym_arr->arr[0].token;
     token_T second_operand = sym_arr->arr[2].token;
 
     if (first_operand.type != second_operand.type)
     {
-        expr_symbol.token.type = TOKEN_UNDEFINED;
+        expr_symbol.expr_type = undefined;
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
         return expr_symbol;
