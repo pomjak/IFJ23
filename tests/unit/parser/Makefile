@@ -24,8 +24,9 @@ run: build
 			echo -e "ret:"$${RET_CODE}" exp:"$$(cat "$(dir)/$${FILENAME}".ret)""; \
 			{ [[ "$${RET_CODE}" -eq "$$(cat "$(dir)/$${FILENAME}".ret)" ]]; } || \
 				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" && ERROR=1;}; \
-			cp output.txt ../test_artifacts/units_test_parser_"$${FILENAME}".txt; \
-			cp debug_output.txt ../test_artifacts/units_test_parser_"$${FILENAME}"_debug.txt; \
+			mkdir -p ../test_artifacts/"parser_$${FILENAME}"/ ; \
+			cp output.txt ../test_artifacts/"parser_$${FILENAME}"/"$${FILENAME}".txt; \
+			cp debug_output.txt ../test_artifacts/"parser_$${FILENAME}"/"$${FILENAME}"_debug.txt; \
 			{ diff "./$(dir)$${FILENAME}_debug.expected" ./debug_output.txt; } || \
 				{ echo -e "[info] test parser $${FILENAME} [RULE] \e[31mFAIL\e[0m" && ERROR=1; }; \
 			{ diff "$(dir)/$${FILENAME}".expected ./output.txt; } || \
@@ -33,8 +34,8 @@ run: build
 			echo -e "[info] test parser $${FILENAME} \e[32mOK\e[0m"; \
 			$(VALGRIND) ./$(NAME) < "$(dir)/$${FILENAME}.swift" > ./valgrind_output.txt 2>&1 || \
 				{ echo -e "[info] valgrind check $${FILENAME} \e[32mOK\e[0m" || \
-				echo -e "[info] valgrind check $${FILENAME} \e[33mWARN VALGRIND\e[0m"; }; \
-			cp valgrind_output.txt ../test_artifacts/units_test_parser_"$${FILENAME}"_valgrind.txt; \
+			echo -e "[info] valgrind check $${FILENAME} \e[33mWARN VALGRIND\e[0m"; }; \
+			cp valgrind_output.txt ../test_artifacts/"parser_$${FILENAME}"/"$${FILENAME}"_valgrind.txt; \
 			echo -e "----------------------------------------"; \
 		fi; \
     ) \
