@@ -149,14 +149,6 @@ void symbol_arr_reverse(symbol_arr_t *sym_arr)
 
 void symbol_arr_free(symbol_arr_t *sym_arr)
 {
-    // for (int i = 0; i < sym_arr->size; i++)
-    // {
-    //     if (sym_arr->arr[i].isTerminal)
-    //     {
-    //         delete_token(&sym_arr->arr[i].token);
-    //     }
-    // }
-
     free(sym_arr->arr);
     sym_arr->size = 0;
 }
@@ -243,7 +235,6 @@ bool is_binary_operator(symstack_data_t symbol)
     case TOKEN_DIV:
 
     // relational
-    // case TOKEN_ASS:
     case TOKEN_EQ:
     case TOKEN_NEQ:
     case TOKEN_GT:
@@ -392,7 +383,6 @@ void equal_shift(symstack_t *stack, token_T *token)
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
     PRINT_STACK(stack);
-    // print_stack(stack, 1);
 }
 
 void shift(symstack_t *stack, token_T *token)
@@ -403,7 +393,6 @@ void shift(symstack_t *stack, token_T *token)
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
     PRINT_STACK(stack);
-    // print_stack(stack, 1);
 }
 
 prec_rule_t choose_operator_rule(symstack_data_t data)
@@ -595,9 +584,6 @@ void reduce(symstack_t *stack, Parser *p)
 
 void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 {
-    // error_code_handler(ERR_SYNTAX);
-    // print_symbol_arr(sym_arr);
-
     DEBUG_PRINT("Reduce error");
 
     /*
@@ -662,7 +648,6 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         else if (sym_arr->arr[0].token.type == TOKEN_L_PAR)
         {
             // ( E
-            // if (is_operand(sym_arr->arr[1]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
             if (is_operand(sym_arr->arr[1]))
             {
                 data.token.type = sym_arr->arr[1].token.type;
@@ -685,7 +670,6 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         // else first TERM
         else
         {
-            // printf("operator types: %d %d\n", sym_arr->arr[0].token.type, sym_arr->arr[1].token.type);
             error_code_handler(ERR_SYNTAX);
             print_error(ERR_SYNTAX, "Missing operand3.\n");
         }
@@ -760,12 +744,10 @@ int expr(Parser *p)
 
     push_initial_sym(&stack);
 
-    // get next symbol a
     GET_TOKEN();
 
     symstack_data_t sym_data = convert_token_to_data(p->curr_tok);
 
-    // print_stack(&stack, 1);
     do
     {
         switch (get_prec_table_operation(&stack, p->curr_tok))
@@ -822,7 +804,10 @@ int expr(Parser *p)
         symstack_dispose(&stack);
     };
 
-    GET_TOKEN();
+    if (is_multiline_exrpession_handler(false))
+    {
+        GET_TOKEN();
+    }
 
     DEBUG_PRINT("recieved token type: %d", p->curr_tok.type);
     DEBUG_PRINT("final expr type: %d", final_expr.expr_type);
