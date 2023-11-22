@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 unsigned tmp_var_id = 0;
+unsigned func_param_id = 0;
 
 void code_generator_defvar(char *frame, char *varname, unsigned id){
     printf("\nDEFVAR %s@%s_%d\n",frame,varname, id);
@@ -233,6 +234,8 @@ void code_generator_function_call_token(token_T token){
 
 void code_generator_function_call(char* name){
 
+    func_param_id = 0;
+
     if(strcmp(name,"readString") == 0){
         printf("READ GF@READED_1 string\n");
         printf("PUSHS GF@READED_1\n");
@@ -247,17 +250,19 @@ void code_generator_function_call(char* name){
     }
 }
 
-void code_generator_function_call_param_add_token(token_T token_name, token_T token_param_name, token_T token_value){
-    code_generator_function_call_param_add(token_name.value.string_val.str, token_param_name.value.string_val.str, token_value);
+void code_generator_function_call_param_add_token(token_T token_name, token_T token_value){
+    code_generator_function_call_param_add(token_name.value.string_val.str, token_value);
 }
 
-void code_generator_function_call_param_add(char* name, char* param_name, token_T token){
+void code_generator_function_call_param_add(char* name, token_T token){
 
     if(code_generator_need_function_frame(name)) {
-        code_generator_defvar("TF", param_name, 0);
-        printf("MOVE TF@%s_%d ",param_name, 0);
+        code_generator_defvar("TF", "##", func_param_id);
+        printf("MOVE TF@##_%d ", func_param_id);
         code_generator_print_value(token);
         printf("\n");
+
+        func_param_id++;
     }
 
     if(strcmp(name,"write") == 0){
@@ -286,6 +291,11 @@ void code_generator_function_label(char* name){
     printf("\nJUMP $$FUNCTION_END_%s\n", name);
     printf("\nLABEL $$FUNCTION_%s\n", name);
     code_generator_pushframe();
+}
+
+void code_generator_param_map(char *param_name, unsigned param_id){
+    code_generator_defvar("LF", param_name, 0);
+    printf("MOVE LF@%s_%d LF@##_%d\n", param_name, 0, param_id);
 }
 
 void code_generator_function_end(char* name){
