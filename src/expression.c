@@ -277,18 +277,42 @@ bool id_is_defined(token_T token, Parser *p)
     unsigned int error = EXIT_SUCCESS;
     if (token.type == TOKEN_IDENTIFIER)
     {
-        p->current_id = search_scopes(p->stack, &token.value.string_val, &error);
+        // find in local scopes
+        if (!p->lhs_id->is_var_initialized && !dstring_cmp(&p->curr_tok.value.string_val, &p->lhs_id->name))
+        {
+            p->current_id = search_scopes(p->stack->next, &token.value.string_val, &error);
+        }
+        else
+        {
+            p->current_id = search_scopes(p->stack, &token.value.string_val, &error);
+        }
         if (p->current_id)
         {
+            // found and unitialized
+            if (!p->current_id->is_var_initialized)
+            {
+                print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined varibale\n");
+                error_code_handler(ERR_UNDEFINED_VARIABLE);
+            }
             return true;
         }
         else
         {
+            // find in global scopes
             p->current_id = symtable_search(&p->global_symtab, &token.value.string_val, &error);
+
+            // found and unitialized
             if (p->current_id)
             {
+                if (!p->current_id->is_var_initialized)
+                {
+                    print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined varibale\n");
+                    error_code_handler(ERR_UNDEFINED_VARIABLE);
+                }
                 return true;
             }
+            print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined variable");
+            error_code_handler(ERR_UNDEFINED_VARIABLE);
             return false;
         }
     }
@@ -447,19 +471,19 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
 
         if (is_operand(sym_arr->arr[0]))
         {
-            if (sym_arr->arr[0].token.type == TOKEN_IDENTIFIER)
-            {
-                if (id_is_defined(sym_arr->arr[0].token, p))
-                {
-                    DEBUG_PRINT("NOT FOUND");
-                }
-                if (!id_is_defined(sym_arr->arr[0].token, p))
-                {
+            // if (sym_arr->arr[0].token.type == TOKEN_IDENTIFIER)
+            // {
+            //     if (id_is_defined(sym_arr->arr[0].token, p))
+            //     {
+            //         DEBUG_PRINT("NOT FOUND");
+            //     }
+            //     if (!id_is_defined(sym_arr->arr[0].token, p))
+            //     {
 
-                    print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
-                    error_code_handler(ERR_UNDEFINED_VARIABLE);
-                }
-            }
+            //         print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
+            //         error_code_handler(ERR_UNDEFINED_VARIABLE);
+            //     }
+            // }
             rule = RULE_OPERAND;
             break;
         }
@@ -861,6 +885,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
         // find the operand
         if (id_is_defined(operand->token, p))
         {
+
             expr_symbol.expr_res.expr_type = p->current_id->type;
             expr_symbol.expr_res.nilable = p->current_id->is_nillable;
         }
