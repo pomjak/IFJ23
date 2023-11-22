@@ -3,9 +3,6 @@ NAME=test
 VALGRIND=valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s --error-exitcode=1 
 
 build:
-	@echo "----------------------------------------"
-	@echo "		expr"
-	@echo "----------------------------------------"
 	@echo "[info] starting CC build for test expr 2"
 	$(CC) *.c -o $(NAME) -D DEBUG -D DEBUGL=2 
 
