@@ -298,7 +298,7 @@ bool id_is_defined(token_T token, Parser *p)
             // found and unitialized
             if (!p->current_id->is_var_initialized)
             {
-                print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined varibale\n");
+                print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined variable\n");
                 error_code_handler(ERR_UNDEFINED_VARIABLE);
             }
             return true;
@@ -1072,29 +1072,27 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
 
     // if there is comparison and both sides are literals
-    if (op.type == TOKEN_EQ || op.type == TOKEN_NEQ && expr_symbol.is_literal)
+    if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
     {
-        // if they are not the same
-        if (!compare_types_strict(&first_operand, &second_operand))
-        {
-            bool first_is_retypeable = compare_operand_with_type(&first_operand, integer) || compare_operand_with_type(&first_operand, double_);
-            bool second_is_retypeable = compare_operand_with_type(&second_operand, integer) || compare_operand_with_type(&second_operand, double_);
+        // put this to function
+        bool first_is_retypeable = compare_operand_with_type(&first_operand, integer) || compare_operand_with_type(&first_operand, double_);
+        bool second_is_retypeable = compare_operand_with_type(&second_operand, integer) || compare_operand_with_type(&second_operand, double_);
 
-            // if they are both retypeable
-            if (first_is_retypeable && second_is_retypeable)
+        // if they are both retypeable
+        if (first_is_retypeable && second_is_retypeable)
+        {
+            if (first_operand.is_literal && compare_operand_with_type(&first_operand, integer))
             {
-                if (compare_operand_with_type(&first_operand, integer))
-                {
-                    DEBUG_PRINT("retyping FIRST from int to double");
-                    first_operand.expr_res.expr_type = double_;
-                }
-                else if (compare_operand_with_type(&second_operand, integer))
-                {
-                    DEBUG_PRINT("retyping SECOND from int to double");
-                    second_operand.expr_res.expr_type = double_;
-                }
+                DEBUG_PRINT("retyping FIRST from int to double");
+                first_operand.expr_res.expr_type = double_;
+            }
+            else if (second_operand.is_literal && compare_operand_with_type(&second_operand, integer))
+            {
+                DEBUG_PRINT("retyping SECOND from int to double");
+                second_operand.expr_res.expr_type = double_;
             }
         }
+
         return expr_symbol;
     }
 
@@ -1139,15 +1137,11 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     case TOKEN_LEQ:
         DEBUG_PRINT("Generate <= comparation\n");
         break;
-        break;
     case TOKEN_LT:
         DEBUG_PRINT("Generate < comparation\n");
         break;
     case TOKEN_GT:
         DEBUG_PRINT("Generate > comparation\n");
-        break;
-    case TOKEN_NIL_CHECK:
-        DEBUG_PRINT("Generate ?? check\n");
         break;
 
     default:
