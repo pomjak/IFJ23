@@ -156,6 +156,7 @@ void code_generator_function_call_token(token_T token);
 
 /**
  * Creates call of function
+ * @post ID of parameter is set to 0
  * @param name name of function
 */
 void code_generator_function_call(char* name);
@@ -163,25 +164,32 @@ void code_generator_function_call(char* name);
 /**
  * Token version of code_generator_function_call_param_add
  * @param token_name
- * @param token_param_name
  * @param token_value
 */
-void code_generator_function_call_param_add_token(token_T token_name, token_T token_param_name, token_T token_value);
+void code_generator_function_call_param_add_token(token_T token_name, token_T token_value);
 
 /**
  * Add parameter to future called function
  * @pre Before adding the first parameter has to be called code_generator_createframe()
+ * @post ID of parameter is incremented
  * @param name name of function
- * @param param_name name of parameter
  * @param value value of parameter
 */
-void code_generator_function_call_param_add(char* name, char* param_name, token_T value);
+void code_generator_function_call_param_add(char* name, token_T value);
 
 /**
  * Token version of code_generator_function_label
+ * @post do code_generator_param_map for all functions parameters
  * @param token
 */
 void code_generator_function_label_token(token_T token);
+
+/**
+ * Maps function parameter from position ID to parameter name
+ * @param param_name name of parameter
+ * @param param_id position ID of parameter from 0
+*/
+void code_generator_param_map(char *param_name, unsigned param_id);
 
 /**
  * Creates label of function (declaration of header)
