@@ -339,6 +339,8 @@ bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2);
 
 bool compare_operand_with_type(symstack_data_t *operand, Type type);
 
+bool operand_is_nilable(symstack_data_t *operand);
+
 /*****************************
  * Generation code functions *
  ****************************/

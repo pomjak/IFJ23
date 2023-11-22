@@ -867,7 +867,28 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     symstack_data_t second_operand = sym_arr->arr[2];
 
     DEFINE_EXPR_SYMBOL;
-    if (first_operand.expr_res.expr_type == string || second_operand.expr_res.expr_type == string)
+
+    // check types of operands
+
+    // if they are identifiers and both are same strict type
+    if (is_identifier(first_operand) && is_identifier(second_operand))
+    {
+        if (!compare_types_strict(&first_operand, &second_operand))
+        {
+            print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types of operands.\n");
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            return expr_symbol;
+        }
+    }
+    // if both operands are same nilable, one operand is literal, so it should be both operands are not nillable
+    else if (operand_is_nilable(&first_operand) != operand_is_nilable(&second_operand))
+    {
+        print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types of operands.\n");
+        error_code_handler(ERR_INCOMPATIBILE_TYPE);
+        return expr_symbol;
+    }
+
+    if (compare_operand_with_type(&first_operand, string) || compare_operand_with_type(&second_operand, string))
     {
         expr_symbol = process_concatenation(sym_arr, p);
         return expr_symbol;
@@ -883,7 +904,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     if (compare_types_strict(&first_operand, &second_operand))
     {
         // printf("\tsame types\n");
-        if (first_operand.expr_res.expr_type == integer || first_operand.expr_res.expr_type == double_)
+        if (compare_operand_with_type(&first_operand, integer) || compare_operand_with_type(&first_operand, double_))
         {
             expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
         }
@@ -897,7 +918,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     }
 
     // if one of the operands is double need to convert it
-    if (first_operand.expr_res.expr_type == double_ || second_operand.expr_res.expr_type == double_)
+    if (compare_operand_with_type(&first_operand, double_) || compare_operand_with_type(&second_operand, double_))
     {
         // printf("\tone of them is double\n");
         int2double(&first_operand.token, &second_operand.token);
@@ -939,7 +960,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
         return expr_symbol;
     }
 
-    if (compare_operand_with_expr(&second_operand, integer))
+    if (compare_operand_with_type(&second_operand, integer))
     {
         if (second_operand.token.value.int_val == 0)
         {
@@ -948,7 +969,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
             return expr_symbol;
         }
     }
-    else if (compare_operand_with_expr(&second_operand, double_))
+    else if (compare_operand_with_type(&second_operand, double_))
     {
         if (second_operand.token.value.double_val == 0.0)
         {
@@ -1044,7 +1065,10 @@ symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p)
     {
         expr_symbol.expr_res.expr_type = convert_to_expr_type(sym_arr->arr[1].token.type);
     }
-    expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
+    else
+    {
+        expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
+    }
 
     return expr_symbol;
 }
@@ -1062,8 +1086,12 @@ bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2)
 bool compare_operand_with_type(symstack_data_t *operand, Type type)
 {
     bool core_type = operand->expr_res.expr_type == type;
-    // bool nilable_type = operand->expr_res.nilable == nilable;
     return core_type;
+}
+
+bool operand_is_nilable(symstack_data_t *operand)
+{
+    return operand->expr_res.nilable;
 }
 
 /* CODE GENERATION FUNCTIONS */
