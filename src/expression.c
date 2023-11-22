@@ -1100,6 +1100,15 @@ bool operand_is_nilable(symstack_data_t *operand)
     return operand->expr_res.nilable;
 }
 
+void verify_lhs_type(symstack_data_t *final_expr, Parser *p)
+{
+    if (p->lhs_id != NULL)
+    {
+        p->lhs_id->type;
+        return;
+    }
+}
+
 /* CODE GENERATION FUNCTIONS */
 void int2double(token_T *first_operand, token_T *second_operand)
 {
