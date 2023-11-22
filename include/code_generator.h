@@ -209,4 +209,9 @@ void code_generator_function_end(char* name);
 */
 void code_generator_return();
 
+/**
+ * Generates code of ord function (internal code generator function)
+*/
+void code_generator_function_ord();
+
 #endif
