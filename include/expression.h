@@ -183,6 +183,24 @@ void reduce_to_eol(symstack_t *stack, Parser *p);
 bool id_is_defined(token_T token, Parser *p);
 
 /**
+ * @brief Chekcs if symbol is literal
+ *
+ * @param symbol
+ * @return true
+ * @return false
+ */
+bool is_literal(symstack_data_t symbol);
+
+/**
+ * @brief checks if symbol is identifer
+ *
+ * @param symbol
+ * @return true
+ * @return false
+ */
+bool is_identifier(symstack_data_t symbol);
+
+/**
  * @brief convert token to precedence table index based on it's data
  *
  * @param token
@@ -319,7 +337,7 @@ symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p);
 
 bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2);
 
-bool compare_operand_with_expr_type(symstack_data_t *operand, Type type, bool nilable);
+bool compare_operand_with_type(symstack_data_t *operand, Type type);
 
 /*****************************
  * Generation code functions *

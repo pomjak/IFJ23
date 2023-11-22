@@ -200,8 +200,7 @@ void push_initial_sym(symstack_t *stack)
 
 bool is_operand(symstack_data_t symbol)
 {
-    token_type_T symbol_type = symbol.token.type;
-    if (symbol_type == TOKEN_IDENTIFIER || symbol_type == TOKEN_INT || symbol_type == TOKEN_DBL || symbol_type == TOKEN_NIL || symbol_type == TOKEN_STRING)
+    if (is_literal(symbol) || is_identifier(symbol))
     {
         return true;
     }
@@ -289,6 +288,17 @@ bool id_is_defined(token_T token, Parser *p)
         }
     }
     return false;
+}
+
+bool is_literal(symstack_data_t symbol)
+{
+    token_type_T exp_type = symbol.token.type;
+    return exp_type == TOKEN_INT || exp_type == TOKEN_DBL || exp_type == TOKEN_STRING || exp_type == TOKEN_NIL;
+}
+
+bool is_identifier(symstack_data_t symbol)
+{
+    return symbol.token.type == TOKEN_IDENTIFIER;
 }
 
 prec_tab_index_t convert_token_to_index(token_T token)
@@ -589,7 +599,6 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 
     if (sym_arr != NULL && sym_arr->arr != NULL)
     {
-        // if (is_operand(sym_arr->arr[0]) || sym_arr->arr[0].token.type == TOKEN_UNDEFINED)
         if (is_operand(sym_arr->arr[0]))
         {
 
@@ -909,7 +918,6 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     error_code_handler(ERR_INCOMPATIBILE_TYPE);
 
-    // expr_symbol.token.type = TOKEN_UNDEFINED;
     expr_symbol.expr_res.expr_type = undefined;
     return expr_symbol;
 }
@@ -918,31 +926,38 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process division");
     DEFINE_EXPR_SYMBOL;
-    expr_symbol.expr_res.expr_type = double_;
 
     // do this with expr_types
-    token_T first_operand = sym_arr->arr[0].token;
-    token_T second_operand = sym_arr->arr[2].token;
+    symstack_data_t first_operand = sym_arr->arr[0];
+    symstack_data_t second_operand = sym_arr->arr[2];
 
-    if (second_operand.type == TOKEN_INT)
+    // define expr_type in here
+    if (!compare_types_strict(&first_operand, &second_operand))
     {
-        if (second_operand.value.int_val == 0)
+        error_code_handler(ERR_INCOMPATIBILE_TYPE);
+        print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
+        return expr_symbol;
+    }
+
+    if (compare_operand_with_expr(&second_operand, integer))
+    {
+        if (second_operand.token.value.int_val == 0)
         {
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
-    else if (second_operand.type == TOKEN_DBL)
+    else if (compare_operand_with_expr(&second_operand, double_))
     {
-        if (second_operand.value.double_val == 0.0)
+        if (second_operand.token.value.double_val == 0.0)
         {
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
-    generate_division(first_operand, second_operand);
+    generate_division(first_operand.token, second_operand.token);
     return expr_symbol;
 }
 
@@ -1044,11 +1059,11 @@ bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2)
     return core_type && nilable_type;
 }
 
-bool compare_operand_with_expr_type(symstack_data_t *operand, Type type, bool nilable)
+bool compare_operand_with_type(symstack_data_t *operand, Type type)
 {
     bool core_type = operand->expr_res.expr_type == type;
-    bool nilable_type = operand->expr_res.nilable == nilable;
-    return core_type && nilable_type;
+    // bool nilable_type = operand->expr_res.nilable == nilable;
+    return core_type;
 }
 
 /* CODE GENERATION FUNCTIONS */
