@@ -13,7 +13,7 @@ run: build
         echo -e "[info] test expr 4 \e[32mPASS\e[0m"; \
     else \
         echo -e "[info] test expr 4 \e[31mFAIL\e[0m"; \
-		exit 1;\
+		export EXPR_ERROR=1; \
     fi
 
 	@echo "[info] performing valgrind check expr 4"
