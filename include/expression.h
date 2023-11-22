@@ -341,6 +341,8 @@ bool compare_operand_with_type(symstack_data_t *operand, Type type);
 
 bool operand_is_nilable(symstack_data_t *operand);
 
+void verify_lhs_type(symstack_data_t *final_expr, Parser *p);
+
 /*****************************
  * Generation code functions *
  ****************************/

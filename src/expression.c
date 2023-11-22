@@ -41,10 +41,15 @@
     expr_symbol.expr_res.nilable = false;
 
 bool is_multiline_expr = false;
+bool is_all_literals = true;
 
 static void set_is_multiline_expr(bool value) { is_multiline_expr = value; }
 
 static bool get_is_multiline_expr() { return is_multiline_expr; }
+
+static void set_is_all_literals(bool value) { is_all_literals = value; };
+
+static bool get_is_all_literals() { return is_all_literals; };
 
 // RO - Relational Operators , FC - Function Call
 const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
@@ -818,16 +823,8 @@ int expr(Parser *p)
         GET_TOKEN();
     }
 
-    // here find lhs
-    if (p->lhs_id != NULL)
-    {
-
-        // process_assignment_type
-        if (p->lhs_id->type == final_expr.expr_res.expr_type)
-        {
-            DEBUG_PRINT("CHECKING_TYPE");
-        }
-    }
+    // verify_lhs_type and correct it if need
+    verify_lhs_type(&final_expr, p);
 
     DEBUG_PRINT("recieved token type: %d", p->curr_tok.type);
     DEBUG_PRINT("final expr type: %d", final_expr.expr_res.expr_type);
@@ -848,6 +845,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     // get type of the expression
     if (operand->token.type == TOKEN_IDENTIFIER)
     {
+        set_is_all_literals(false);
         // find the operand
         if (id_is_defined(operand->token, p))
         {
@@ -1102,11 +1100,21 @@ bool operand_is_nilable(symstack_data_t *operand)
 
 void verify_lhs_type(symstack_data_t *final_expr, Parser *p)
 {
-    if (p->lhs_id != NULL)
+    // if lhs is defined and all processed operands were literals
+    if (p->lhs_id != NULL && get_is_all_literals())
     {
-        p->lhs_id->type;
-        return;
+        // check core types
+        if (p->lhs_id->type != final_expr->expr_res.expr_type)
+        {
+            // find if type conversion exists
+            if (p->lhs_id->type == double_ && final_expr->expr_res.expr_type == integer)
+            {
+                // generate code tu push int2char expr on stack
+                final_expr->expr_res.expr_type = double_;
+            }
+        }
     }
+    set_is_all_literals(true);
 }
 
 /* CODE GENERATION FUNCTIONS */
