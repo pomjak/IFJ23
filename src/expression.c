@@ -925,8 +925,8 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     if (compare_operand_with_type(&first_operand, double_) || compare_operand_with_type(&second_operand, double_))
     {
         // printf("\tone of them is double\n");
-        int2double(&first_operand.token, &second_operand.token);
-        generate_float_arithmetic_by_operator(op, first_operand.token.value.double_val, second_operand.token.value.double_val);
+        // int2double(&first_operand, &second_operand);
+        // generate_float_arithmetic_by_operator(op, first_operand.token.value.double_val, second_operand.token.value.double_val);
         expr_symbol.expr_res.expr_type = double_;
         return expr_symbol;
     }
@@ -934,7 +934,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     else if (first_operand.expr_res.expr_type == integer && compare_types_strict(&first_operand, &second_operand))
     {
         // printf("\tBoth are int\n");
-        generate_int_arithmetic_by_operator(op, first_operand.token.value.int_val, second_operand.token.value.int_val);
+        // generate_int_arithmetic_by_operator(op, first_operand.token.value.int_val, second_operand.token.value.int_val);
         expr_symbol.expr_res.expr_type = integer;
         return expr_symbol;
     }
@@ -982,7 +982,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
             return expr_symbol;
         }
     }
-    generate_division(first_operand.token, second_operand.token);
+    // generate_division(first_operand.token, second_operand.token);
     return expr_symbol;
 }
 
@@ -1118,87 +1118,87 @@ void verify_lhs_type(symstack_data_t *final_expr, Parser *p)
 }
 
 /* CODE GENERATION FUNCTIONS */
-void int2double(token_T *first_operand, token_T *second_operand)
-{
-    if (first_operand->type == TOKEN_INT)
-    {
-        // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
-        DEBUG_PRINT("int2double FIRST\n");
-        // first_operand->value.double_val = (double)first_operand->value.int_val;
-    }
-    else
-    {
-        // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
-        DEBUG_PRINT("int2double SECOND\n");
-        // second_operand->value.double_val = (double)second_operand->value.int_val;
-    }
-}
+// void int2double(symstack_data_t *first_operand, symstack_data_t *second_operand)
+// {
+//     if (compare_operand_with_type(first_operand, integer))
+//     {
+//         // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
+//         DEBUG_PRINT("int2double FIRST\n");
+//         // first_operand->value.double_val = (double)first_operand->value.int_val;
+//     }
+//     else
+//     {
+//         // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
+//         DEBUG_PRINT("int2double SECOND\n");
+//         // second_operand->value.double_val = (double)second_operand->value.int_val;
+//     }
+// }
 
-void generate_float_arithmetic_by_operator(token_T op, double first_operand, double second_operand)
-{
-    switch (op.type)
-    {
-    case TOKEN_ADD:
-        DEBUG_PRINT("Generate ADDITION\n");
-        break;
-    case TOKEN_SUB:
-        // DEBUG_PRINT("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
-        DEBUG_PRINT("Generate SUBSTRACTION\n");
-        break;
-    case TOKEN_MUL:
-        // DEBUG_PRINT("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
-        DEBUG_PRINT("Generate MULTIPLICATION\n");
-        break;
-    default:
-        break;
-    }
-}
+// void generate_float_arithmetic_by_operator(token_T op, double first_operand, double second_operand)
+// {
+//     switch (op.type)
+//     {
+//     case TOKEN_ADD:
+//         DEBUG_PRINT("Generate ADDITION\n");
+//         break;
+//     case TOKEN_SUB:
+//         // DEBUG_PRINT("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
+//         DEBUG_PRINT("Generate SUBSTRACTION\n");
+//         break;
+//     case TOKEN_MUL:
+//         // DEBUG_PRINT("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
+//         DEBUG_PRINT("Generate MULTIPLICATION\n");
+//         break;
+//     default:
+//         break;
+//     }
+// }
 
-void generate_int_arithmetic_by_operator(token_T op, int first_operand, int second_operand)
-{
-    switch (op.type)
-    {
-    case TOKEN_ADD:
-        // DEBUG_PRINT("Generate ADDITION %d + %d\n", first_operand, second_operand);
-        DEBUG_PRINT("Generate ADDITION\n");
-        break;
-    case TOKEN_SUB:
-        // DEBUG_PRINT("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
-        DEBUG_PRINT("Generate SUBSTRACTION\n");
-        break;
-    case TOKEN_MUL:
-        // DEBUG_PRINT("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
-        DEBUG_PRINT("Generate MULTIPLICATION\n");
-        break;
-    default:
-        break;
-    }
-}
+// void generate_int_arithmetic_by_operator(token_T op, int first_operand, int second_operand)
+// {
+//     switch (op.type)
+//     {
+//     case TOKEN_ADD:
+//         // DEBUG_PRINT("Generate ADDITION %d + %d\n", first_operand, second_operand);
+//         DEBUG_PRINT("Generate ADDITION\n");
+//         break;
+//     case TOKEN_SUB:
+//         // DEBUG_PRINT("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
+//         DEBUG_PRINT("Generate SUBSTRACTION\n");
+//         break;
+//     case TOKEN_MUL:
+//         // DEBUG_PRINT("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
+//         DEBUG_PRINT("Generate MULTIPLICATION\n");
+//         break;
+//     default:
+//         break;
+//     }
+// }
 
-void generate_division(token_T first_operand, token_T second_operand)
-{
-    if (first_operand.type == second_operand.type)
-    {
-        if (first_operand.type == TOKEN_INT)
-        {
-            DEBUG_PRINT("Generate DIVISION %d / %d\n", first_operand.value.int_val, second_operand.value.int_val);
-        }
-        else
-        {
-            DEBUG_PRINT("Generate DIVISION %f / %f\n", first_operand.value.double_val, second_operand.value.double_val);
-        }
-    }
-    else
-    {
-        if (first_operand.type == TOKEN_DBL)
-        {
-            DEBUG_PRINT("Generate DIVISION %f / %d\n", first_operand.value.double_val, second_operand.value.int_val);
-        }
-        else
-        {
-            DEBUG_PRINT("Generate DIVISION %d / %f\n", first_operand.value.int_val, second_operand.value.double_val);
-        }
-    }
-}
+// void generate_division(symstack_data_t *first_operand, symstack_data_t *second_operand)
+// {
+//     if (compare_types_strict(&first_operand, &second_operand))
+//     {
+//         if (first_operand.type == TOKEN_INT)
+//         {
+//             DEBUG_PRINT("Generate DIVISION %d / %d\n", first_operand.value.int_val, second_operand.value.int_val);
+//         }
+//         else
+//         {
+//             DEBUG_PRINT("Generate DIVISION %f / %f\n", first_operand.value.double_val, second_operand.value.double_val);
+//         }
+//     }
+//     else
+//     {
+//         if (first_operand.type == TOKEN_DBL)
+//         {
+//             DEBUG_PRINT("Generate DIVISION %f / %d\n", first_operand.value.double_val, second_operand.value.int_val);
+//         }
+//         else
+//         {
+//             DEBUG_PRINT("Generate DIVISION %d / %f\n", first_operand.value.int_val, second_operand.value.double_val);
+//         }
+//     }
+// }
 
-void generate_comparison();
+// void generate_comparison();
