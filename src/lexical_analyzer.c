@@ -1093,9 +1093,11 @@ state_T eol_end_q(char read) {
             return;
         }
 
-    if (read == '\n')  NEXT_STATE(eol_end_q);
-    if (read != '"')  NEXT_STATE(m_string_inner);
-    if (read == '"')  NEXT_STATE(m_string_end1);
+    // @todo: fix indent formating by spaces before """
+
+    if (read == '\n' || is_whitespace(read))  NEXT_STATE(eol_end_q);
+    if (read != '"')                          NEXT_STATE(m_string_inner);
+    if (read == '"')                          NEXT_STATE(m_string_end1);
 
     NEXT_STATE(NULL);   
 }
