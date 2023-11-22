@@ -303,7 +303,7 @@ bool is_literal(symstack_data_t symbol)
 
 bool is_identifier(symstack_data_t symbol)
 {
-    return symbol.token.type == TOKEN_IDENTIFIER;
+    return !symbol.is_literal;
 }
 
 prec_tab_index_t convert_token_to_index(token_T token)
@@ -866,7 +866,6 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process arithmetic op");
 
-    // same thing : do this with expr, not with tokens
     symstack_data_t first_operand = sym_arr->arr[0];
     token_T op = sym_arr->arr[1].token;
     symstack_data_t second_operand = sym_arr->arr[2];
@@ -1027,11 +1026,32 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     symstack_data_t first_operand = sym_arr->arr[0];
     token_T op = sym_arr->arr[1].token;
     symstack_data_t second_operand = sym_arr->arr[2];
-    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+    expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
 
     // if there is comparison and both sides are literals
     if (op.type == TOKEN_EQ || op.type == TOKEN_EQ && expr_symbol.is_literal)
     {
+        // if they are not the same
+        if (!compare_types_strict(&first_operand, &second_operand))
+        {
+            bool first_is_retypeable = compare_operand_with_type(&first_operand, integer) || compare_operand_with_type(&first_operand, double_);
+            bool second_is_retypeable = compare_operand_with_type(&second_operand, integer) || compare_operand_with_type(&second_operand, double_);
+
+            // if they are both retypeable
+            if (first_is_retypeable && second_is_retypeable)
+            {
+                if (compare_operand_with_type(&first_operand, integer))
+                {
+                    DEBUG_PRINT("retyping FIRST from int to double");
+                    first_operand.expr_res.expr_type = double_;
+                }
+                else if (compare_operand_with_type(&second_operand, integer))
+                {
+                    DEBUG_PRINT("retyping SECOND from int to double");
+                    second_operand.expr_res.expr_type = double_;
+                }
+            }
+        }
     }
 
     if (!compare_types_strict(&first_operand, &second_operand))
