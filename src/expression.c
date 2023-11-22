@@ -573,7 +573,7 @@ void reduce(symstack_t *stack, Parser *p)
     symbol_arr_move_expr_to_arr(stack, &sym_arr);
     symbol_arr_reverse(&sym_arr);
 
-    print_symbol_arr(&sym_arr);
+    // print_symbol_arr(&sym_arr);
 
     prec_rule_t rule = get_rule(&sym_arr, p);
     DEBUG_PRINT("RULE %d\n", rule);
