@@ -55,7 +55,7 @@ func function_with_lots_of_scopes()
 	if(1 == 1)
 	{
 		var overlay : Int = overlay 
-		if cond {
+		if let cond {
 			var overlay = function_String_String(cond)
 			while( 2!= 1)
 			{
@@ -86,7 +86,7 @@ func function_with_lots_of_scopes()
 		}
 	}
 	else{
-		if cond {
+		if let cond {
 			var overlay = function_String_Double(cond)
 		}
 		else{
@@ -98,7 +98,7 @@ func function_with_lots_of_scopes()
 if(1 == 1)
 {
 	var overlay : Int = overlay 
-	if cond {
+	if let cond {
 		var overlay = function_String_String(cond)
 	}
 	else{
@@ -106,7 +106,7 @@ if(1 == 1)
 	}
 }
 else{
-	if cond {
+	if let cond {
 		var overlay = function_String_Double(cond)
 	}
 	else{
@@ -115,7 +115,7 @@ else{
 }
 
 var someDouble = 3.14
-var implicit_conversion_of_literal_to_Double = 1
+var implicit_conversion_of_literal_to_Double : Double = 1
 implicit_conversion_of_literal_to_Double = someDouble
 
 func function_nil_nil ()
