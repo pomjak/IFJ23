@@ -50,14 +50,14 @@ static bool get_is_multiline_expr() { return is_multiline_expr; }
 const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
     {
         /*      | / * | + - | ?? | i | FC | RO | ( | ) | ! | $ | */
-        /* / * */ {R, R, R, S, R, R, R, R, R},
-        /* + - */ {S, R, R, S, R, S, R, R, R},
-        /* ??  */ {S, S, S, S, S, S, R, R, R},
-        /* i   */ {R, R, R, X, R, X, R, R, R},
-        /* RO  */ {S, S, R, S, E, S, R, R, R},
+        /* / * */ {R, R, R, S, R, R, R, S, R},
+        /* + - */ {S, R, R, S, R, S, R, S, R},
+        /* ??  */ {S, S, S, S, S, S, R, S, R},
+        /* i   */ {R, R, R, X, R, X, R, S, R},
+        /* RO  */ {S, S, R, S, E, S, R, S, R},
         /* (   */ {S, S, S, S, S, S, E, X, X},
-        /* )   */ {R, R, R, X, R, X, R, R, R},
-        /* !   */ {R, R, R, R, R, R, R, R, R}, // not sure
+        /* )   */ {R, R, R, X, R, X, R, S, R},
+        /* !   */ {R, R, R, R, R, R, R, S, R}, // not sure
         /* $   */ {S, S, S, S, S, S, X, S, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
