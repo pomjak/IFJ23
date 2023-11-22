@@ -54,8 +54,8 @@ static bool get_is_all_literals() { return is_all_literals; };
 // RO - Relational Operators , FC - Function Call
 const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
     {
-        /*      | / * | + - | ?? | i | FC | RO | ( | ) | ! | $ | */
-        /* / * */ {R, R, R, S, R, R, R, S, R},
+        /*      | / * | + - | ?? | i | RO | ( | ) | ! | $ | */
+        /* / * */ {R, R, R, S, R, S, R, S, R},
         /* + - */ {S, R, R, S, R, S, R, S, R},
         /* ??  */ {S, S, S, S, S, S, R, S, R},
         /* i   */ {R, R, R, X, R, X, R, R, R},
