@@ -493,9 +493,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_OPERAND:
         // set to non-terminal
         expr_symbol = process_operand(&sym_arr->arr[0], p);
-        // printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_type);
-        // printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        // printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -507,9 +507,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
 
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
         expr_symbol.expr_res.nilable = false;
-        // printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
-        // printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        // printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -519,6 +519,9 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_MUL_E:
     case RULE_E_DIV_E:
         expr_symbol = process_arithmetic_operation(sym_arr, p);
+        DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
         return;
 
@@ -531,13 +534,16 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
         expr_symbol = process_relational_operation(sym_arr, p);
-        // printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_type);
-        // printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        // printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
         return;
     case RULE_PARL_E_PARR:
         expr_symbol = process_parenthesis(sym_arr, p);
+        DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
         return;
     default:
