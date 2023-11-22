@@ -950,7 +950,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
 
     if (first_operand.expr_res.expr_type == string && second_operand.expr_res.expr_type == string)
     {
-        GENERATE_CODE("Generate concatenation\n");
+        DEBUG_PRINT("Generate concatenation\n");
         return expr_symbol;
     }
     print_error(ERR_INCOMPATIBILE_TYPE, "Concatenation with uncompatibile types.\n");
@@ -978,25 +978,25 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     switch (sym_arr->arr[1].token.type)
     {
     case TOKEN_EQ:
-        GENERATE_CODE("Generate == comparation\n");
+        DEBUG_PRINT("Generate == comparation\n");
         break;
     case TOKEN_GEQ:
-        GENERATE_CODE("Generate >= comparation\n");
+        DEBUG_PRINT("Generate >= comparation\n");
         break;
     case TOKEN_LEQ:
-        GENERATE_CODE("Generate <= comparation\n");
+        DEBUG_PRINT("Generate <= comparation\n");
         break;
     case TOKEN_NEQ:
-        GENERATE_CODE("Generate != comparation\n");
+        DEBUG_PRINT("Generate != comparation\n");
         break;
     case TOKEN_LT:
-        GENERATE_CODE("Generate < comparation\n");
+        DEBUG_PRINT("Generate < comparation\n");
         break;
     case TOKEN_GT:
-        GENERATE_CODE("Generate > comparation\n");
+        DEBUG_PRINT("Generate > comparation\n");
         break;
     case TOKEN_NIL_CHECK:
-        GENERATE_CODE("Generate ?? check\n");
+        DEBUG_PRINT("Generate ?? check\n");
         break;
 
     default:
@@ -1023,14 +1023,14 @@ void int2double(token_T *first_operand, token_T *second_operand)
 {
     if (first_operand->type == TOKEN_INT)
     {
-        // GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
-        GENERATE_CODE("int2double FIRST\n")
+        // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
+        DEBUG_PRINT("int2double FIRST\n")
         // first_operand->value.double_val = (double)first_operand->value.int_val;
     }
     else
     {
-        // GENERATE_CODE("int2double %d\n", first_operand->value.int_val)
-        GENERATE_CODE("int2double SECOND\n")
+        // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
+        DEBUG_PRINT("int2double SECOND\n")
         // second_operand->value.double_val = (double)second_operand->value.int_val;
     }
 }
@@ -1040,15 +1040,15 @@ void generate_float_arithmetic_by_operator(token_T op, double first_operand, dou
     switch (op.type)
     {
     case TOKEN_ADD:
-        GENERATE_CODE("Generate ADDITION\n");
+        DEBUG_PRINT("Generate ADDITION\n");
         break;
     case TOKEN_SUB:
-        // GENERATE_CODE("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
-        GENERATE_CODE("Generate SUBSTRACTION\n");
+        // DEBUG_PRINT("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
+        DEBUG_PRINT("Generate SUBSTRACTION\n");
         break;
     case TOKEN_MUL:
-        // GENERATE_CODE("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
-        GENERATE_CODE("Generate MULTIPLICATION\n");
+        // DEBUG_PRINT("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
+        DEBUG_PRINT("Generate MULTIPLICATION\n");
         break;
     default:
         break;
@@ -1060,16 +1060,16 @@ void generate_int_arithmetic_by_operator(token_T op, int first_operand, int seco
     switch (op.type)
     {
     case TOKEN_ADD:
-        // GENERATE_CODE("Generate ADDITION %d + %d\n", first_operand, second_operand);
-        GENERATE_CODE("Generate ADDITION\n");
+        // DEBUG_PRINT("Generate ADDITION %d + %d\n", first_operand, second_operand);
+        DEBUG_PRINT("Generate ADDITION\n");
         break;
     case TOKEN_SUB:
-        // GENERATE_CODE("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
-        GENERATE_CODE("Generate SUBSTRACTION\n");
+        // DEBUG_PRINT("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
+        DEBUG_PRINT("Generate SUBSTRACTION\n");
         break;
     case TOKEN_MUL:
-        // GENERATE_CODE("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
-        GENERATE_CODE("Generate MULTIPLICATION\n");
+        // DEBUG_PRINT("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
+        DEBUG_PRINT("Generate MULTIPLICATION\n");
         break;
     default:
         break;
@@ -1082,22 +1082,22 @@ void generate_division(token_T first_operand, token_T second_operand)
     {
         if (first_operand.type == TOKEN_INT)
         {
-            GENERATE_CODE("Generate DIVISION %d / %d\n", first_operand.value.int_val, second_operand.value.int_val);
+            DEBUG_PRINT("Generate DIVISION %d / %d\n", first_operand.value.int_val, second_operand.value.int_val);
         }
         else
         {
-            GENERATE_CODE("Generate DIVISION %f / %f\n", first_operand.value.double_val, second_operand.value.double_val);
+            DEBUG_PRINT("Generate DIVISION %f / %f\n", first_operand.value.double_val, second_operand.value.double_val);
         }
     }
     else
     {
         if (first_operand.type == TOKEN_DBL)
         {
-            GENERATE_CODE("Generate DIVISION %f / %d\n", first_operand.value.double_val, second_operand.value.int_val);
+            DEBUG_PRINT("Generate DIVISION %f / %d\n", first_operand.value.double_val, second_operand.value.int_val);
         }
         else
         {
-            GENERATE_CODE("Generate DIVISION %d / %f\n", first_operand.value.int_val, second_operand.value.double_val);
+            DEBUG_PRINT("Generate DIVISION %d / %f\n", first_operand.value.int_val, second_operand.value.double_val);
         }
     }
 }
