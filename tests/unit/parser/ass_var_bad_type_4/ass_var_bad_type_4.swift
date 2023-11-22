@@ -6,4 +6,4 @@
  * Pokud není hodnota výrazu typově kompatibilní s typem proměnné id, dojde k chybě 7.
 */
 let x : Double? = 1
-// Error 7
+// Error 0

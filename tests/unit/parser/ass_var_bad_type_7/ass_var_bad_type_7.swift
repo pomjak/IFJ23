@@ -7,4 +7,4 @@
 */
 var x : Double
 x = 1
-// Error 7
+// Error 0

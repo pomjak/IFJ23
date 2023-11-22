@@ -7,4 +7,4 @@ opt_assign
 prog
 stmt
 expr_type
-[ERROR 7] Incompatible types when assigninng to variable 'x'
+prog

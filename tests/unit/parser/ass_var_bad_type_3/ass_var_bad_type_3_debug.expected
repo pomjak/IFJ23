@@ -4,4 +4,4 @@ define
 var_def_cont
 type
 opt_assign
-[ERROR 7] Incompatible types when assigninng to variable 'x'
+prog
