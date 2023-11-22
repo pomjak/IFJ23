@@ -13,20 +13,15 @@
 
 #define MIN_WIDTH 10
 
-// void delete_token(token_T *token)
-// {
-//     if (token->type == TOKEN_STRING || token->type == TOKEN_IDENTIFIER)
-//     {
-//         dstring_free(&token->value.string_val);
-//     }
-// }
-
 symstack_data_t convert_token_to_data(token_T token)
 {
     symstack_data_t data;
     data.token = token;
     data.is_handleBegin = false;
     data.is_terminal = true;
+    data.is_literal = false;
+    data.expr_res.expr_type = undefined;
+    data.expr_res.nilable = false;
     strcpy(data.symbol, convert_token_type_to_string(token));
     return data;
 }
