@@ -47,6 +47,76 @@ ret_string = function_Int_String(implicitIntegerVariable)
 ret_string = function__Double_String(implicitDoubleVariable)
 ret_string = function_String_String(implicitStringVariable)
 
+var overlay = ret_int
+let cond : String? = "SMH"
+
+func function_with_lots_of_scopes()
+{
+	if(1 == 1)
+	{
+		var overlay : Int = overlay 
+		if cond {
+			var overlay = function_String_String(cond)
+			while( 2!= 1)
+			{
+				let number = 15
+				if (number > 10 )
+				{
+					var multi_line_string :String = 
+					"""
+						this
+						is 
+						multi-line
+						string
+						with 
+						indentation
+						of
+						one 
+						tab
+					"""
+				}
+				else{ //built-ins
+					write("hello", "there",ret_dbl, overlay, cond )
+
+				}
+			}
+		}
+		else{
+			var overlay = function_String_Int(cond)
+		}
+	}
+	else{
+		if cond {
+			var overlay = function_String_Double(cond)
+		}
+		else{
+			var overlay = function_String_Int(cond)
+		}
+	}
+}
+
+if(1 == 1)
+{
+	var overlay : Int = overlay 
+	if cond {
+		var overlay = function_String_String(cond)
+	}
+	else{
+		var overlay = function_String_Int(cond)
+	}
+}
+else{
+	if cond {
+		var overlay = function_String_Double(cond)
+	}
+	else{
+		var overlay = function_String_Int(cond)
+	}
+}
+
+var someDouble = 3.14
+var implicit_conversion_of_literal_to_Double = 1
+implicit_conversion_of_literal_to_Double = someDouble
 
 func function_nil_nil ()
 {
