@@ -205,7 +205,7 @@ void push_initial_sym(symstack_t *stack)
 
 bool is_operand(symstack_data_t symbol)
 {
-    if (is_literal(symbol) || is_identifier(symbol))
+    if (is_literal(symbol) || symbol.token.type == TOKEN_IDENTIFIER || is_identifier(symbol))
     {
         return true;
     }
@@ -434,17 +434,28 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
     {
         return RULE_NO_RULE;
     }
+    DEBUG_PRINT("\nCHOOSING RULE | size: %zu \n", sym_arr->size);
+
+    bool is_op = is_operand(sym_arr->arr[0]);
+    DEBUG_PRINT("IS OPERAND ? : %d", is_op);
+
     prec_rule_t rule = RULE_NO_RULE;
     switch (sym_arr->size)
     {
     case 1:
         // question of function handling here
+
         if (is_operand(sym_arr->arr[0]))
         {
             if (sym_arr->arr[0].token.type == TOKEN_IDENTIFIER)
             {
+                if (id_is_defined(sym_arr->arr[0].token, p))
+                {
+                    DEBUG_PRINT("NOT FOUND");
+                }
                 if (!id_is_defined(sym_arr->arr[0].token, p))
                 {
+
                     print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
                     error_code_handler(ERR_UNDEFINED_VARIABLE);
                 }
@@ -489,8 +500,6 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
 {
     // see expression types
     DEFINE_EXPR_SYMBOL;
-
-    DEBUG_PRINT("RULE %d\n", rule);
 
     switch (rule)
     {
@@ -564,8 +573,10 @@ void reduce(symstack_t *stack, Parser *p)
     symbol_arr_move_expr_to_arr(stack, &sym_arr);
     symbol_arr_reverse(&sym_arr);
 
-    prec_rule_t rule = get_rule(&sym_arr, p);
+    print_symbol_arr(&sym_arr);
 
+    prec_rule_t rule = get_rule(&sym_arr, p);
+    DEBUG_PRINT("RULE %d\n", rule);
     if (rule == RULE_NO_RULE)
     {
 
