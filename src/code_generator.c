@@ -17,8 +17,8 @@ void code_generator_defvar(char *frame, char *varname, unsigned id){
 }
 
 bool code_generator_need_function_frame(char* name) {
-    const char* no_frame_funcions[] = {"readString", "readInt", "readDouble", "write", "Int2Double", "Double2Int", "length"};
-    const unsigned no_frame_funcions_count = 7;
+    const char* no_frame_funcions[] = {"readString", "readInt", "readDouble", "write", "Int2Double", "Double2Int", "length", "chr"};
+    const unsigned no_frame_funcions_count = 8;
 
     for(unsigned i = 0; i < no_frame_funcions_count; i++){
         if(strcmp(name, no_frame_funcions[i]) == 0) {
@@ -39,6 +39,7 @@ void code_generator_prolog(){
     code_generator_defvar("GF", "READED", 1);
     code_generator_defvar("GF", "READED", 2);
     code_generator_defvar("GF", "READED", 3);
+    code_generator_defvar("GF", "INT2CHAR", 1);
     code_generator_createframe();
     code_generator_pushframe();
 }
@@ -284,6 +285,11 @@ void code_generator_function_call_param_add(char* name, token_T token){
         code_generator_print_value(token);
         printf("\n");
         printf("PUSHS GF@LENGTH_1\n");
+    } else if(strcmp(name, "chr") == 0){
+        printf("INT2CHAR GF@INT2CHAR_1 ");
+        code_generator_print_value(token);
+        printf("\n");
+        printf("PUSHS GF@INT2CHAR_1\n");
     }
 }
 
