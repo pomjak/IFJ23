@@ -8,7 +8,7 @@ aho\j \u{2a}123_\"!
 
 """
 ""
-    """
+"""
 
 "\u{9}"
 "dlouhecislo123456789\u{0000000D}carriage_return"
@@ -19,3 +19,13 @@ eol
 
 
 """
+
+     """
+     ahoj
+     tady
+     """
+
+"""
+   ahoj
+   tady
+  """

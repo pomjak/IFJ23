@@ -147,6 +147,44 @@ char hexa_to_dec(dstring_t *hexa) {
     return tmp;
 }
 
+#define indentation_ok          0
+#define indentation_fail        1
+#define indentation_memory_fail 2
+unsigned indentation_perform(dstring_t *read_string) {
+    
+    dstring_t indent;
+    dstring_t result;
+
+    if(!dstring_init(&indent)) return indentation_memory_fail;
+    if(!dstring_init(&result)) return indentation_memory_fail;
+
+    for (size_t i = read_string->length - 4; i >= 0; i--) {
+        if (read_string->str[i] == '\n') break;
+        if (!dstring_append(&indent, read_string->str[i])) return indentation_memory_fail;
+    }
+
+    unsigned indent_position = 0;
+    for (size_t i = 0; i < read_string->length - indent.length - 4; i++) {
+        if (indent_position < indent.length) {
+            if (read_string->str[i] != indent.str[indent.length - indent_position - 1]) return false;
+        } else {
+            if (!dstring_append(&result, read_string->str[i])) return indentation_memory_fail;
+        }
+
+        indent_position++;
+
+        if (read_string->str[i] == '\n') indent_position = 0;
+    }
+
+    dstring_clear(read_string);
+    if (!dstring_copy(&result, read_string)) return indentation_memory_fail;
+
+    dstring_free(&indent);
+    dstring_free(&result);
+
+    return indentation_ok;
+}
+
 const char* keywords[] = {
     "else",
     "func", 
@@ -1093,8 +1131,6 @@ state_T eol_end_q(char read) {
             return;
         }
 
-    // @todo: fix indent formating by spaces before """
-
     if (read == '\n' || is_whitespace(read))  NEXT_STATE(eol_end_q);
     if (read != '"')                          NEXT_STATE(m_string_inner);
     if (read == '"')                          NEXT_STATE(m_string_end1);
@@ -1128,7 +1164,17 @@ state_T m_string_end2(char read) {
     if (read == '\n') NEXT_STATE(eol_end_q);
     if (read != '"')  NEXT_STATE(m_string_inner);
     if (read == '"')  {
-        dstring_retract(&read_string, 4);
+        //dstring_retract(&read_string, 4);
+        
+        unsigned status = indentation_perform(&read_string);
+
+        if (status == indentation_memory_fail) {
+            malloc_error = true;
+            return;
+        } else if (status == indentation_fail) {
+            NEXT_STATE(NULL); // parsing error invalid indent
+        }
+
         NEXT_STATE(string_end);
     }
 
