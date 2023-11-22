@@ -1029,7 +1029,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
 
     // if there is comparison and both sides are literals
-    if (op.type == TOKEN_EQ || op.type == TOKEN_EQ && expr_symbol.is_literal)
+    if (op.type == TOKEN_EQ || op.type == TOKEN_NEQ && expr_symbol.is_literal)
     {
         // if they are not the same
         if (!compare_types_strict(&first_operand, &second_operand))
