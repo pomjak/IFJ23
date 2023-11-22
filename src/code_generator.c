@@ -42,6 +42,7 @@ void code_generator_prolog(){
     code_generator_defvar("GF", "INT2CHAR", 1);
     code_generator_createframe();
     code_generator_pushframe();
+    code_generator_function_ord();
 }
 
 /**
@@ -291,6 +292,24 @@ void code_generator_function_call_param_add(char* name, token_T token){
         printf("\n");
         printf("PUSHS GF@INT2CHAR_1\n");
     }
+}
+
+void code_generator_function_ord(){
+    code_generator_function_label("ord");
+
+    code_generator_defvar("LF", "length", 0);
+    printf("STRLEN LF@length_0 LF@??_0\n");
+
+    printf("JUMPIFNEQ ORD_NOT0 int@0 LF@length_0\n");
+    printf("PUSHS int@0\n");
+    code_generator_return();
+
+    printf("LABEL ORD_NOT0\n");
+    code_generator_defvar("LF", "ord_value", 0);
+    printf("STRI2INT LF@ord_value_0 LF@??_0 int@0\n");
+    printf("PUSHS LF@ord_value_0\n");
+
+    code_generator_function_end("ord");
 }
 
 void code_generator_function_label_token(token_T token){
