@@ -799,6 +799,17 @@ int expr(Parser *p)
         GET_TOKEN();
     }
 
+    // here find lhs
+    if (p->lhs_id != NULL)
+    {
+
+        // process_assignment_type
+        if (p->lhs_id->type == final_expr.expr_res.expr_type)
+        {
+            DEBUG_PRINT("CHECKING_TYPE");
+        }
+    }
+
     DEBUG_PRINT("recieved token type: %d", p->curr_tok.type);
     DEBUG_PRINT("final expr type: %d", final_expr.expr_res.expr_type);
 
