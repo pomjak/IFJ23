@@ -17,8 +17,9 @@
 typedef struct DATA
 {
     token_T token;
-    bool isTerminal;
-    bool isHandleBegin;
+    bool is_terminal;
+    bool is_handleBegin;
+    bool is_literal;
     expr_res_t expr_res;
     char symbol[MAX_TOKEN_SYMBOL_SIZE];
 } symstack_data_t;

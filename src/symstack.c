@@ -25,8 +25,8 @@ symstack_data_t convert_token_to_data(token_T token)
 {
     symstack_data_t data;
     data.token = token;
-    data.isHandleBegin = false;
-    data.isTerminal = true;
+    data.is_handleBegin = false;
+    data.is_terminal = true;
     strcpy(data.symbol, convert_token_type_to_string(token));
     return data;
 }
@@ -172,7 +172,7 @@ void print_node(node_t *node, unsigned int width)
     {
         printf(" ");
     }
-    if (!node->data.isTerminal)
+    if (!node->data.is_terminal)
     {
         item_length = 1;
         printf("E");
@@ -192,7 +192,7 @@ void print_node(node_t *node, unsigned int width)
         printf(" ");
     }
 
-    if (node->data.isHandleBegin)
+    if (node->data.is_handleBegin)
     {
         printf("| < \n");
     }

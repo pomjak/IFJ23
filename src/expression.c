@@ -35,8 +35,8 @@
 
 #define DEFINE_EXPR_SYMBOL                      \
     symstack_data_t expr_symbol;                \
-    expr_symbol.isTerminal = false;             \
-    expr_symbol.isHandleBegin = false;          \
+    expr_symbol.is_terminal = false;            \
+    expr_symbol.is_handleBegin = false;         \
     expr_symbol.expr_res.expr_type = undefined; \
     expr_symbol.expr_res.nilable = false;
 
@@ -108,7 +108,7 @@ void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
     }
 
     node_t *current_node = symstack_peek(stack);
-    while (!current_node->data.isHandleBegin)
+    while (!current_node->data.is_handleBegin)
     {
         if (!symbol_arr_append(sym_arr, current_node->data))
         {
@@ -124,7 +124,7 @@ void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
 {
     // tady error lebo stack je empty
     symstack_data_t current_symbol = symstack_pop(stack);
-    while (!current_symbol.isHandleBegin && !symstack_is_empty(stack) && sym_arr->size < MAX_EXPR_SIZE)
+    while (!current_symbol.is_handleBegin && !symstack_is_empty(stack) && sym_arr->size < MAX_EXPR_SIZE)
     {
         if (!symbol_arr_append(sym_arr, current_symbol))
         {
@@ -136,7 +136,7 @@ void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
         current_symbol = symstack_pop(stack);
     }
     // remove handle and push it back
-    current_symbol.isHandleBegin = false;
+    current_symbol.is_handleBegin = false;
     symstack_push(stack, current_symbol);
 }
 
@@ -192,8 +192,8 @@ int error_code_handler(int error_code)
 void push_initial_sym(symstack_t *stack)
 {
     symstack_data_t data;
-    data.isHandleBegin = false;
-    data.isTerminal = true;
+    data.is_handleBegin = false;
+    data.is_terminal = true;
 
     token_T token;
     token.type = TOKEN_UNDEFINED;
@@ -354,7 +354,7 @@ node_t *get_closest_terminal(symstack_t *stack)
 
     while (current_node != NULL)
     {
-        if (current_node->data.isTerminal)
+        if (current_node->data.is_terminal)
         {
             return current_node;
         }
@@ -388,7 +388,7 @@ void shift(symstack_t *stack, token_T *token)
 {
     DEBUG_PRINT("shift\n");
     node_t *peek = get_closest_terminal(stack);
-    peek->data.isHandleBegin = true;
+    peek->data.is_handleBegin = true;
     symstack_data_t sym_data = convert_token_to_data(*token);
     symstack_push(stack, sym_data);
     PRINT_STACK(stack);
@@ -456,7 +456,7 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
         break;
     case 2:
         // E!
-        if (!sym_arr->arr[0].isTerminal && sym_arr->arr[1].token.type == TOKEN_NOT_NIL)
+        if (!sym_arr->arr[0].is_terminal && sym_arr->arr[1].token.type == TOKEN_NOT_NIL)
         {
             rule = RULE_E_NOT_NIL;
             break;
@@ -465,7 +465,7 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
         break;
     case 3:
         // choose rule E_OP_E
-        if (!sym_arr->arr[0].isTerminal && !sym_arr->arr[2].isTerminal)
+        if (!sym_arr->arr[0].is_terminal && !sym_arr->arr[2].is_terminal)
         {
             rule = choose_operator_rule(sym_arr->arr[1]);
             break;
@@ -499,8 +499,8 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         // set to non-terminal
         expr_symbol = process_operand(&sym_arr->arr[0], p);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
-        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -513,8 +513,8 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
         expr_symbol.expr_res.nilable = false;
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
-        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -525,8 +525,8 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_DIV_E:
         expr_symbol = process_arithmetic_operation(sym_arr, p);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
-        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         symstack_push(stack, expr_symbol);
         return;
 
@@ -540,15 +540,15 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_IS_NIL_E:
         expr_symbol = process_relational_operation(sym_arr, p);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
-        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         symstack_push(stack, expr_symbol);
         return;
     case RULE_PARL_E_PARR:
         expr_symbol = process_parenthesis(sym_arr, p);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
-        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
-        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
+        DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         symstack_push(stack, expr_symbol);
         return;
     default:
@@ -687,8 +687,8 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         }
     }
 
-    data.isHandleBegin = false;
-    data.isTerminal = false;
+    data.is_handleBegin = false;
+    data.is_terminal = false;
     strcpy(data.symbol, "ERR");
     symstack_push(stack, data);
 }
@@ -841,6 +841,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     // define expression symbol
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token = operand->token;
+    expr_symbol.is_literal = is_literal(*operand);
 
     // get type of the expression
     if (operand->token.type == TOKEN_IDENTIFIER)
@@ -871,7 +872,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     symstack_data_t second_operand = sym_arr->arr[2];
 
     DEFINE_EXPR_SYMBOL;
-
+    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
     // check types of operands
 
     // if they are identifiers and both are same strict type
@@ -956,6 +957,8 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
     symstack_data_t first_operand = sym_arr->arr[0];
     symstack_data_t second_operand = sym_arr->arr[2];
 
+    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+
     // define expr_type in here
     if (!compare_types_strict(&first_operand, &second_operand))
     {
@@ -997,6 +1000,8 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
     token_T operator= sym_arr->arr[1].token;
     symstack_data_t second_operand = sym_arr->arr[2];
 
+    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+
     if (operator.type != TOKEN_ADD)
     {
         print_error(ERR_INCOMPATIBILE_TYPE, "Unknown string operation.\n");
@@ -1020,7 +1025,14 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     expr_symbol.expr_res.expr_type = bool_;
 
     symstack_data_t first_operand = sym_arr->arr[0];
+    token_T op = sym_arr->arr[1].token;
     symstack_data_t second_operand = sym_arr->arr[2];
+    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+
+    // if there is comparison and both sides are literals
+    if (op.type == TOKEN_EQ || op.type == TOKEN_EQ && expr_symbol.is_literal)
+    {
+    }
 
     if (!compare_types_strict(&first_operand, &second_operand))
     {
@@ -1030,19 +1042,14 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     }
 
     // generate code
-    switch (sym_arr->arr[1].token.type)
+    switch (op.type)
     {
-    case TOKEN_EQ:
-        DEBUG_PRINT("Generate == comparation\n");
-        break;
     case TOKEN_GEQ:
         DEBUG_PRINT("Generate >= comparation\n");
         break;
     case TOKEN_LEQ:
         DEBUG_PRINT("Generate <= comparation\n");
         break;
-    case TOKEN_NEQ:
-        DEBUG_PRINT("Generate != comparation\n");
         break;
     case TOKEN_LT:
         DEBUG_PRINT("Generate < comparation\n");
