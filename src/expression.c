@@ -278,9 +278,16 @@ bool id_is_defined(token_T token, Parser *p)
     if (token.type == TOKEN_IDENTIFIER)
     {
         // find in local scopes
-        if (!p->lhs_id->is_var_initialized && !dstring_cmp(&p->curr_tok.value.string_val, &p->lhs_id->name))
+        if (p->lhs_id != NULL)
         {
-            p->current_id = search_scopes(p->stack->next, &token.value.string_val, &error);
+            if (!p->lhs_id->is_var_initialized && !dstring_cmp(&p->curr_tok.value.string_val, &p->lhs_id->name))
+            {
+                p->current_id = search_scopes(p->stack->next, &token.value.string_val, &error);
+            }
+            else
+            {
+                p->current_id = search_scopes(p->stack, &token.value.string_val, &error);
+            }
         }
         else
         {
