@@ -57,7 +57,7 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* RO  */ {S, S, R, S, E, S, R, R, R},
         /* (   */ {S, S, S, S, S, S, E, X, X},
         /* )   */ {R, R, R, X, R, X, R, R, R},
-        /* !   */ {X, X, X, X, X, X, X, X, X},
+        /* !   */ {R, R, R, R, R, R, R, R, R}, // not sure
         /* $   */ {S, S, S, S, S, S, X, S, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
@@ -441,7 +441,7 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
         break;
     case 2:
         // E!
-        if (sym_arr->arr[0].isTerminal && sym_arr->arr[1].token.type == TOKEN_NOT_NIL)
+        if (!sym_arr->arr[0].isTerminal && sym_arr->arr[1].token.type == TOKEN_NOT_NIL)
         {
             rule = RULE_E_NOT_NIL;
             break;
@@ -494,8 +494,12 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_NOT_NIL:
         // change type nilable to false
         expr_symbol.token = sym_arr->arr[0].token;
-        expr_symbol.expr_res.expr_type = convert_to_expr_type(sym_arr->arr[0].token.type);
+
+        expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
         expr_symbol.expr_res.nilable = false;
+        // printf("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
+        // printf("\t EXPR_SYM isterm   : %d\n", expr_symbol.isTerminal);
+        // printf("\t EXPR_SYM ishandle : %d\n", expr_symbol.isHandleBegin);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -1035,13 +1039,13 @@ void int2double(token_T *first_operand, token_T *second_operand)
     if (first_operand->type == TOKEN_INT)
     {
         // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
-        DEBUG_PRINT("int2double FIRST\n")
+        DEBUG_PRINT("int2double FIRST\n");
         // first_operand->value.double_val = (double)first_operand->value.int_val;
     }
     else
     {
         // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
-        DEBUG_PRINT("int2double SECOND\n")
+        DEBUG_PRINT("int2double SECOND\n");
         // second_operand->value.double_val = (double)second_operand->value.int_val;
     }
 }
