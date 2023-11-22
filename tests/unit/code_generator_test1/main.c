@@ -134,9 +134,9 @@ int main(int argc, char ** argv) {
     //end of for
     code_generator_for_loop_end(forId);
 
-    code_generator_function_call_param_add("write", "", c);
-    code_generator_function_call_param_add("write", "", space);
-    code_generator_function_call_param_add("write", "", a);
+    code_generator_function_call_param_add("write", c);
+    code_generator_function_call_param_add("write", space);
+    code_generator_function_call_param_add("write", a);
     code_generator_function_call("write");
 
     return 0;
