@@ -55,7 +55,7 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* ??  */ {S, S, S, S, S, S, R, S, R},
         /* i   */ {R, R, R, X, R, X, R, R, R},
         /* RO  */ {S, S, R, S, E, S, R, S, R},
-        /* (   */ {S, S, S, S, S, S, E, X, X},
+        /* (   */ {S, S, S, S, S, S, E, S, X},
         /* )   */ {R, R, R, X, R, X, R, S, R},
         /* !   */ {R, R, R, R, R, R, R, S, R}, // not sure
         /* $   */ {S, S, S, S, S, S, X, S, R}};
@@ -871,7 +871,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     }
 
     // if adding same types
-    if (first_operand.expr_res.expr_type == second_operand.expr_res.expr_type)
+    if (compare_types_strict(&first_operand, &second_operand))
     {
         // printf("\tsame types\n");
         if (first_operand.expr_res.expr_type == integer || first_operand.expr_res.expr_type == double_)
@@ -896,8 +896,8 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
         expr_symbol.expr_res.expr_type = double_;
         return expr_symbol;
     }
-    // if both are int
-    else if (first_operand.expr_res.expr_type == integer && second_operand.expr_res.expr_type == integer)
+    // if both are int and same expr type
+    else if (first_operand.expr_res.expr_type == integer && compare_types_strict(&first_operand, &second_operand))
     {
         // printf("\tBoth are int\n");
         generate_int_arithmetic_by_operator(op, first_operand.token.value.int_val, second_operand.token.value.int_val);
