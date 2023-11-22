@@ -204,9 +204,9 @@ void code_generator_function_label(char* name);
 void code_generator_function_end(char* name);
 
 /**
- * Creates return from function
- * @param token return value (identifier/string/int/double)
+ * Creates return from function (last item on stack)
+ * @pre use code_generator_push() for return value
 */
-void code_generator_return(token_T token);
+void code_generator_return();
 
 #endif
