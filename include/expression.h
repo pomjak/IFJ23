@@ -313,6 +313,14 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p);
 
 symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p);
 
+/**************************
+ * Type related functions *
+ **************************/
+
+bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2);
+
+bool compare_operand_with_expr_type(symstack_data_t *operand, Type type, bool nilable);
+
 /*****************************
  * Generation code functions *
  ****************************/

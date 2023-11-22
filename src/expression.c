@@ -53,7 +53,7 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* / * */ {R, R, R, S, R, R, R, S, R},
         /* + - */ {S, R, R, S, R, S, R, S, R},
         /* ??  */ {S, S, S, S, S, S, R, S, R},
-        /* i   */ {R, R, R, X, R, X, R, S, R},
+        /* i   */ {R, R, R, X, R, X, R, R, R},
         /* RO  */ {S, S, R, S, E, S, R, S, R},
         /* (   */ {S, S, S, S, S, S, E, X, X},
         /* )   */ {R, R, R, X, R, X, R, S, R},
@@ -963,7 +963,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
         return expr_symbol;
     }
 
-    if (first_operand.expr_res.expr_type == string && second_operand.expr_res.expr_type == string)
+    if (compare_types_strict(&first_operand, &second_operand))
     {
         DEBUG_PRINT("Generate concatenation\n");
         return expr_symbol;
@@ -982,7 +982,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     symstack_data_t first_operand = sym_arr->arr[0];
     symstack_data_t second_operand = sym_arr->arr[2];
 
-    if (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type)
+    if (!compare_types_strict(&first_operand, &second_operand))
     {
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
@@ -1017,6 +1017,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     default:
         break;
     }
+
     return expr_symbol;
 }
 
@@ -1031,6 +1032,23 @@ symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p)
     expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
 
     return expr_symbol;
+}
+
+/* TYPE RELATED FUNCTIONS */
+bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2)
+{
+    bool core_type = operand1->expr_res.expr_type == operand2->expr_res.expr_type;
+    bool nilable_type = operand1->expr_res.nilable == operand2->expr_res.nilable;
+    DEBUG_PRINT("Core types     : %d == %d\n", operand1->expr_res.expr_type, operand2->expr_res.expr_type);
+    DEBUG_PRINT("Nilable types  : %d == %d\n", operand1->expr_res.nilable, operand2->expr_res.nilable);
+    return core_type && nilable_type;
+}
+
+bool compare_operand_with_expr_type(symstack_data_t *operand, Type type, bool nilable)
+{
+    bool core_type = operand->expr_res.expr_type == type;
+    bool nilable_type = operand->expr_res.nilable == nilable;
+    return core_type && nilable_type;
 }
 
 /* CODE GENERATION FUNCTIONS */
