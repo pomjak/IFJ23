@@ -81,12 +81,14 @@ Rule stmt(Parser* p) {
         GET_TOKEN();
         NEXT_RULE(define);
         p->lhs_id->is_mutable = true;
+        p->lhs_id = NULL;
         break;
     case TOKEN_LET: /* let <define> */
         CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
         p->lhs_id->is_mutable = false;
+        p->lhs_id = NULL;
         break;
     case TOKEN_IDENTIFIER: /* ID<expression_type> */
         CHECK_NEWLINE();
@@ -103,6 +105,7 @@ Rule stmt(Parser* p) {
         p->lhs_id = p->current_id;
         GET_TOKEN();
         NEXT_RULE(expr_type);
+        p->lhs_id = NULL;
         break;
     case TOKEN_WHILE: /* while EXP { <block_body> */
         CHECK_NEWLINE();
@@ -829,13 +832,15 @@ Rule func_stmt(Parser* p) {
         CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
-        p->current_id->is_mutable = true;
+        p->lhs_id->is_mutable = true;
+        p->lhs_id = NULL;
         break;
     case TOKEN_LET:
         CHECK_NEWLINE();
         GET_TOKEN();
         NEXT_RULE(define);
-        p->current_id->is_mutable = false;
+        p->lhs_id->is_mutable = false;
+        p->lhs_id = NULL;
         break;
     case TOKEN_IDENTIFIER:
         CHECK_NEWLINE();
@@ -852,6 +857,7 @@ Rule func_stmt(Parser* p) {
         p->lhs_id = p->current_id;
         GET_TOKEN();
         NEXT_RULE(expr_type);
+        p->lhs_id = NULL;
         break;
     case TOKEN_WHILE:
         CHECK_NEWLINE();
