@@ -257,8 +257,12 @@ void code_generator_function_call_param_add_token(token_T token_name, token_T to
 void code_generator_function_call_param_add(char* name, token_T token){
 
     if(code_generator_need_function_frame(name)) {
-        code_generator_defvar("TF", "##", func_param_id);
-        printf("MOVE TF@##_%d ", func_param_id);
+        if (func_param_id == 0) {
+            code_generator_createframe();
+        }
+
+        code_generator_defvar("TF", "??", func_param_id);
+        printf("MOVE TF@??_%d ", func_param_id);
         code_generator_print_value(token);
         printf("\n");
 
@@ -295,7 +299,7 @@ void code_generator_function_label(char* name){
 
 void code_generator_param_map(char *param_name, unsigned param_id){
     code_generator_defvar("LF", param_name, 0);
-    printf("MOVE LF@%s_%d LF@##_%d\n", param_name, 0, param_id);
+    printf("MOVE LF@%s_%d LF@??_%d\n", param_name, 0, param_id);
 }
 
 void code_generator_function_end(char* name){
@@ -304,8 +308,7 @@ void code_generator_function_end(char* name){
     printf("\nLABEL $$FUNCTION_END_%s\n", name);
 }
 
-void code_generator_return(token_T token){
-    code_generator_push(token);
+void code_generator_return(){
     code_generator_popframe();
     printf("RETURN\n");
 }
