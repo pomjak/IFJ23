@@ -41,5 +41,5 @@ int main()
     assert(expr_res == 0);
     fprintf(stderr, "res = %d", expr_res);
     parser_dispose(&p);
-    return 0;
+    return expr_res;
 }

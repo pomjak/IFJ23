@@ -36,8 +36,8 @@ int main()
     }
 
     int expr_res = expr(&p);
-
     assert(p.expr_res.expr_type == bool_);
+
     assert(expr_res == 0);
     fprintf(stderr, "res = %d", expr_res);
     parser_dispose(&p);
