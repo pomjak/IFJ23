@@ -1,0 +1,8 @@
+prog
+stmt
+define
+var_def_cont
+prog
+stmt
+expr_type
+[ERROR 9] Assigning a new value to immutable variable e

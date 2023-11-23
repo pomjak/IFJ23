@@ -1,0 +1,8 @@
+func_header
+param_list
+func_ret_type
+prog
+param_list_skip
+func_ret_type_skip
+func_body
+prog

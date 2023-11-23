@@ -1,0 +1,4 @@
+prog
+stmt
+expr_type
+[ERROR 3] Attempting to call an undefined function

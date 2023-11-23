@@ -1,0 +1,5 @@
+prog
+stmt
+define
+var_def_cont
+[ERROR 8] 'c' - cannot implicitly set type from nil expression

@@ -1,34 +1,27 @@
 # LL-grammar syntax for parsing table generator
 # https://www.fit.vutbr.cz/~ikocman/llkptg/
 
-program: stmtlist;
-stmtlist: stmt stmtlist | funcdef stmtlist | "EOF";
-stmt: vardef | idconstruct | loop | cond;
-vardef: mutb "ID" vardefcont;
+
+program: stmt program | "func" "ID" "(" paramlist funcrettype "{" funcbody program | "EOF";
+stmt: "var" def | "let" def | "ID" exprtype | "while" "EXP" "{" blkbody | "if" cclause "{" blkbody "else" "{" blkbody;
+def: "ID" vardefcont;
 vardefcont: ":" type optassign | "=" "EXP";
 optassign: "=" "EXP" | /*eps*/;
-idconstruct: "ID" exprtype;
 exprtype: "=" "EXP" | "(" arglist;
-loop: "while" "EXP" "{" blkbody;
-cond: "if" cclause "{" blkbody "else" "{" blkbody;
 cclause: "EXP" | "let" "ID";
-arglist: arg argnext;
-argnext: "," arg argnext | ")";
-arg: "ID" optarg | literal ;
-funcdef: "func" "ID" "(" paramlist ")" funcrettype "{" funcbody;
-paramlist: param paramnext | /*eps*/;
-param: paramextid "ID" ":" type ;
-paramnext: "," param paramnext;
-paramextid: "_" | "ID" ;
+arglist: arg argnext | ")" ;
+argnext: "," arg argnext | ")" ;
+arg: "ID" optarg | literal;
+paramlist: param paramnext | ")";
+param: "_" "ID" ":" type | "ID" "ID" ":" type;
+paramnext: "," param paramnext | ")";
 blkbody: stmt blkbody | "}";
 funcbody: funcstmt funcbody | "}";
-funcstmt: vardef | idconstruct | "while" "EXP" "{" funcbody | "if" cclause "{" funcbody "else" "{" funcbody | "return" optret;
+funcstmt: "var" def | "let" def | "ID" exprtype | "while" "EXP" "{" funcbody | "if" cclause "{" funcbody "else" "{" funcbody | "return" optret;
 funcrettype: "-"">" type | /*eps*/;
 optret: "EXP" | /*eps*/;
 opttype: ":" type | /*eps*/;
-type: "Int"nilable | "String"nilable | "Double"nilable;
-nilable: "?" | /*eps*/;
+type: "Int" | "String" | "Double";
 optarg: ":" term | /*eps*/;
 term: "ID" | literal;
-mutb: "let" | "var";
 literal: "INT_LIT" | "STRING_LIT" | "DOUBLE_LIT";

@@ -1,0 +1,43 @@
+
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Zadejte cislo pro vypocet faktorialu
+'><R_PAR>
+<LET><IDENTIFIER  value='a'><COL><DT_INT  nilable='1'><ASS><IDENTIFIER  value='readInt'><L_PAR><R_PAR>
+<IF><LET><IDENTIFIER  value='a'><L_BKT>
+<IF><L_PAR><IDENTIFIER  value='a'><LT><INT  value='0'><R_PAR><L_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Faktorial nelze spocitat
+'><R_PAR>
+<R_BKT><ELSE><L_BKT>
+<VAR><IDENTIFIER  value='a'><ASS><IDENTIFIER  value='Int2Double'><L_PAR><IDENTIFIER  value='a'><R_PAR>
+<VAR><IDENTIFIER  value='vysl'><COL><DT_DOUBLE  nilable='0'><ASS><INT  value='1'>
+<WHILE><L_PAR><IDENTIFIER  value='a'><GT><INT  value='0'><R_PAR><L_BKT>
+<IDENTIFIER  value='vysl'><ASS><IDENTIFIER  value='vysl'><MUL><IDENTIFIER  value='a'>
+<IDENTIFIER  value='a'><ASS><IDENTIFIER  value='a'><SUB><INT  value='1'>
+<R_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Vysledek je: '><COMMA><IDENTIFIER  value='vysl'><COMMA><STRING  value='
+'><R_PAR>
+<R_BKT>
+<R_BKT><ELSE><L_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Chyba pri nacitani celeho cisla!
+'><R_PAR>
+<R_BKT><EOF>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Zadejte cislo pro vypocet faktorialu
+'><R_PAR>
+<LET><IDENTIFIER  value='a'><COL><DT_INT  nilable='1'><ASS><IDENTIFIER  value='readInt'><L_PAR><R_PAR>
+<IF><LET><IDENTIFIER  value='a'><L_BKT>
+<IF><L_PAR><IDENTIFIER  value='a'><LT><INT  value='0'><R_PAR><L_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Faktorial nelze spocitat
+'><R_PAR>
+<R_BKT><ELSE><L_BKT>
+<VAR><IDENTIFIER  value='a'><ASS><IDENTIFIER  value='Int2Double'><L_PAR><IDENTIFIER  value='a'><R_PAR>
+<VAR><IDENTIFIER  value='vysl'><COL><DT_DOUBLE  nilable='0'><ASS><INT  value='1'>
+<WHILE><L_PAR><IDENTIFIER  value='a'><GT><INT  value='0'><R_PAR><L_BKT>
+<IDENTIFIER  value='vysl'><ASS><IDENTIFIER  value='vysl'><MUL><IDENTIFIER  value='a'>
+<IDENTIFIER  value='a'><ASS><IDENTIFIER  value='a'><SUB><INT  value='1'>
+<R_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Vysledek je: '><COMMA><IDENTIFIER  value='vysl'><COMMA><STRING  value='
+'><R_PAR>
+<R_BKT>
+<R_BKT><ELSE><L_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Chyba pri nacitani celeho cisla!
+'><R_PAR>
+<R_BKT><EOF>

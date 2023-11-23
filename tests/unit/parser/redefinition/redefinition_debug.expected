@@ -1,0 +1,10 @@
+prog
+stmt
+define
+var_def_cont
+type
+opt_assign
+prog
+stmt
+define
+[ERROR 3] Variable x already defined

@@ -43,7 +43,7 @@ test: submission
 	
 	# for all dirs in ./tests/unit
 	for f in ./tests/unit/*; do \
-		if [ -d "$$f" -a $$(echo -n "$$f" | tail -c 1) != "-" ]; then \
+		if [ -d "$$f" -a "$$(echo -n "$$f" | tail -c 1)" != "-" ]; then \
 			mkdir ./test_build/                                       && \
 			cp -r ./build/* ./test_build/                             && \
 			rm ./test_build/compiler.c                                && \

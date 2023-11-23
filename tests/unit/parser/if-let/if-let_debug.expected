@@ -1,0 +1,12 @@
+prog
+stmt
+define
+var_def_cont
+type
+opt_assign
+prog
+stmt
+cond_clause
+block_body
+block_body
+prog
