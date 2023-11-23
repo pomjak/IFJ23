@@ -67,6 +67,3 @@ test_artifacts
 test_build
 
 vgcore.*
-
-expr/*
-*.txt
