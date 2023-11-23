@@ -1191,8 +1191,8 @@ void verify_lhs_type(symstack_data_t *final_expr, Parser *p)
 
 void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
 {
-    bool first_is_retypeable = (compare_operand_with_type(operand1, integer) || compare_operand_with_type(&operand1, double_)) && (operand1->expr_res.nilable == false);
-    bool second_is_retypeable = (compare_operand_with_type(operand2, integer) || compare_operand_with_type(&operand2, double_)) && (operand2->expr_res.nilable == false);
+    bool first_is_retypeable = (compare_operand_with_type(operand1, integer) || compare_operand_with_type(operand1, double_)) && (operand1->expr_res.nilable == false);
+    bool second_is_retypeable = (compare_operand_with_type(operand2, integer) || compare_operand_with_type(operand2, double_)) && (operand2->expr_res.nilable == false);
 
     // if they are both retypeable
     if (first_is_retypeable && second_is_retypeable)
