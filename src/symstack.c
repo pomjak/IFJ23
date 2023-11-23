@@ -77,8 +77,7 @@ bool symstack_dispose(symstack_t *stack)
 {
     while (!symstack_is_empty(stack))
     {
-        symstack_data_t data = symstack_pop(stack);
-        // delete_token(&data.token);
+        symstack_pop(stack);
     }
     return symstack_is_empty(stack);
 }
@@ -149,7 +148,7 @@ const char *convert_token_type_to_string(token_T token)
 void print_line(unsigned int width)
 {
     printf("+");
-    for (int i = 1; i < width - 1; i++)
+    for (unsigned int i = 1; i < width - 1; i++)
     {
         printf("-");
     }
@@ -161,9 +160,9 @@ void print_node(node_t *node, unsigned int width)
     print_line(width);
     printf("|");
 
-    int item_length = strlen(node->data.symbol);
-    int indent = 2;
-    for (int i = 1; i < indent; i++)
+    unsigned int item_length = strlen(node->data.symbol);
+    unsigned int indent = 2;
+    for (unsigned int i = 1; i < indent; i++)
     {
         printf(" ");
     }
@@ -182,7 +181,7 @@ void print_node(node_t *node, unsigned int width)
         printf("%s", node->data.symbol);
     }
 
-    for (int i = indent + item_length - 1; i < width - 2; i++)
+    for (unsigned int i = indent + item_length - 1; i < width - 2; i++)
     {
         printf(" ");
     }
@@ -206,13 +205,13 @@ void print_stack(const symstack_t *stack, unsigned int width)
     node_t nodes[stack->size];
 
     node_t *current_node = stack->top;
-    for (int i = 0; i < stack->size; i++)
+    for (size_t i = 0; i < stack->size; i++)
     {
         nodes[i] = *current_node;
         current_node = current_node->previous;
     }
 
-    for (int i = 0; i < stack->size; i++)
+    for (size_t i = 0; i < stack->size; i++)
     {
         print_node(&nodes[i], width);
     }

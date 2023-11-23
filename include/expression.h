@@ -262,7 +262,7 @@ prec_rule_t choose_operator_rule(symstack_data_t data);
  * @param p - pointer to parser data
  * @return prec_rule_t
  */
-prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p);
+prec_rule_t get_rule(symbol_arr_t *sym_arr);
 
 /**
  * @brief sets the isTerminal to false of chosen terminal
@@ -321,15 +321,15 @@ int expr(Parser *parser_data);
 
 symstack_data_t process_operand(symstack_data_t *operand, Parser *p);
 
-symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p);
+symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr);
 
-symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p);
+symstack_data_t process_division(symbol_arr_t *sym_arr);
 
-symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p);
+symstack_data_t process_concatenation(symbol_arr_t *sym_arr);
 
-symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p);
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr);
 
-symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p);
+symstack_data_t process_parenthesis(symbol_arr_t *sym_arr);
 
 /**************************
  * Type related functions *
