@@ -22,7 +22,7 @@ run: build
 			./$(NAME) < "$(dir)/$${FILENAME}".swift > ./output.txt 2>debug_output.txt; \
 			RET_CODE=$$?; \
 			echo -e "ret:"$${RET_CODE}" exp:"$$(cat "$(dir)/$${FILENAME}".ret)""; \
-			{ [[ "$${RET_CODE}" -eq "$$(cat "$(dir)/$${FILENAME}".ret)" ]]; } || \
+			{ [ "$${RET_CODE}" -eq "$$(cat "$(dir)/$${FILENAME}".ret)" ]; } || \
 				{ echo -e "[info] test parser $${FILENAME} [RET_CODE] \e[31mFAIL\e[0m" && exit 1;}; \
 			mkdir -p ../test_artifacts/"parser_$${FILENAME}"/ ; \
 			cp output.txt ../test_artifacts/"parser_$${FILENAME}"/"$${FILENAME}".txt; \
