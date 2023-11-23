@@ -476,7 +476,11 @@ Rule expr_type(Parser* p) {
         NEXT_RULE(arg_list);
         break;
     default:
-        print_token(p->curr_tok);
+        if (!p->current_id)
+        {
+            fprintf(stderr, "[ERROR %d] undefined variable\n", ERR_UNDEFINED_VARIABLE);
+            return ERR_UNDEFINED_VARIABLE;
+        }
         fprintf(stderr, "[ERROR %d] Unexpected token after identifier '%s'", ERR_SYNTAX, p->current_id->name.str);
         return ERR_SYNTAX;
     }
