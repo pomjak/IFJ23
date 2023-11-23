@@ -343,6 +343,8 @@ bool operand_is_nilable(symstack_data_t *operand);
 
 void verify_lhs_type(symstack_data_t *final_expr, Parser *p);
 
+void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2);
+
 /*****************************
  * Generation code functions *
  ****************************/

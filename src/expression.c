@@ -1074,25 +1074,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     // if there is comparison and both sides are literals
     if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
     {
-        // put this to function
-        bool first_is_retypeable = compare_operand_with_type(&first_operand, integer) || compare_operand_with_type(&first_operand, double_);
-        bool second_is_retypeable = compare_operand_with_type(&second_operand, integer) || compare_operand_with_type(&second_operand, double_);
-
-        // if they are both retypeable
-        if (first_is_retypeable && second_is_retypeable)
-        {
-            if (first_operand.is_literal && compare_operand_with_type(&first_operand, integer))
-            {
-                DEBUG_PRINT("retyping FIRST from int to double");
-                first_operand.expr_res.expr_type = double_;
-            }
-            else if (second_operand.is_literal && compare_operand_with_type(&second_operand, integer))
-            {
-                DEBUG_PRINT("retyping SECOND from int to double");
-                second_operand.expr_res.expr_type = double_;
-            }
-        }
-
+        convert_if_retypeable(&first_operand, &second_operand);
         return expr_symbol;
     }
 
@@ -1205,6 +1187,27 @@ void verify_lhs_type(symstack_data_t *final_expr, Parser *p)
         }
     }
     set_is_all_literals(true);
+}
+
+void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
+{
+    bool first_is_retypeable = (compare_operand_with_type(operand1, integer) || compare_operand_with_type(&operand1, double_)) && (operand1->expr_res.nilable == false);
+    bool second_is_retypeable = (compare_operand_with_type(operand2, integer) || compare_operand_with_type(&operand2, double_)) && (operand2->expr_res.nilable == false);
+
+    // if they are both retypeable
+    if (first_is_retypeable && second_is_retypeable)
+    {
+        if (operand1->is_literal && compare_operand_with_type(operand1, integer))
+        {
+            DEBUG_PRINT("retyping FIRST from int to double");
+            operand1->expr_res.expr_type = double_;
+        }
+        else if (operand1->is_literal && compare_operand_with_type(operand2, integer))
+        {
+            DEBUG_PRINT("retyping SECOND from int to double");
+            operand2->expr_res.expr_type = double_;
+        }
+    }
 }
 
 /* CODE GENERATION FUNCTIONS */
