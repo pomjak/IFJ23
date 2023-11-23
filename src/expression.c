@@ -28,9 +28,9 @@
 #define PRINT_STACK(stack)
 #endif
 
-#define EMPTY_TOKEN            \
-    {                          \
-        false, TOKEN_UNDEFINED \
+#define EMPTY_TOKEN(eol)            \
+    {                               \
+        eol, TOKEN_UNDEFINED, {false} \
     }
 
 #define DEFINE_EXPR_SYMBOL                      \
@@ -47,9 +47,9 @@ static void set_is_multiline_expr(bool value) { is_multiline_expr = value; }
 
 static bool get_is_multiline_expr() { return is_multiline_expr; }
 
-static void set_is_all_literals(bool value) { is_all_literals = value; };
+static void set_is_all_literals(bool value) { is_all_literals = value; }
 
-static bool get_is_all_literals() { return is_all_literals; };
+static bool get_is_all_literals() { return is_all_literals; }
 
 // RO - Relational Operators , FC - Function Call
 const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
@@ -166,15 +166,15 @@ void symbol_arr_free(symbol_arr_t *sym_arr)
 
 void print_symbol_arr(symbol_arr_t *sym_arr)
 {
-    for (int i = 0; i < sym_arr->size; i++)
+    for (size_t i = 0; i < sym_arr->size; i++)
     {
         if (sym_arr->arr[i].token.type == TOKEN_IDENTIFIER || sym_arr->arr[i].token.type == TOKEN_STRING)
         {
-            printf("sym_arr[%d]: %s\n", i, sym_arr->arr[i].token.value.string_val.str);
+            printf("sym_arr[%ld]: %s\n", i, sym_arr->arr[i].token.value.string_val.str);
         }
         else
         {
-            printf("sym_arr[%d]: %s\n", i, sym_arr->arr[i].symbol);
+            printf("sym_arr[%ld]: %s\n", i, sym_arr->arr[i].symbol);
         }
     }
 }
@@ -459,7 +459,7 @@ prec_rule_t choose_operator_rule(symstack_data_t data)
     }
 }
 
-prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
+prec_rule_t get_rule(symbol_arr_t *sym_arr)
 {
     if (sym_arr->arr == NULL)
     {
@@ -467,8 +467,7 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr, Parser *p)
     }
     DEBUG_PRINT("\nCHOOSING RULE | size: %zu \n", sym_arr->size);
 
-    bool is_op = is_operand(sym_arr->arr[0]);
-    DEBUG_PRINT("IS OPERAND ? : %d", is_op);
+    DEBUG_PRINT("IS OPERAND ? : %d", is_operand(sym_arr->arr[0]));
 
     prec_rule_t rule = RULE_NO_RULE;
     switch (sym_arr->size)
@@ -563,7 +562,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_MINUS_E:
     case RULE_E_MUL_E:
     case RULE_E_DIV_E:
-        expr_symbol = process_arithmetic_operation(sym_arr, p);
+        expr_symbol = process_arithmetic_operation(sym_arr);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
@@ -578,14 +577,14 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_EQ_E:
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
-        expr_symbol = process_relational_operation(sym_arr, p);
+        expr_symbol = process_relational_operation(sym_arr);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         symstack_push(stack, expr_symbol);
         return;
     case RULE_PARL_E_PARR:
-        expr_symbol = process_parenthesis(sym_arr, p);
+        expr_symbol = process_parenthesis(sym_arr);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
@@ -606,7 +605,7 @@ void reduce(symstack_t *stack, Parser *p)
 
     // print_symbol_arr(&sym_arr);
 
-    prec_rule_t rule = get_rule(&sym_arr, p);
+    prec_rule_t rule = get_rule(&sym_arr);
     DEBUG_PRINT("RULE %d\n", rule);
     if (rule == RULE_NO_RULE)
     {
@@ -625,7 +624,7 @@ void reduce(symstack_t *stack, Parser *p)
             PRINT_STACK(stack);
 
             // set the end of the expression
-            token_T empty = EMPTY_TOKEN;
+            token_T empty = EMPTY_TOKEN(p->curr_tok.preceding_eol);
             p->curr_tok = empty;
         }
         return;
@@ -790,8 +789,6 @@ int expr(Parser *p)
     DEBUG_PRINT("EXPR\n");
 
     /* error handling */
-    int error_code = EXIT_SUCCESS;
-    bool parser_defined = p == NULL;
 
     symstack_t stack;
     init_symstack(&stack);
@@ -834,7 +831,7 @@ int expr(Parser *p)
                 PRINT_STACK(&stack);
 
                 // set the end of the expression
-                token_T empty = EMPTY_TOKEN;
+                token_T empty = EMPTY_TOKEN(p->curr_tok.preceding_eol);
                 p->curr_tok = empty;
             }
             else
@@ -905,7 +902,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     return expr_symbol;
 }
 
-symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
+symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 {
     DEBUG_PRINT("Process arithmetic op");
 
@@ -937,13 +934,13 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
 
     if (compare_operand_with_type(&first_operand, string) || compare_operand_with_type(&second_operand, string))
     {
-        expr_symbol = process_concatenation(sym_arr, p);
+        expr_symbol = process_concatenation(sym_arr);
         return expr_symbol;
     }
 
     if (op.type == TOKEN_DIV)
     {
-        expr_symbol = process_division(sym_arr, p);
+        expr_symbol = process_division(sym_arr);
         return expr_symbol;
     }
 
@@ -990,7 +987,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr, Parser *p)
     return expr_symbol;
 }
 
-symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
+symstack_data_t process_division(symbol_arr_t *sym_arr)
 {
     DEBUG_PRINT("Process division");
     DEFINE_EXPR_SYMBOL;
@@ -1031,7 +1028,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr, Parser *p)
     return expr_symbol;
 }
 
-symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
+symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 {
     DEBUG_PRINT("Process concat");
     DEFINE_EXPR_SYMBOL;
@@ -1060,7 +1057,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr, Parser *p)
     return expr_symbol;
 }
 
-symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
 {
     DEBUG_PRINT("Process relational op");
     DEFINE_EXPR_SYMBOL;
@@ -1133,7 +1130,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     return expr_symbol;
 }
 
-symstack_data_t process_parenthesis(symbol_arr_t *sym_arr, Parser *p)
+symstack_data_t process_parenthesis(symbol_arr_t *sym_arr)
 {
     DEFINE_EXPR_SYMBOL;
 
