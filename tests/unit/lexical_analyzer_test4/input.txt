@@ -1,0 +1,18 @@
+//Deklarace a definice uzivatelskych funkci
+func bar(with param : String) -> String {
+let r : String = foo(param)
+return r
+}
+func foo(_ par : String) -> String {
+let ret = bar(with: par)
+return ret
+}
+bar(with: "ahoj")
+func concat(_ x : String, with y : String) -> String {
+let x = x + y
+return x + " " + y
+}
+let a = "ahoj "
+var ct : String
+ct = concat(a, with: "svete")
+write(ct, a)

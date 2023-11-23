@@ -1,0 +1,27 @@
+
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Zadejte cislo pro vypocet faktorialu: '><R_PAR>
+<LET><IDENTIFIER  value='inp'><COL><DT_INT  nilable='1'><ASS><IDENTIFIER  value='readInt'><L_PAR><R_PAR>
+<FUNC><IDENTIFIER  value='decrement'><L_PAR><IDENTIFIER  value='of'><IDENTIFIER  value='n'><COL><DT_INT  nilable='0'><COMMA><IDENTIFIER  value='by'><IDENTIFIER  value='m'><COL><DT_INT  nilable='0'><R_PAR><RET_VAL><DT_INT  nilable='0'><L_BKT>
+<RETURN><IDENTIFIER  value='n'><SUB><IDENTIFIER  value='m'>
+<R_BKT>
+<FUNC><IDENTIFIER  value='factorial'><L_PAR><UND_SCR><IDENTIFIER  value='n'><COL><DT_INT  nilable='0'><R_PAR><RET_VAL><DT_INT  nilable='0'><L_BKT>
+<VAR><IDENTIFIER  value='result'><COL><DT_INT  nilable='1'>
+<IF><L_PAR><IDENTIFIER  value='n'><LT><INT  value='2'><R_PAR><L_BKT>
+<IDENTIFIER  value='result'><ASS><INT  value='1'>
+<R_BKT><ELSE><L_BKT>
+<LET><IDENTIFIER  value='decremented_n'><ASS><IDENTIFIER  value='decrement'><L_PAR><IDENTIFIER  value='of'><COL><IDENTIFIER  value='n'><COMMA><IDENTIFIER  value='by'><COL><INT  value='1'><R_PAR>
+<LET><IDENTIFIER  value='temp_result'><ASS><IDENTIFIER  value='factorial'><L_PAR><IDENTIFIER  value='decremented_n'><R_PAR>
+<IDENTIFIER  value='result'><ASS><IDENTIFIER  value='n'><MUL><IDENTIFIER  value='temp_result'>
+<R_BKT>
+<RETURN><IDENTIFIER  value='result'><NOT_NIL>
+<R_BKT>
+<IF><LET><IDENTIFIER  value='inp'><L_BKT>
+<IF><L_PAR><IDENTIFIER  value='inp'><LT><INT  value='0'><R_PAR><L_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Faktorial nelze spocitat!'><R_PAR>
+<R_BKT><ELSE><L_BKT>
+<LET><IDENTIFIER  value='vysl'><ASS><IDENTIFIER  value='factorial'><L_PAR><IDENTIFIER  value='inp'><R_PAR>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Vysledek je: '><COMMA><IDENTIFIER  value='vysl'><R_PAR>
+<R_BKT>
+<R_BKT><ELSE><L_BKT>
+<IDENTIFIER  value='write'><L_PAR><STRING  value='Chyba pri nacitani celeho cisla!'><R_PAR>
+<R_BKT><EOF>

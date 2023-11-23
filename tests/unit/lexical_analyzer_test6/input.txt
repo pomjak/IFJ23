@@ -1,0 +1,21 @@
+//Test of keywords/identifiers
+_ahoj
+_AHoj
+_123
+Test
+TEst
+te_12
+else
+func
+if
+let
+nil
+return
+var
+while
+Double?
+Double
+Int?
+Int
+String?
+String

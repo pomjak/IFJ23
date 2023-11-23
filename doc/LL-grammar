@@ -1,0 +1,27 @@
+# LL-grammar syntax for parsing table generator
+# https://www.fit.vutbr.cz/~ikocman/llkptg/
+
+
+program: stmt program | "func" "ID" "(" paramlist funcrettype "{" funcbody program | "EOF";
+stmt: "var" def | "let" def | "ID" exprtype | "while" "EXP" "{" blkbody | "if" cclause "{" blkbody "else" "{" blkbody;
+def: "ID" vardefcont;
+vardefcont: ":" type optassign | "=" "EXP";
+optassign: "=" "EXP" | /*eps*/;
+exprtype: "=" "EXP" | "(" arglist;
+cclause: "EXP" | "let" "ID";
+arglist: arg argnext | ")" ;
+argnext: "," arg argnext | ")" ;
+arg: "ID" optarg | literal;
+paramlist: param paramnext | ")";
+param: "_" "ID" ":" type | "ID" "ID" ":" type;
+paramnext: "," param paramnext | ")";
+blkbody: stmt blkbody | "}";
+funcbody: funcstmt funcbody | "}";
+funcstmt: "var" def | "let" def | "ID" exprtype | "while" "EXP" "{" funcbody | "if" cclause "{" funcbody "else" "{" funcbody | "return" optret;
+funcrettype: "-"">" type | /*eps*/;
+optret: "EXP" | /*eps*/;
+opttype: ":" type | /*eps*/;
+type: "Int" | "String" | "Double";
+optarg: ":" term | /*eps*/;
+term: "ID" | literal;
+literal: "INT_LIT" | "STRING_LIT" | "DOUBLE_LIT";

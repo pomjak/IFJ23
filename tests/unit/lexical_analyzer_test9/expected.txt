@@ -1,0 +1,17 @@
+
+<STRING  value=''>
+<STRING  value='ahoj 123_"!*'>
+<STRING  value='ahoj *123_"!
+*'>
+<STRING  value='""'>
+<STRING  value='	'>
+<STRING  value='dlouhecislo123456789carriage_return'>
+<STRING  value='lomenoRlomenoR'><STRING  value='
+'><STRING  value='lomenoT	'>
+<STRING  value='eol
+
+'>
+<STRING  value='ahoj
+tady'>
+<STRING  value=' ahoj
+ tady'><EOF>

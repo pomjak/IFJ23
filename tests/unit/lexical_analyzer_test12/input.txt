@@ -1,0 +1,22 @@
+hello /* multi line comment*/
+"""
+eol
+
+
+""" // comment
+/*
+multi line comment
+multi line comment
+*/
+// comment
+func       foo        ()         {} // comment
+func abc() -> Int {} // comment
+c
+=
+1
++
+d
+=
+a
+-     
+b

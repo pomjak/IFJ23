@@ -1,0 +1,10 @@
+
+<INT  value='1'>
+<INT  value='155'>
+<DBL  value='0.000100'>
+<DBL  value='400000.000000'>
+<DBL  value='1000000.000000'>
+<DBL  value='200000000000.000000'>
+<DBL  value='12.500000'>
+<DBL  value='1.150000'>
+<DBL  value='1100000.000000'><EOF>
