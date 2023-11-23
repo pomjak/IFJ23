@@ -71,9 +71,15 @@ void code_generator_var_declare_token(token_T token);
 
 /**
  * Declares and sets value from stack to variable (pop)
- * @param var name of variable
+ * @param variable name of variable
 */
 void code_generator_var_declare(char* variable);
+
+/**
+ * Copies variable from local frame to temporary frame
+ * @param variable name of variable
+*/
+void code_generator_copy_var_to_new_frame(char* variable);
 
 /**
  * Creates eof label
@@ -213,5 +219,10 @@ void code_generator_return();
  * Generates code of ord function (internal code generator function)
 */
 void code_generator_function_ord();
+
+/**
+ * Generates code of substring function (internal code generator function)
+*/
+void code_generator_substring();
 
 #endif
