@@ -28,9 +28,9 @@
 #define PRINT_STACK(stack)
 #endif
 
-#define EMPTY_TOKEN(eol)            \
-    {                               \
-        eol, TOKEN_UNDEFINED, {false} \
+#define EMPTY_TOKEN(eol)                \
+    {                                   \
+        eol, TOKEN_UNDEFINED, { false } \
     }
 
 #define DEFINE_EXPR_SYMBOL                      \
@@ -247,6 +247,7 @@ bool find_closest_eol(symstack_t *stack)
     {
         if (current_node->data.token.preceding_eol)
         {
+            DEBUG_PRINT("PRECEDING EOL");
             eol_found = true;
             break;
         }
@@ -618,6 +619,7 @@ void reduce(symstack_t *stack, Parser *p)
         }
         else
         {
+            DEBUG_PRINT("NO ERR");
             reduce_to_eol(stack, p);
             set_is_multiline_expr(true);
             tb_prev(&p->buffer);
@@ -851,7 +853,12 @@ int expr(Parser *p)
     if (!symstack_is_empty(&stack))
     {
         symstack_dispose(&stack);
-    };
+    }
+    else
+    {
+        error_code_handler(ERR_SYNTAX);
+        print_error(ERR_SYNTAX, "Missing expression.\n");
+    }
 
     DEBUG_PRINT("before token type: %d", p->curr_tok.type);
     DEBUG_PRINT("before expr type: %d", final_expr.expr_res.expr_type);
