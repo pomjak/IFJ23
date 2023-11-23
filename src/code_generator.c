@@ -43,6 +43,7 @@ void code_generator_prolog(){
     code_generator_createframe();
     code_generator_pushframe();
     code_generator_function_ord();
+    code_generator_substring();
 }
 
 /**
@@ -76,7 +77,7 @@ void code_generator_var_assign(char* var){
 	if(strcmp(var, "_") != 0){
 		printf("\nPOPS LF@%s_%d\n", var, 0);
 	} else{
-        code_generator_defvar("LF","TMP",tmp_var_id);
+        code_generator_defvar("LF","TMP", tmp_var_id);
 		printf("POPS LF@TMP_%u\n", tmp_var_id);
 		tmp_var_id++;
 	}
@@ -87,8 +88,13 @@ void code_generator_var_declare_token(token_T token){
 }
 
 void code_generator_var_declare(char* variable){
-	code_generator_defvar("LF",variable,0);
+	code_generator_defvar("LF", variable, 0);
     printf("POPS LF@%s_%d\n", variable, 0);
+}
+
+void code_generator_copy_var_to_new_frame(char* variable){
+    code_generator_defvar("TF", variable, 0);
+    printf("MOVE TF@%s_%d LF@%s_%d\n", variable, 0, variable, 0);
 }
 
 void code_generator_eof(){
@@ -97,6 +103,7 @@ void code_generator_eof(){
 
 void code_generator_push(token_T token){
     if(token.type != TOKEN_IDENTIFIER &&
+       token.type != TOKEN_NIL &&
        token.type != TOKEN_INT &&
        token.type != TOKEN_DBL &&
        token.type != TOKEN_STRING) { 
@@ -139,6 +146,8 @@ void code_generator_print_value(token_T token){
 
     if(token.type == TOKEN_IDENTIFIER){
         printf("LF@%s_%d",token.value.string_val.str, 0);
+    } else if (token.type == TOKEN_NIL) {
+	    printf("nil@nil");
     } else if (token.type == TOKEN_INT) {
 	    printf("int@%d",token.value.int_val);
 	} else if (token.type == TOKEN_DBL) {
@@ -310,6 +319,55 @@ void code_generator_function_ord(){
     printf("PUSHS LF@ord_value_0\n");
 
     code_generator_function_end("ord");
+}
+
+void code_generator_substring(){
+    code_generator_function_label("substring");
+
+    code_generator_defvar("LF", "length", 0);
+    printf("STRLEN LF@length_0 LF@??_0\n");
+
+    code_generator_defvar("LF", "condition", 0);
+
+    printf("LT LF@condition_0 LF@??_1 int@0\n");
+    printf("JUMPIFEQ SUSTRING_nil LF@condition_0 bool@true\n");
+
+    printf("LT LF@condition_0 LF@??_2 int@0\n");
+    printf("JUMPIFEQ SUSTRING_nil LF@condition_0 bool@true\n");
+
+    printf("GT LF@condition_0 LF@??_1 LF@??_2\n");
+    printf("JUMPIFEQ SUSTRING_nil LF@condition_0 bool@true\n");
+
+    printf("LT LF@condition_0 LF@??_1 LF@length_0\n");
+    printf("JUMPIFNEQ SUSTRING_nil LF@condition_0 bool@true\n");
+
+    printf("GT LF@condition_0 LF@??_2 LF@length_0\n");
+    printf("JUMPIFEQ SUSTRING_nil LF@condition_0 bool@true\n");
+
+    code_generator_defvar("LF", "result", 0);
+    code_generator_defvar("LF", "char", 0);
+
+    printf("MOVE LF@result_0 string@\n");
+
+    printf("LABEL SUSTRING_loop\n");
+
+    printf("LT LF@condition_0 LF@??_1 LF@??_2\n");
+    printf("JUMPIFNEQ SUSTRING_loop_end LF@condition_0 bool@true\n");
+
+    printf("GETCHAR LF@char_0 LF@??_0 LF@??_1\n");
+    printf("CONCAT LF@result_0 LF@result_0 LF@char_0\n");
+    printf("ADD LF@??_1 int@1 LF@??_1\n");
+
+    printf("JUMP SUSTRING_loop\n");
+    printf("LABEL SUSTRING_loop_end\n");
+
+    printf("PUSHS LF@result_0\n");
+    code_generator_return();
+
+    printf("LABEL SUSTRING_nil\n");
+    printf("PUSHS nil@nil\n");
+
+    code_generator_function_end("substring");
 }
 
 void code_generator_function_label_token(token_T token){
