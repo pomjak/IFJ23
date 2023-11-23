@@ -550,7 +550,7 @@ Rule cond_clause(Parser* p) {
  */
 Rule arg_list(Parser* p) {
     RULE_PRINT("arg_list");
-    uint32_t res, err;
+    uint32_t res;
     p->current_arg = p->last_func_id->parameters;
     if (p->curr_tok.type == TOKEN_R_PAR) {
         /* Only check argument count if func has a set number of parameters */
@@ -582,7 +582,7 @@ Rule arg_list(Parser* p) {
  */
 Rule arg_next(Parser* p) {
     RULE_PRINT("arg_next");
-    uint32_t res, err;
+    uint32_t res;
 
     switch (p->curr_tok.type) {
     case TOKEN_COMMA:
@@ -691,7 +691,7 @@ Rule arg(Parser* p) {
  */
 Rule param_list(Parser* p) {
     RULE_PRINT("param_list");
-    uint32_t res, err;
+    uint32_t res;
     p->in_param = true;
     if (p->curr_tok.type == TOKEN_R_PAR) {
         p->in_param = false;
@@ -707,7 +707,7 @@ Rule param_list(Parser* p) {
  */
 Rule param_next(Parser* p) {
     RULE_PRINT("param_next");
-    uint32_t res, err;
+    uint32_t res;
 
     switch (p->curr_tok.type) {
     case TOKEN_R_PAR:
@@ -935,7 +935,7 @@ Rule func_ret_type(Parser* p) {
  */
 Rule opt_ret(Parser* p) {
     RULE_PRINT("opt_ret");
-    uint32_t res, err;
+    uint32_t res;
 
     if (p->last_func_id->return_type == nil) {
         GET_TOKEN();
@@ -966,7 +966,7 @@ Rule opt_ret(Parser* p) {
  */
 Rule opt_type(Parser* p) {
     RULE_PRINT("opt_type");
-    uint32_t res, err;
+    uint32_t res;
 
     if (p->curr_tok.type == TOKEN_COL) {
         GET_TOKEN();
@@ -981,7 +981,7 @@ Rule opt_type(Parser* p) {
  */
 Rule type(Parser* p) {
     RULE_PRINT("type");
-    uint32_t res, err;
+    uint32_t err;
 
     switch (p->curr_tok.type) {
     case TOKEN_DT_INT:
@@ -1070,7 +1070,7 @@ Rule type(Parser* p) {
  */
 Rule opt_arg(Parser* p) {
     RULE_PRINT("opt_arg");
-    uint32_t res, err;
+    uint32_t res;
 
     if (p->curr_tok.type == TOKEN_COL) {
         GET_TOKEN();
@@ -1137,7 +1137,6 @@ Rule term(Parser* p) {
  */
 Rule literal(Parser* p) {
     RULE_PRINT("literal");
-    uint32_t res, err;
     DEBUG_PRINT("Before switch::%d", p->curr_tok.type);
     switch (p->curr_tok.type) {
     case TOKEN_INT:
@@ -1209,7 +1208,7 @@ Rule func_header(Parser* p) {
  */
 Rule type_skip(Parser* p) {
     RULE_PRINT("type_skip");
-    uint32_t res, err;
+    uint32_t  err;
 
     switch (p->curr_tok.type) {
     case TOKEN_DT_INT:
@@ -1344,7 +1343,7 @@ Rule skip(Parser* p) {
  */
 Rule funccall(Parser* p) {
     RULE_PRINT("funccall");
-    uint32_t res, err;
+    uint32_t res;
     symtab_item_t* temp;
 
     /* Current token must be an identifier stored in p->rhs_id (already parsed in the rule calling this function) */
