@@ -1,26 +1,22 @@
 /**
  * @file compiler.c
- * @author your name (xponec01@fit.vutbr.cz)
- * @author your name (you@domain.com)
- * @author your name (you@domain.com)
- * @author your name (you@domain.com)
- * @brief 
+ * @author Pomsar Jakub (xpomsa00@fit.vutbr.cz)
+ * @author Simon Cagala (xcagal00@stud.fit.vutbr.cz)
+ * @author Marie Kolarikova (xkolar77@stud.fit.vutbr.cz)
+ * @author Adrián Ponechal (xponec01@stud.fit.vutbr.cz)
+ * @brief
  * @version 0.1
  * @date 2023-06-05
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "error.h"
+#include "parser.h"
 
-int main(int argc, char ** argv)
+int main()
 {
-    (void)argc;
-    (void)argv;
-    printf("Compiler was compiled!\n");
-    
-    return 0;
+    return parse();
 }
