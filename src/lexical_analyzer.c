@@ -158,7 +158,7 @@ unsigned indentation_perform(dstring_t *read_string) {
     if(!dstring_init(&indent)) return indentation_memory_fail;
     if(!dstring_init(&result)) return indentation_memory_fail;
 
-    for (size_t i = read_string->length - 4; i >= 0; i--) {
+    for (size_t i = read_string->length - 4; ; i--) {
         if (read_string->str[i] == '\n') break;
         if (!dstring_append(&indent, read_string->str[i])) return indentation_memory_fail;
     }
