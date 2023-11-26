@@ -3,14 +3,23 @@
  * @file code_generator.c
  * @brief Code generator
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
- * @date 19.11.2023
+ * @date 26.11.2023
  **/
 
 #include "code_generator.h"
 #include <stdio.h>
 
+#define BUFFER_PRINT(fmt, ...) {                               \
+    int   sprintf_size = snprintf(NULL, 0, fmt, ##__VA_ARGS__);\
+    char* sprintf_data = malloc(sprintf_size + 1);             \
+    sprintf(sprintf_data, fmt, ##__VA_ARGS__);                 \
+    code_generator_buffer_print(sprintf_data);                  \
+}
+
 unsigned tmp_var_id = 0;
 unsigned func_param_id = 0;
+unsigned for_open = 0;
+dstring_t print_buffer;
 
 void code_generator_defvar(char *frame, char *varname, unsigned id){
     printf("\nDEFVAR %s@%s_%d\n",frame,varname, id);
@@ -27,10 +36,23 @@ bool code_generator_need_function_frame(char* name) {
     }
 
     return true;
+}
 
+void code_generator_buffer_print(char *text){
+    if(for_open > 0){
+        dstring_add_const_str(&print_buffer, text);
+    } else {
+        printf(text);
+    }
+}
+
+void code_generator_buffer_transmit(){
+    printf(print_buffer.str);
+    dstring_clear(&print_buffer);
 }
 
 void code_generator_prolog(){
+    dstring_init(&print_buffer);
 	printf(".IFJcode23\n");
 	code_generator_defvar("GF", "PARAM", 1);
 	code_generator_defvar("GF", "PARAM", 2);
@@ -51,17 +73,17 @@ void code_generator_prolog(){
  */
 
 void code_generator_if_header(unsigned id){
-    printf("\nPUSHS bool@true\n");
-    printf("JUMPIFNEQS $$ELSE_%u\n", id);
+    BUFFER_PRINT("\nPUSHS bool@true\n");
+    BUFFER_PRINT("JUMPIFNEQS $$ELSE_%u\n", id);
 }
 
 void code_generator_if_else(unsigned id){
-	printf("\nJUMP $$IF_END_%u\n", id);
-	printf("LABEL $$ELSE_%u\n", id);
+	BUFFER_PRINT("\nJUMP $$IF_END_%u\n", id);
+	BUFFER_PRINT("LABEL $$ELSE_%u\n", id);
 }
 
 void code_generator_if_end(unsigned id){
-	printf("\nLABEL $$IF_END_%u\n", id);
+	BUFFER_PRINT("\nLABEL $$IF_END_%u\n", id);
 }
 
 /**
@@ -75,10 +97,10 @@ void code_generator_var_assign_token(token_T token){
 void code_generator_var_assign(char* var){
     
 	if(strcmp(var, "_") != 0){
-		printf("\nPOPS LF@%s_%d\n", var, 0);
+		BUFFER_PRINT("\nPOPS LF@%s_%d\n", var, 0);
 	} else{
         code_generator_defvar("LF","TMP", tmp_var_id);
-		printf("POPS LF@TMP_%u\n", tmp_var_id);
+		BUFFER_PRINT("POPS LF@TMP_%u\n", tmp_var_id);
 		tmp_var_id++;
 	}
 }
@@ -89,16 +111,17 @@ void code_generator_var_declare_token(token_T token){
 
 void code_generator_var_declare(char* variable){
 	code_generator_defvar("LF", variable, 0);
-    printf("POPS LF@%s_%d\n", variable, 0);
+    BUFFER_PRINT("POPS LF@%s_%d\n", variable, 0);
 }
 
 void code_generator_copy_var_to_new_frame(char* variable){
     code_generator_defvar("TF", variable, 0);
-    printf("MOVE TF@%s_%d LF@%s_%d\n", variable, 0, variable, 0);
+    BUFFER_PRINT("MOVE TF@%s_%d LF@%s_%d\n", variable, 0, variable, 0);
 }
 
 void code_generator_eof(){
-	printf("\nLABEL $$EOF\n");
+	BUFFER_PRINT("\nLABEL $$EOF\n");
+    dstring_free(&print_buffer);
 }
 
 void code_generator_push(token_T token){
@@ -110,9 +133,9 @@ void code_generator_push(token_T token){
 		return; 
 	}
        
-    printf("\nPUSHS ");
+    BUFFER_PRINT("\nPUSHS ");
     code_generator_print_value(token);
-    printf("\n");
+    BUFFER_PRINT("\n");
 }
 
 /**
@@ -120,22 +143,28 @@ void code_generator_push(token_T token){
  */
 
 void code_generator_for_loop_end(unsigned id){
-    printf("\nJUMP $$FOR_%u\n",id);
-    printf("LABEL $$FOR_END_%u\n",id);
+    BUFFER_PRINT("\nJUMP $$FOR_%u\n",id);
+    BUFFER_PRINT("LABEL $$FOR_END_%u\n",id);
+
+    for_open--;
+    if(for_open <= 0){
+        code_generator_buffer_transmit();
+    }
 }
 
 void code_generator_for_loop_if(unsigned id){
-	printf("\nPUSHS bool@true\n");
-    printf("JUMPIFNEQS $$FOR_END_%u\n", id);
-	printf("JUMP $$FOR_BODY_%u\n", id);
+	BUFFER_PRINT("\nPUSHS bool@true\n");
+    BUFFER_PRINT("JUMPIFNEQS $$FOR_END_%u\n", id);
+	BUFFER_PRINT("JUMP $$FOR_BODY_%u\n", id);
 }
 
 void code_generator_for_label(unsigned id){
-	printf("\nLABEL $$FOR_%u\n", id);
+    for_open++;
+	BUFFER_PRINT("\nLABEL $$FOR_%u\n", id);
 }
 
 void code_generator_for_body(unsigned id){
-	printf("\nLABEL $$FOR_BODY_%u\n", id);
+	BUFFER_PRINT("\nLABEL $$FOR_BODY_%u\n", id);
 }
 
 /**
@@ -145,23 +174,23 @@ void code_generator_for_body(unsigned id){
 void code_generator_print_value(token_T token){
 
     if(token.type == TOKEN_IDENTIFIER){
-        printf("LF@%s_%d",token.value.string_val.str, 0);
+        BUFFER_PRINT("LF@%s_%d",token.value.string_val.str, 0);
     } else if (token.type == TOKEN_NIL) {
-	    printf("nil@nil");
+	    BUFFER_PRINT("nil@nil");
     } else if (token.type == TOKEN_INT) {
-	    printf("int@%d",token.value.int_val);
+	    BUFFER_PRINT("int@%d",token.value.int_val);
 	} else if (token.type == TOKEN_DBL) {
-		printf("float@%a",token.value.double_val);
+		BUFFER_PRINT("float@%a",token.value.double_val);
 	} else if (token.type == TOKEN_STRING) {
-		printf("string@");
+		BUFFER_PRINT("string@");
         int token_length = strlen(token.value.string_val.str);
 
         for(int i = 0; i < token_length; i++){
             char c = token.value.string_val.str[i];
             if((c >= 0 && c <= 32) || c == '#' || c == '\\'){
-                printf("\\%03d",c);
+                BUFFER_PRINT("\\%03d",c);
             } else{
-                printf("%c", c);
+                BUFFER_PRINT("%c", c);
             }
         }
 	}
@@ -172,15 +201,15 @@ void code_generator_print_value(token_T token){
  */
 
 void code_generator_pushframe(){
-    printf("\nPUSHFRAME\n");
+    BUFFER_PRINT("\nPUSHFRAME\n");
 }
 
 void code_generator_popframe(){
-    printf("\nPOPFRAME\n");
+    BUFFER_PRINT("\nPOPFRAME\n");
 }
 
 void code_generator_createframe(){
-    printf("\nCREATEFRAME\n");
+    BUFFER_PRINT("\nCREATEFRAME\n");
 }
 
 /**
@@ -190,49 +219,49 @@ void code_generator_createframe(){
 void code_generator_operations(token_type_T operator, bool is_int){
 
     if(operator == TOKEN_ADD) {
-        printf("\nADDS\n");
+        BUFFER_PRINT("\nADDS\n");
     } else if (operator == TOKEN_SUB) {
-        printf("\nSUBS\n");
+        BUFFER_PRINT("\nSUBS\n");
     } else if (operator == TOKEN_MUL) {
-        printf("\nMULS\n");
+        BUFFER_PRINT("\nMULS\n");
     } else if (operator == TOKEN_DIV && !is_int) {
-        printf("\nDIVS\n");
+        BUFFER_PRINT("\nDIVS\n");
     } else if (operator == TOKEN_DIV && is_int) {
-        printf("\nIDIVS\n");
+        BUFFER_PRINT("\nIDIVS\n");
     } else if (operator == TOKEN_LT) {
-        printf("\nLTS\n");
+        BUFFER_PRINT("\nLTS\n");
     } else if (operator == TOKEN_LEQ) {
-        printf("\nGTS\n");
-        printf("\nNOTS\n");
+        BUFFER_PRINT("\nGTS\n");
+        BUFFER_PRINT("\nNOTS\n");
     } else if (operator == TOKEN_GT) {
-        printf("\nGTS\n");
+        BUFFER_PRINT("\nGTS\n");
     } else if (operator == TOKEN_GEQ) {
-        printf("\nLTS\n");
-        printf("\nNOTS\n");
+        BUFFER_PRINT("\nLTS\n");
+        BUFFER_PRINT("\nNOTS\n");
     } else if (operator == TOKEN_EQ) {
-        printf("\nEQS\n");
+        BUFFER_PRINT("\nEQS\n");
     } else if (operator == TOKEN_NEQ) {
-        printf("\nEQS\n");
-        printf("\nNOTS\n");
+        BUFFER_PRINT("\nEQS\n");
+        BUFFER_PRINT("\nNOTS\n");
     }
 }
 
 void code_generator_concats(){
     //POPS PARAM_2
-    printf("\nPOPS GF@PARAM_2\n");
+    BUFFER_PRINT("\nPOPS GF@PARAM_2\n");
 
     //POPS PARAM_1
-    printf("POPS GF@PARAM_1\n");
+    BUFFER_PRINT("POPS GF@PARAM_1\n");
 
     //CONCAT: RESULT = PARAM_1 + PARAM_2
-    printf("CONCAT GF@RESULT_1 GF@PARAM_1 GF@PARAM_2\n");
+    BUFFER_PRINT("CONCAT GF@RESULT_1 GF@PARAM_1 GF@PARAM_2\n");
 
     //PUSHS RESULT
-    printf("PUSHS GF@RESULT_1\n");
+    BUFFER_PRINT("PUSHS GF@RESULT_1\n");
 }
 
 void code_generator_clears(){
-    printf("\nCLEARS\n");
+    BUFFER_PRINT("\nCLEARS\n");
 }
 
 /**
@@ -248,16 +277,16 @@ void code_generator_function_call(char* name){
     func_param_id = 0;
 
     if(strcmp(name,"readString") == 0){
-        printf("READ GF@READED_1 string\n");
-        printf("PUSHS GF@READED_1\n");
+        BUFFER_PRINT("READ GF@READED_1 string\n");
+        BUFFER_PRINT("PUSHS GF@READED_1\n");
     } else if(strcmp(name,"readInt") == 0){
-        printf("READ GF@READED_2 int\n");
-        printf("PUSHS GF@READED_2\n");
+        BUFFER_PRINT("READ GF@READED_2 int\n");
+        BUFFER_PRINT("PUSHS GF@READED_2\n");
     } else if((strcmp(name,"readDouble") == 0)){
-        printf("READ GF@READED_3 float\n");
-        printf("PUSHS GF@READED_3\n");
+        BUFFER_PRINT("READ GF@READED_3 float\n");
+        BUFFER_PRINT("PUSHS GF@READED_3\n");
     } else if (code_generator_need_function_frame(name)) {
-        printf("CALL $$FUNCTION_%s\n", name);
+        BUFFER_PRINT("CALL $$FUNCTION_%s\n", name);
     }
 }
 
@@ -273,33 +302,33 @@ void code_generator_function_call_param_add(char* name, token_T token){
         }
 
         code_generator_defvar("TF", "??", func_param_id);
-        printf("MOVE TF@??_%d ", func_param_id);
+        BUFFER_PRINT("MOVE TF@??_%d ", func_param_id);
         code_generator_print_value(token);
-        printf("\n");
+        BUFFER_PRINT("\n");
 
         func_param_id++;
     }
 
     if(strcmp(name,"write") == 0){
-        printf("WRITE ");
+        BUFFER_PRINT("WRITE ");
         code_generator_print_value(token);
-        printf("\n");
+        BUFFER_PRINT("\n");
     } else if(strcmp(name,"Int2Double") == 0){
         code_generator_push(token);
-        printf("INT2FLOATS\n");  
+        BUFFER_PRINT("INT2FLOATS\n");  
     } else if((strcmp(name,"Double2Int") == 0)){
         code_generator_push(token);
-        printf("FLOAT2INTS\n");
+        BUFFER_PRINT("FLOAT2INTS\n");
     } else if((strcmp(name,"length") == 0)){
-        printf("STRLEN GF@LENGTH_1 ");
+        BUFFER_PRINT("STRLEN GF@LENGTH_1 ");
         code_generator_print_value(token);
-        printf("\n");
-        printf("PUSHS GF@LENGTH_1\n");
+        BUFFER_PRINT("\n");
+        BUFFER_PRINT("PUSHS GF@LENGTH_1\n");
     } else if(strcmp(name, "chr") == 0){
-        printf("INT2CHAR GF@INT2CHAR_1 ");
+        BUFFER_PRINT("INT2CHAR GF@INT2CHAR_1 ");
         code_generator_print_value(token);
-        printf("\n");
-        printf("PUSHS GF@INT2CHAR_1\n");
+        BUFFER_PRINT("\n");
+        BUFFER_PRINT("PUSHS GF@INT2CHAR_1\n");
     }
 }
 
@@ -375,23 +404,23 @@ void code_generator_function_label_token(token_T token){
 }
 
 void code_generator_function_label(char* name){
-    printf("\nJUMP $$FUNCTION_END_%s\n", name);
-    printf("\nLABEL $$FUNCTION_%s\n", name);
+    BUFFER_PRINT("\nJUMP $$FUNCTION_END_%s\n", name);
+    BUFFER_PRINT("\nLABEL $$FUNCTION_%s\n", name);
     code_generator_pushframe();
 }
 
 void code_generator_param_map(char *param_name, unsigned param_id){
     code_generator_defvar("LF", param_name, 0);
-    printf("MOVE LF@%s_%d LF@??_%d\n", param_name, 0, param_id);
+    BUFFER_PRINT("MOVE LF@%s_%d LF@??_%d\n", param_name, 0, param_id);
 }
 
 void code_generator_function_end(char* name){
     code_generator_popframe();
-    printf("RETURN\n");
-    printf("\nLABEL $$FUNCTION_END_%s\n", name);
+    BUFFER_PRINT("RETURN\n");
+    BUFFER_PRINT("\nLABEL $$FUNCTION_END_%s\n", name);
 }
 
 void code_generator_return(){
     code_generator_popframe();
-    printf("RETURN\n");
+    BUFFER_PRINT("RETURN\n");
 }
