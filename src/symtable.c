@@ -125,6 +125,7 @@ symtab_item_t *symtable_search(symtab_t *symtab, dstring_t *id, unsigned int *er
 
 symtab_item_t *item_init(dstring_t *id, unsigned int *error)
 {
+    static unsigned int unique_id = 0;
     symtab_item_t *new = malloc(sizeof(symtab_item_t));
 
     if (!new)
@@ -146,7 +147,8 @@ symtab_item_t *item_init(dstring_t *id, unsigned int *error)
     }
 
     new->active = true;
-
+    new->uid = unique_id;
+    unique_id++;
     new->type = undefined;
     new->is_mutable = false;
     new->is_func_defined = false;
