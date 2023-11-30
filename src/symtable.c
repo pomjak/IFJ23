@@ -165,7 +165,7 @@ void resize(symtab_t *symtab, unsigned int *error)
 {
     const size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553, 12409, 25229};
 
-    size_t new_size;
+    size_t new_size = 0;
     for (int i = 0; primes[i]; i++)
     {
         if (symtab->size < primes[i])
