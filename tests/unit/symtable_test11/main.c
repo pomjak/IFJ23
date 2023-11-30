@@ -1,7 +1,7 @@
 /**
  * @file main.c (for testing purposes)
  * @author Pomsar Jakub xpomsa00
- * @brief   main for unit test 10 - used every created function
+ * @brief   main for unit test 11 - uid 
  * @version 0.1
  * @date 2023-10-14
  *
