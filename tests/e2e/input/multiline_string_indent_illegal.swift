@@ -1,3 +1,4 @@
-let a = """
+let a =
+    """
   hello
     """

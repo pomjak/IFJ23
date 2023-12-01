@@ -1,4 +1,4 @@
-if 3 < "hello"
+if (3 < "hello")
 {
 }
 else

@@ -1,4 +1,4 @@
-var a : Int?
+let a : Int?
 
 if let a {
     write("not nil!")

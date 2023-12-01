@@ -1,6 +1,6 @@
 var a = 3
 
-while a > 0 {
+while (a > 0) {
     var b = 5
 
     while (b > 0)
