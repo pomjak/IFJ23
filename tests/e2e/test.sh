@@ -21,9 +21,13 @@ execTest () {
 		printf "\e[1m\e[31mFailed\e[0m Test %02d: $1\n" $testNum
 		diff ic23int_output.txt $3 
 	fi
-	
-	mkdir -p ../test_artifacts/e2e/
-	cp tmp.txt ../test_artifacts/e2e/$((testNum)).txt
+	# creating artifacts
+	mkdir -p ../test_artifacts/e2e/$((testNum))_"$1"
+	cp "$2" ../test_artifacts/e2e/$((testNum))_"$1"/input.swift
+	cp "$3" ../test_artifacts/e2e/$((testNum))_"$1"/expected.txt
+	echo "$4" >> ../test_artifacts/e2e/$((testNum))_"$1"/exp_ret.txt
+	cp tmp.txt ../test_artifacts/e2e/$((testNum))_"$1"/output.txt
+
 	testNum=$((testNum+1))
 }
 
