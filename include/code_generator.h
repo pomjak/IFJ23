@@ -3,20 +3,35 @@
  * @file code_generator.h
  * @brief Code generator header
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
- * @date 19.11.2023
+ * @date 1.12.2023
  **/
 
 #ifndef CODE_GENERATOR_H
 #define CODE_GENERATOR_H
 
 #include "lexical_analyzer.h"
+#include "symtable.h"
+#include "scope.h"
+
+/**
+ * Sets symtable for getting uid of variable
+ * @param g_symtable pointer to global symtable
+ * @param stack pointer to scope stack
+ * @post g_symtable and stack will be used in all functions working with variables
+*/
+void code_generator_set_current_symtable(symtab_t* g_symtable, scope_t* stack);
+
+/**
+ * Token version of code_generator_defvar
+ * @param token token of var identifier
+*/
+void code_generator_defvar_token(token_T token);
 
 /**
  * Creates variable definition
  * @param frame frame of declared variable
  * @param varname name of declared variable
  * @param id id of declared variable (default 0)
- * 
 */
 void code_generator_defvar(char *frame, char *varname, unsigned id);
 
@@ -74,12 +89,6 @@ void code_generator_var_declare_token(token_T token);
  * @param variable name of variable
 */
 void code_generator_var_declare(char* variable);
-
-/**
- * Copies variable from local frame to temporary frame
- * @param variable name of variable
-*/
-void code_generator_copy_var_to_new_frame(char* variable);
 
 /**
  * Creates eof label
