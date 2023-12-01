@@ -40,7 +40,7 @@ test: submission
 	@echo "[info] creating dir for tests artifacts"
 	mkdir ./test_artifacts/
 	@echo "[info] starting unit tests"
-	
+
 	# for all dirs in ./tests/unit
 	for f in ./tests/unit/*; do \
 		if [ -d "$$f" -a "$$(echo -n "$$f" | tail -c 1)" != "-" ]; then \
@@ -53,6 +53,14 @@ test: submission
 			rm -rf ./test_build/ || exit 1;\
 		fi \
 	done
+	
+	# e2e testing using script test
+	mkdir ./test_build/ 
+	cp -r ./build/* ./test_build/                      
+	cp -rf ./tests/e2e/* ./test_build/   
+	cd ./test_build/ && $(MAKE) && ./test.sh
+	cd ..
+	rm -rf ./test_build/
 
 clean:
 	rm -rf build
