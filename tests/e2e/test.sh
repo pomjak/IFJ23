@@ -26,7 +26,8 @@ execTest () {
 	cp "$2" ../test_artifacts/e2e/$((testNum))_"$1"/input.swift
 	cp "$3" ../test_artifacts/e2e/$((testNum))_"$1"/expected.txt
 	echo "$4" >> ../test_artifacts/e2e/$((testNum))_"$1"/exp_ret.txt
-	cp tmp.txt ../test_artifacts/e2e/$((testNum))_"$1"/output.txt
+	cp tmp.txt ../test_artifacts/e2e/$((testNum))_"$1"/output_instr.txt
+	cp ic23int_output.txt ../test_artifacts/e2e/$((testNum))_"$1"/output.txt
 
 	testNum=$((testNum+1))
 }
