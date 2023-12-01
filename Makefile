@@ -42,17 +42,17 @@ test: submission
 	@echo "[info] starting unit tests"
 
 	# for all dirs in ./tests/unit
-	# for f in ./tests/unit/*; do \
-	# 	if [ -d "$$f" -a "$$(echo -n "$$f" | tail -c 1)" != "-" ]; then \
-	# 		mkdir ./test_build/                                       && \
-	# 		cp -r ./build/* ./test_build/                             && \
-	# 		rm ./test_build/compiler.c                                && \
-	# 		cp -rf $$f/* ./test_build/                                && \
-	# 		cd ./test_build && $(MAKE) run && $(MAKE) artifacts       && \
-	# 		cd ../                                                    && \
-	# 		rm -rf ./test_build/ || exit 1;\
-	# 	fi \
-	# done
+	for f in ./tests/unit/*; do \
+		if [ -d "$$f" -a "$$(echo -n "$$f" | tail -c 1)" != "-" ]; then \
+			mkdir ./test_build/                                       && \
+			cp -r ./build/* ./test_build/                             && \
+			rm ./test_build/compiler.c                                && \
+			cp -rf $$f/* ./test_build/                                && \
+			cd ./test_build && $(MAKE) run && $(MAKE) artifacts       && \
+			cd ../                                                    && \
+			rm -rf ./test_build/ || exit 1;\
+		fi \
+	done
 	
 	# e2e testing using script test
 	mkdir ./test_build/ 
