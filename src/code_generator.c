@@ -3,23 +3,120 @@
  * @file code_generator.c
  * @brief Code generator
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
- * @date 26.11.2023
+ * @date 1.12.2023
  **/
 
 #include "code_generator.h"
+#include "debug.h"
 #include <stdio.h>
 
 #define BUFFER_PRINT(fmt, ...) {                               \
     int   sprintf_size = snprintf(NULL, 0, fmt, ##__VA_ARGS__);\
     char* sprintf_data = malloc(sprintf_size + 1);             \
     sprintf(sprintf_data, fmt, ##__VA_ARGS__);                 \
-    code_generator_buffer_print(sprintf_data);                  \
+    code_generator_buffer_print(sprintf_data);                 \
 }
 
 unsigned tmp_var_id = 0;
 unsigned func_param_id = 0;
 unsigned for_open = 0;
 dstring_t print_buffer;
+
+symtab_t* global_symtable = NULL;
+scope_t*  scope_stack = NULL;
+
+char gf_name[] = "GF";
+char lf_name[] = "LF";
+
+void code_generator_set_current_symtable(symtab_t* g_symtable, scope_t* stack) {
+    global_symtable = g_symtable;
+    scope_stack = stack;
+}
+
+unsigned code_generator_get_var_uid(char *varname){
+    dstring_t dynamic_varname;
+    dstring_init(&dynamic_varname);
+    dstring_add_const_str(&dynamic_varname, varname);
+
+    unsigned error;
+
+    if(scope_stack == NULL){
+        WARNING_PRINT("Current scope stack is null. Function used implicit 0.");
+        dstring_free(&dynamic_varname);
+        return 0;
+    }
+
+    symtab_item_t* item = search_scopes(*scope_stack, &dynamic_varname, &error);
+
+    if(error == SYMTAB_OK){
+        dstring_free(&dynamic_varname);
+        return item->uid;
+    }
+
+    if(global_symtable == NULL){
+        WARNING_PRINT("Current symtable is null. Function used implicit 0.");
+        dstring_free(&dynamic_varname);
+        return 0;
+    }
+
+    item = symtable_search(global_symtable, &dynamic_varname, &error);
+
+    if(error == SYMTAB_OK){
+        dstring_free(&dynamic_varname);
+        return item->uid;
+    }
+
+    WARNING_PRINT("Variable was not found in symtable. Function used implicit 0.");
+    dstring_free(&dynamic_varname);
+
+    return 0;
+}
+
+char* code_generator_get_var_frame(char *varname){
+    dstring_t dynamic_varname;
+    dstring_init(&dynamic_varname);
+    dstring_add_const_str(&dynamic_varname, varname);
+
+    unsigned error;
+
+    if(scope_stack == NULL){
+        WARNING_PRINT("Current scope stack is null. Function used implicit LF.");
+        dstring_free(&dynamic_varname);
+        return lf_name;
+    }
+
+    search_scopes(*scope_stack, &dynamic_varname, &error);
+
+    if(error == SYMTAB_OK){
+        dstring_free(&dynamic_varname);
+        return lf_name;
+    }
+
+    if(global_symtable == NULL){
+        WARNING_PRINT("Current symtable is null. Function used implicit LF.");
+        dstring_free(&dynamic_varname);
+        return lf_name;
+    }
+
+    symtable_search(global_symtable, &dynamic_varname, &error);
+
+    if(error == SYMTAB_OK){
+        dstring_free(&dynamic_varname);
+        return gf_name;
+    }
+
+    dstring_free(&dynamic_varname);
+
+    return lf_name;
+}
+
+void code_generator_defvar_token(token_T token){
+    code_generator_defvar(
+        code_generator_get_var_frame(token.value.string_val.str),
+        token.value.string_val.str,
+        code_generator_get_var_uid(token.value.string_val.str)
+    );
+}
 
 void code_generator_defvar(char *frame, char *varname, unsigned id){
     printf("\nDEFVAR %s@%s_%d\n",frame,varname, id);
@@ -54,14 +151,14 @@ void code_generator_buffer_transmit(){
 void code_generator_prolog(){
     dstring_init(&print_buffer);
 	printf(".IFJcode23\n");
-	code_generator_defvar("GF", "PARAM", 1);
-	code_generator_defvar("GF", "PARAM", 2);
-	code_generator_defvar("GF", "RESULT", 1);
-    code_generator_defvar("GF", "LENGTH", 1);
-    code_generator_defvar("GF", "READED", 1);
-    code_generator_defvar("GF", "READED", 2);
-    code_generator_defvar("GF", "READED", 3);
-    code_generator_defvar("GF", "INT2CHAR", 1);
+	code_generator_defvar("GF", "?PARAM", 1);
+	code_generator_defvar("GF", "?PARAM", 2);
+	code_generator_defvar("GF", "?RESULT", 1);
+    code_generator_defvar("GF", "?LENGTH", 1);
+    code_generator_defvar("GF", "?READED", 1);
+    code_generator_defvar("GF", "?READED", 2);
+    code_generator_defvar("GF", "?READED", 3);
+    code_generator_defvar("GF", "?INT2CHAR", 1);
     code_generator_createframe();
     code_generator_pushframe();
     code_generator_function_ord();
@@ -97,7 +194,7 @@ void code_generator_var_assign_token(token_T token){
 void code_generator_var_assign(char* var){
     
 	if(strcmp(var, "_") != 0){
-		BUFFER_PRINT("\nPOPS LF@%s_%d\n", var, 0);
+		BUFFER_PRINT("\nPOPS %s@%s_%d\n",code_generator_get_var_frame(var), var, code_generator_get_var_uid(var));
 	} else{
         code_generator_defvar("LF","TMP", tmp_var_id);
 		BUFFER_PRINT("POPS LF@TMP_%u\n", tmp_var_id);
@@ -110,13 +207,8 @@ void code_generator_var_declare_token(token_T token){
 }
 
 void code_generator_var_declare(char* variable){
-	code_generator_defvar("LF", variable, 0);
-    BUFFER_PRINT("POPS LF@%s_%d\n", variable, 0);
-}
-
-void code_generator_copy_var_to_new_frame(char* variable){
-    code_generator_defvar("TF", variable, 0);
-    BUFFER_PRINT("MOVE TF@%s_%d LF@%s_%d\n", variable, 0, variable, 0);
+	code_generator_defvar(code_generator_get_var_frame(variable), variable, code_generator_get_var_uid(variable));
+    BUFFER_PRINT("POPS %s@%s_%d\n", code_generator_get_var_frame(variable), variable, code_generator_get_var_uid(variable));
 }
 
 void code_generator_eof(){
@@ -174,7 +266,11 @@ void code_generator_for_body(unsigned id){
 void code_generator_print_value(token_T token){
 
     if(token.type == TOKEN_IDENTIFIER){
-        BUFFER_PRINT("LF@%s_%d",token.value.string_val.str, 0);
+        BUFFER_PRINT("%s@%s_%d",
+            code_generator_get_var_frame(token.value.string_val.str),
+            token.value.string_val.str,
+            code_generator_get_var_uid(token.value.string_val.str)
+        );
     } else if (token.type == TOKEN_NIL) {
 	    BUFFER_PRINT("nil@nil");
     } else if (token.type == TOKEN_INT) {
@@ -247,17 +343,17 @@ void code_generator_operations(token_type_T operator, bool is_int){
 }
 
 void code_generator_concats(){
-    //POPS PARAM_2
-    BUFFER_PRINT("\nPOPS GF@PARAM_2\n");
+    //POPS ?PARAM_2
+    BUFFER_PRINT("\nPOPS GF@?PARAM_2\n");
 
-    //POPS PARAM_1
-    BUFFER_PRINT("POPS GF@PARAM_1\n");
+    //POPS ?PARAM_1
+    BUFFER_PRINT("POPS GF@?PARAM_1\n");
 
-    //CONCAT: RESULT = PARAM_1 + PARAM_2
-    BUFFER_PRINT("CONCAT GF@RESULT_1 GF@PARAM_1 GF@PARAM_2\n");
+    //CONCAT: ?RESULT = ?PARAM_1 + ?PARAM_2
+    BUFFER_PRINT("CONCAT GF@?RESULT_1 GF@?PARAM_1 GF@?PARAM_2\n");
 
-    //PUSHS RESULT
-    BUFFER_PRINT("PUSHS GF@RESULT_1\n");
+    //PUSHS ?RESULT
+    BUFFER_PRINT("PUSHS GF@?RESULT_1\n");
 }
 
 void code_generator_clears(){
@@ -277,14 +373,14 @@ void code_generator_function_call(char* name){
     func_param_id = 0;
 
     if(strcmp(name,"readString") == 0){
-        BUFFER_PRINT("READ GF@READED_1 string\n");
-        BUFFER_PRINT("PUSHS GF@READED_1\n");
+        BUFFER_PRINT("READ GF@?READED_1 string\n");
+        BUFFER_PRINT("PUSHS GF@?READED_1\n");
     } else if(strcmp(name,"readInt") == 0){
-        BUFFER_PRINT("READ GF@READED_2 int\n");
-        BUFFER_PRINT("PUSHS GF@READED_2\n");
+        BUFFER_PRINT("READ GF@?READED_2 int\n");
+        BUFFER_PRINT("PUSHS GF@?READED_2\n");
     } else if((strcmp(name,"readDouble") == 0)){
-        BUFFER_PRINT("READ GF@READED_3 float\n");
-        BUFFER_PRINT("PUSHS GF@READED_3\n");
+        BUFFER_PRINT("READ GF@?READED_3 float\n");
+        BUFFER_PRINT("PUSHS GF@?READED_3\n");
     } else if (code_generator_need_function_frame(name)) {
         BUFFER_PRINT("CALL $$FUNCTION_%s\n", name);
     }
@@ -320,15 +416,15 @@ void code_generator_function_call_param_add(char* name, token_T token){
         code_generator_push(token);
         BUFFER_PRINT("FLOAT2INTS\n");
     } else if((strcmp(name,"length") == 0)){
-        BUFFER_PRINT("STRLEN GF@LENGTH_1 ");
+        BUFFER_PRINT("STRLEN GF@?LENGTH_1 ");
         code_generator_print_value(token);
         BUFFER_PRINT("\n");
-        BUFFER_PRINT("PUSHS GF@LENGTH_1\n");
+        BUFFER_PRINT("PUSHS GF@?LENGTH_1\n");
     } else if(strcmp(name, "chr") == 0){
-        BUFFER_PRINT("INT2CHAR GF@INT2CHAR_1 ");
+        BUFFER_PRINT("INT2CHAR GF@?INT2CHAR_1 ");
         code_generator_print_value(token);
         BUFFER_PRINT("\n");
-        BUFFER_PRINT("PUSHS GF@INT2CHAR_1\n");
+        BUFFER_PRINT("PUSHS GF@?INT2CHAR_1\n");
     }
 }
 
@@ -410,8 +506,8 @@ void code_generator_function_label(char* name){
 }
 
 void code_generator_param_map(char *param_name, unsigned param_id){
-    code_generator_defvar("LF", param_name, 0);
-    BUFFER_PRINT("MOVE LF@%s_%d LF@??_%d\n", param_name, 0, param_id);
+    code_generator_defvar(code_generator_get_var_frame(param_name), param_name, code_generator_get_var_uid(param_name));
+    BUFFER_PRINT("MOVE %s@%s_%d LF@??_%d\n", code_generator_get_var_frame(param_name), param_name, code_generator_get_var_uid(param_name), param_id);
 }
 
 void code_generator_function_end(char* name){
