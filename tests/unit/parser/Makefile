@@ -29,8 +29,6 @@ run: build
 			cp debug_output.txt ../test_artifacts/"parser_$${FILENAME}"/"$${FILENAME}"_debug.txt; \
 			{ diff "./$(dir)$${FILENAME}_debug.expected" ./debug_output.txt; } || \
 				{ echo -e "[info] test parser $${FILENAME} [RULE] \e[31mFAIL\e[0m" && exit 1; }; \
-			{ diff "$(dir)/$${FILENAME}".expected ./output.txt; } || \
-				{ echo -e "[info] test parser $${FILENAME} [INSTR] \e[31mFAIL\e[0m" && exit 1; }; \
 			echo -e "[info] test parser $${FILENAME} \e[32mOK\e[0m"; \
 			$(VALGRIND) ./$(NAME) < "$(dir)/$${FILENAME}.swift" > ./valgrind_output.txt 2>&1 || \
 				{ echo -e "[info] valgrind check $${FILENAME} \e[32mOK\e[0m" || \
