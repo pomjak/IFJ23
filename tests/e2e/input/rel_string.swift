@@ -1,7 +1,7 @@
 let a = "abc"
 let b = "def"
 
-if a < b
+if (a < b)
 {
     write("TRUE")
 }

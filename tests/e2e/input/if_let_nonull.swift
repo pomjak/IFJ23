@@ -1,4 +1,4 @@
-var a : Int = 0
+let a : Int = 0
 
 if let a {
     write("foo")

@@ -1,4 +1,5 @@
-let a = """
+let a = 
+"""
 """
 
 write("a")
