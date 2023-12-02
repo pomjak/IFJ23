@@ -164,16 +164,26 @@ unsigned indentation_perform(dstring_t *read_string) {
     }
 
     unsigned indent_position = 0;
-    for (size_t i = 0; i < read_string->length - indent.length - 4; i++) {
+    size_t  for_iter = (read_string->length < indent.length + 4) ? 0 : read_string->length - indent.length - 4;
+
+    for (size_t i = 0; i < for_iter; i++) {
+        
+        if (read_string->str[i] == '\n') {
+            if (indent_position < indent.length && indent_position != 0) return indentation_fail;
+
+            indent_position = 0;
+            
+            if (!dstring_append(&result, read_string->str[i])) return indentation_memory_fail;
+            continue;
+        }
+
         if (indent_position < indent.length) {
-            if (read_string->str[i] != indent.str[indent.length - indent_position - 1]) return false;
+            if (read_string->str[i] != indent.str[indent.length - indent_position - 1]) return indentation_fail;
         } else {
             if (!dstring_append(&result, read_string->str[i])) return indentation_memory_fail;
         }
 
         indent_position++;
-
-        if (read_string->str[i] == '\n') indent_position = 0;
     }
 
     dstring_clear(read_string);
@@ -1019,7 +1029,7 @@ state_T empty_string(char read) {
 state_T eol_start_q(char read) {
     DEBUG_PRINT("read char is %c", read);
 
-    if (read == '\n')  NEXT_STATE(m_string_inner);
+    if (read == '\n')  NEXT_STATE(eol_end_q);
 
     NEXT_STATE(NULL);   
 }
