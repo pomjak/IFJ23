@@ -936,13 +936,15 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
             return expr_symbol;
         }
     }
-    // if both operands are same nilable, one operand is literal, so it should be both operands are not nillable
-    else if (operand_is_nilable(&first_operand) != operand_is_nilable(&second_operand))
+
+    // if operands are nillable
+    if (operand_is_nilable(&first_operand) || operand_is_nilable(&second_operand))
     {
         print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types of operands.\n");
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         return expr_symbol;
     }
+    
 
     if (compare_operand_with_type(&first_operand, string) || compare_operand_with_type(&second_operand, string))
     {
@@ -965,7 +967,6 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         }
         else
         {
-            printf("First op: %d | second op: %d\n", first_operand.expr_res.expr_type, second_operand.expr_res.expr_type);
             print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             return expr_symbol;
@@ -985,7 +986,6 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         return expr_symbol;
     }
 
-    printf("First op: %d | second op: %d\n", first_operand.expr_res.expr_type, second_operand.expr_res.expr_type);
     print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     error_code_handler(ERR_INCOMPATIBILE_TYPE);
 
