@@ -1084,7 +1084,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     if (op.type == TOKEN_NIL_CHECK)
     {
         // check if not same types
-        if (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type)
+        if (first_operand.expr_res.expr_type != nil && (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type))
         {
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types in nil check.\n");
@@ -1092,7 +1092,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         }
 
         // check if not (type? ?? type)
-        if (!first_operand.expr_res.nilable || second_operand.expr_res.nilable)
+        if (first_operand.expr_res.expr_type != nil && (!first_operand.expr_res.nilable || second_operand.expr_res.nilable))
         {
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types in nil check.\n");
@@ -1100,7 +1100,14 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         }
 
         // set final type
-        expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
+        if(first_operand.expr_res.expr_type == nil)
+        {
+            expr_symbol.expr_res.expr_type = second_operand.expr_res.expr_type;
+        }
+        else
+        {
+            expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
+        }
         expr_symbol.expr_res.nilable = false;
         return expr_symbol;
     }
