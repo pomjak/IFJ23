@@ -345,18 +345,4 @@ void verify_lhs_type(symstack_data_t *final_expr, Parser *p);
 
 void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2);
 
-/*****************************
- * Generation code functions *
- ****************************/
-
-// void int2double(symstack_data_t *first_operand, symstack_data_t *second_operand);
-
-// void generate_float_arithmetic_by_operator(token_T op, double first_operand, double second_operand);
-
-// void generate_int_arithmetic_by_operator(token_T op, int first_operand, int second_operand);
-
-// void generate_division(token_T first_operand, token_T second_operand);
-
-// void generate_comparison();
-
 #endif
