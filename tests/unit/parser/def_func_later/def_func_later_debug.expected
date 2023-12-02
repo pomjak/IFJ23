@@ -33,6 +33,8 @@ stmt
 expr_type
 arg_list
 arg
+opt_arg
+term
 literal
 arg_next
 prog
