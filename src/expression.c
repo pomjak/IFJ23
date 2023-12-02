@@ -919,7 +919,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
 
     // check types of operands
-    if ((first_operand.is_literal || second_operand.is_literal))
+    if (compare_types_strict(&first_operand, &second_operand) && (first_operand.is_literal || second_operand.is_literal))
     {
         convert_if_retypeable(&first_operand, &second_operand);
     }
