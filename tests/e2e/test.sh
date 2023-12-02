@@ -28,6 +28,7 @@ execTest () {
 	echo "$4" >> ../test_artifacts/e2e/$((testNum))_"$1"/exp_ret.txt
 	cp tmp.txt ../test_artifacts/e2e/$((testNum))_"$1"/output_instr.txt
 	cp ic23int_output.txt ../test_artifacts/e2e/$((testNum))_"$1"/output.txt
+	rm tmp.txt ic23int_output.txt
 
 	testNum=$((testNum+1))
 }
