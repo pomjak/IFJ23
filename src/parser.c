@@ -22,6 +22,7 @@ Rule prog(Parser* p) {
 
     switch (p->curr_tok.type) {
     case TOKEN_EOF:
+        code_generator_eof();
         break;
     case TOKEN_FUNC:
         CHECK_NEWLINE();
@@ -29,11 +30,15 @@ Rule prog(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
         p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+        /* Generate label for function */
+        code_generator_function_label_token(p->curr_tok);
+
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
         /* new scope for parameters */
         add_scope(&p->stack, &err);
-
+        /* Reset param counter before parsing function parameters */
+        p->param_cnt = 0;
         GET_TOKEN();
         NEXT_RULE(param_list_skip);
 
@@ -52,6 +57,7 @@ Rule prog(Parser* p) {
         pop_scope(&p->stack, &err);
         p->in_func_body = false;
         p->first_stmt = false;
+        code_generator_function_end(p->last_func_id->name.str);
         GET_TOKEN();
         NEXT_RULE(prog);
         break;
@@ -240,12 +246,15 @@ Rule var_def_cont(Parser* p) {
                         p->lhs_id->type = p->rhs_id->return_type;
                         p->lhs_id->is_nillable = p->rhs_id->is_nillable;
                     }
+                    /* Funccall rule generates jump to function label and pushes arguments to stack */
                     NEXT_RULE(funccall);
                     DEBUG_PRINT("Setting %s to initialized rettype: %d", p->lhs_id->name.str, p->lhs_id->type);
                     p->lhs_id->is_var_initialized = true;
+                    /* Generate function declaration with the result of function call as its value */
+                    code_generator_var_declare(p->lhs_id->name.str);
                     return EXIT_SUCCESS;
                 }
-                /* ID found in global symtab was not a function */
+                /* ID found in global symtab was not a function revert current token back to '=' */
                 else {
                     GET_TOKEN();
                     if (p->curr_tok.type == TOKEN_L_PAR) {
@@ -263,11 +272,12 @@ Rule var_def_cont(Parser* p) {
                 p->curr_tok = tb_get_token(&p->buffer);
             }
         }
+        /* If the next token was not an identifier, revert current token back to '=' and  process the rest as an expression */
         else {
             tb_prev(&p->buffer);
             p->curr_tok = tb_get_token(&p->buffer);
         }
-        DEBUG_PRINT("before expr :: %d", p->curr_tok.type);
+        /* Expression parsing */
         if ((res = expr(p))) {
             return res;
         }
@@ -277,12 +287,13 @@ Rule var_def_cont(Parser* p) {
             fprintf(stderr, "[ERROR %d] '%s' - cannot implicitly set type from nil expression", ERR_MISSING_TYPE, p->lhs_id->name.str);
             return ERR_MISSING_TYPE;
         }
-
+        /* Set the variable's type and nilability to according to the result of the expression */
         p->lhs_id->type = p->expr_res.expr_type;
         p->lhs_id->is_nillable = p->expr_res.nilable;
 
         DEBUG_PRINT("Setting %s to initialized", p->lhs_id->name.str);
         p->lhs_id->is_var_initialized = true;
+        code_generator_var_declare(p->lhs_id->name.str);
         break;
 
     default:
@@ -324,6 +335,8 @@ Rule opt_assign(Parser* p) {
                     }
                     NEXT_RULE(funccall);
                     p->lhs_id->is_var_initialized = true;
+                    /* Generate function declaration with the result of function call as its value */
+                    code_generator_var_declare(p->lhs_id->name.str);
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -367,10 +380,12 @@ Rule opt_assign(Parser* p) {
                 return ERR_INCOMPATIBILE_TYPE;
             }
         }
-
         p->lhs_id->is_var_initialized = true;
-    }
+        code_generator_var_declare(p->lhs_id->name.str);
 
+    }
+    /* Generate an empty variable declaration */
+    code_generator_var_declare(p->lhs_id->name.str);
     return EXIT_SUCCESS;
 }
 
@@ -380,7 +395,7 @@ Rule opt_assign(Parser* p) {
 Rule expr_type(Parser* p) {
     RULE_PRINT("expr_type");
     uint32_t res, err;
-
+    symtab_item_t* temp;
     switch (p->curr_tok.type) {
     /* If assignment is the next step after loading the identifier, the ID was a variable */
     case TOKEN_ASS:
@@ -415,6 +430,7 @@ Rule expr_type(Parser* p) {
                     }
                     NEXT_RULE(funccall);
                     p->lhs_id->is_var_initialized = true;
+                    code_generator_var_assign(p->lhs_id->name.str);
                     return EXIT_SUCCESS;
                 }
                 /* ID found in global symtab was not a function */
@@ -460,6 +476,7 @@ Rule expr_type(Parser* p) {
             }
         }
         p->lhs_id->is_var_initialized = true;
+        code_generator_var_assign(p->lhs_id->name.str);
         break;
     /* If the loaded ID is followed by opening parentheses the ID should have been a function */
     case TOKEN_L_PAR:
@@ -472,12 +489,15 @@ Rule expr_type(Parser* p) {
             return ERR_UNDEFINED_FUNCTION;
         }
         /* If the ID we're processing is a function, set it to last_func_id and reset current_id */
+        temp = p->last_func_id; /* Temporarily save last func id */
         p->last_func_id = p->current_id;
         p->current_id = NULL;
         p->in_function = true;
 
         GET_TOKEN();
         NEXT_RULE(arg_list);
+        code_generator_function_call(p->last_func_id->name.str);
+        p->last_func_id = temp; /* reset last func id */
         break;
     default:
         if (!p->current_id) {
@@ -677,6 +697,7 @@ Rule arg(Parser* p) {
                     return ERR_FUNCTION_PARAMETER;
                 }
             }
+            code_generator_function_call_param_add(p->last_func_id->name.str, p->curr_tok);
             return EXIT_SUCCESS;
         }
         /* Assert validity of the label */
@@ -975,6 +996,7 @@ Rule opt_ret(Parser* p) {
             return ERR_RETURN_TYPE;
         }
     }
+    code_generator_return();
     return EXIT_SUCCESS;
 }
 
@@ -1142,6 +1164,7 @@ Rule term(Parser* p) {
             fprintf(stderr, "[ERROR %d] Invalid type of identifier %s in function %s\n", ERR_FUNCTION_PARAMETER, p->current_id->name.str, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
         }
+        code_generator_function_call_param_add(p->last_func_id->name.str, p->curr_tok);
     }
     else {
         NEXT_RULE(literal);
@@ -1154,7 +1177,6 @@ Rule term(Parser* p) {
  */
 Rule literal(Parser* p) {
     RULE_PRINT("literal");
-    DEBUG_PRINT("Before switch::%d", p->curr_tok.type);
     switch (p->curr_tok.type) {
     case TOKEN_INT:
         if (!p->last_func_id->variadic_param) {
@@ -1163,7 +1185,6 @@ Rule literal(Parser* p) {
                 return ERR_FUNCTION_PARAMETER;
             }
         }
-        /* generate term value */
         break;
     case TOKEN_DBL:
         if (!p->last_func_id->variadic_param) {
@@ -1185,6 +1206,7 @@ Rule literal(Parser* p) {
         fprintf(stderr, "[ERROR 2] Invalid literal\n");
         return ERR_SYNTAX;
     }
+    code_generator_function_call_param_add(p->last_func_id->name.str, p->curr_tok);
     return EXIT_SUCCESS;
 }
 
@@ -1266,7 +1288,9 @@ Rule param_skip(Parser* p) {
     symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
     p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
     p->current_id->is_var_initialized = true;
-
+    /* Generate func parameter and increase counter before the next one */
+    code_generator_param_map(p->current_id->name.str, p->param_cnt);
+    p->param_cnt++;
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
 
@@ -1371,6 +1395,7 @@ Rule funccall(Parser* p) {
     p->last_func_id = p->rhs_id;
     GET_TOKEN();
     NEXT_RULE(arg_list);
+    code_generator_function_call(p->last_func_id->name.str);
     p->last_func_id = temp;
     return EXIT_SUCCESS;
 }
@@ -1410,6 +1435,7 @@ bool parser_init(Parser* p) {
     p->in_param = false;
     p->expr_res.expr_type = undefined;
     p->expr_res.nilable = false;
+    p->param_cnt = 0;
     return true;
 }
 
@@ -1533,6 +1559,10 @@ uint32_t parse() {
         return ERR_INTERNAL;
     }
     DEBUG_PRINT("parser initialized");
+
+    /* Generate header before generating any other code*/
+    code_generator_prolog();
+
     /* Add builtin functions to the global symtable */
     if (!add_builtins(&p)) {
         parser_dispose(&p);
@@ -1540,6 +1570,7 @@ uint32_t parse() {
         return ERR_INTERNAL;
     }
     DEBUG_PRINT("builtins added");
+
     /* Load tokens from input and fill the token buffer */
     if ((res = parser_fill_buffer(&p))) {
         parser_dispose(&p);
