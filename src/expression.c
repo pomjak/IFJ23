@@ -205,7 +205,7 @@ void push_initial_sym(symstack_t *stack)
 
 bool is_operand(symstack_data_t symbol)
 {
-    if (is_literal(symbol) || symbol.token.type == TOKEN_IDENTIFIER || is_identifier(symbol))
+    if (symbol.is_literal || is_identifier(symbol))
     {
         return true;
     }
@@ -328,7 +328,7 @@ bool id_is_defined(token_T token, Parser *p)
 bool is_literal(symstack_data_t symbol)
 {
     token_type_T exp_type = symbol.token.type;
-    return exp_type == TOKEN_INT || exp_type == TOKEN_DBL || exp_type == TOKEN_STRING || exp_type == TOKEN_NIL;
+    return (exp_type == TOKEN_INT || exp_type == TOKEN_DBL || exp_type == TOKEN_STRING || exp_type == TOKEN_NIL);
 }
 
 bool is_identifier(symstack_data_t symbol)
@@ -539,6 +539,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -561,6 +562,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -573,6 +575,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         return;
 
@@ -588,6 +591,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         return;
     case RULE_PARL_E_PARR:
@@ -595,6 +599,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         return;
     default:
@@ -924,7 +929,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     symstack_data_t second_operand = sym_arr->arr[2];
 
     DEFINE_EXPR_SYMBOL;
-    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+    expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
 
     // check types of operands
     if (!compare_types_strict(&first_operand, &second_operand) && (first_operand.is_literal || second_operand.is_literal))
@@ -1200,6 +1205,7 @@ symstack_data_t process_parenthesis(symbol_arr_t *sym_arr)
 {
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
+    expr_symbol.is_literal = sym_arr->arr[1].is_literal;
     return expr_symbol;
 }
 
@@ -1215,7 +1221,7 @@ bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2)
 
 bool compare_operand_with_type(symstack_data_t *operand, Type type)
 {
-    bool core_type = operand->expr_res.expr_type == type;
+    bool core_type = (operand->expr_res.expr_type == type);
     return core_type;
 }
 
@@ -1263,13 +1269,13 @@ void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
         }
         else
         {
-            print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.");
+            print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
         }
     }
     else
     {
-        print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.");
+        print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
     }
 }
