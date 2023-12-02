@@ -917,7 +917,13 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     DEFINE_EXPR_SYMBOL;
     expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+
     // check types of operands
+    if ((first_operand.is_literal || second_operand.is_literal))
+    {
+        convert_if_retypeable(&first_operand, &second_operand);
+    }
+
 
     // if they are identifiers and both are same strict type
     if (is_identifier(first_operand) && is_identifier(second_operand))
@@ -1074,10 +1080,14 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
 
     // if there is comparison and both sides are literals
-    if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+    if(!compare_types_strict(&first_operand,&second_operand))
     {
-        convert_if_retypeable(&first_operand, &second_operand);
+        if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+        {
+            convert_if_retypeable(&first_operand, &second_operand);
+        }
     }
+    
 
     // retype nill check
     if (op.type == TOKEN_NIL_CHECK)
@@ -1201,11 +1211,21 @@ void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
             DEBUG_PRINT("retyping FIRST from int to double");
             operand1->expr_res.expr_type = double_;
         }
-        else if (operand1->is_literal && compare_operand_with_type(operand2, integer))
+        else if (operand2->is_literal && compare_operand_with_type(operand2, integer))
         {
             DEBUG_PRINT("retyping SECOND from int to double");
             operand2->expr_res.expr_type = double_;
         }
+        else
+        {
+            print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.");
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+        }
+    }
+    else
+    {
+        print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.");
+        error_code_handler(ERR_INCOMPATIBILE_TYPE);
     }
 }
 
