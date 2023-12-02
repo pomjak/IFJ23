@@ -697,6 +697,7 @@ Rule arg(Parser* p) {
                     return ERR_FUNCTION_PARAMETER;
                 }
             }
+            code_generator_function_call_param_add(p->last_func_id->name.str, p->curr_tok);
             return EXIT_SUCCESS;
         }
         /* Assert validity of the label */
