@@ -549,7 +549,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         expr_symbol.token = sym_arr->arr[0].token;
 
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
-        if(expr_symbol.expr_res.nilable)
+        if(sym_arr->arr[0].expr_res.nilable)
         {
             expr_symbol.expr_res.nilable = false;
         }
