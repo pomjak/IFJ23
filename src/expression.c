@@ -240,7 +240,6 @@ bool is_binary_operator(symstack_data_t symbol)
 bool find_closest_eol(symstack_t *stack)
 {
     node_t *current_node = stack->top;
-    int distance = 0;
     bool eol_found = false;
 
     while (current_node != NULL)
@@ -252,7 +251,6 @@ bool find_closest_eol(symstack_t *stack)
             break;
         }
         current_node = current_node->previous;
-        distance += 1;
     }
 
     return eol_found;
