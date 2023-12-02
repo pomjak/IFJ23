@@ -205,7 +205,7 @@ void push_initial_sym(symstack_t *stack)
 
 bool is_operand(symstack_data_t symbol)
 {
-    if (is_literal(symbol) || symbol.token.type == TOKEN_IDENTIFIER || is_identifier(symbol))
+    if (symbol.is_literal || is_identifier(symbol))
     {
         return true;
     }
@@ -240,7 +240,6 @@ bool is_binary_operator(symstack_data_t symbol)
 bool find_closest_eol(symstack_t *stack)
 {
     node_t *current_node = stack->top;
-    int distance = 0;
     bool eol_found = false;
 
     while (current_node != NULL)
@@ -252,7 +251,6 @@ bool find_closest_eol(symstack_t *stack)
             break;
         }
         current_node = current_node->previous;
-        distance += 1;
     }
 
     return eol_found;
@@ -330,7 +328,7 @@ bool id_is_defined(token_T token, Parser *p)
 bool is_literal(symstack_data_t symbol)
 {
     token_type_T exp_type = symbol.token.type;
-    return exp_type == TOKEN_INT || exp_type == TOKEN_DBL || exp_type == TOKEN_STRING || exp_type == TOKEN_NIL;
+    return (exp_type == TOKEN_INT || exp_type == TOKEN_DBL || exp_type == TOKEN_STRING || exp_type == TOKEN_NIL);
 }
 
 bool is_identifier(symstack_data_t symbol)
@@ -541,6 +539,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -551,10 +550,19 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         expr_symbol.token = sym_arr->arr[0].token;
 
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
-        expr_symbol.expr_res.nilable = false;
+        if(sym_arr->arr[0].expr_res.nilable)
+        {
+            expr_symbol.expr_res.nilable = false;
+        }
+        else
+        {
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            print_error(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
+        }
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -567,6 +575,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         return;
 
@@ -582,6 +591,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         return;
     case RULE_PARL_E_PARR:
@@ -589,6 +599,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
+        DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         return;
     default:
@@ -918,8 +929,14 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     symstack_data_t second_operand = sym_arr->arr[2];
 
     DEFINE_EXPR_SYMBOL;
-    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+    expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
+
     // check types of operands
+    if (!compare_types_strict(&first_operand, &second_operand) && (first_operand.is_literal || second_operand.is_literal))
+    {
+        convert_if_retypeable(&first_operand, &second_operand);
+    }
+
 
     // if they are identifiers and both are same strict type
     if (is_identifier(first_operand) && is_identifier(second_operand))
@@ -1070,23 +1087,70 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_res.expr_type = bool_;
 
+    // define operands
     symstack_data_t first_operand = sym_arr->arr[0];
     token_T op = sym_arr->arr[1].token;
     symstack_data_t second_operand = sym_arr->arr[2];
     expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
 
-    // if there is comparison and both sides are literals
-    if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+    // process rel expression with nil
+    bool first_is_nil = compare_operand_with_type(&first_operand, nil);
+    bool second_is_nil = compare_operand_with_type(&second_operand, nil);
+
+    // if there is nil operand
+    if(first_is_nil || second_is_nil)
     {
-        convert_if_retypeable(&first_operand, &second_operand);
-        return expr_symbol;
+        if(first_is_nil)
+        {
+            if(!operand_is_nilable(&second_operand))
+            {
+                error_code_handler(ERR_INCOMPATIBILE_TYPE);
+                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                return expr_symbol;
+            }
+        }
+        else
+        {
+            if(!operand_is_nilable(&first_operand))
+            {
+                error_code_handler(ERR_INCOMPATIBILE_TYPE);
+                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                return expr_symbol;
+            }
+        }
     }
+    else // if there is not nil operand
+    {
+        if (!compare_types_strict(&first_operand, &second_operand))
+        {
+            if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+            {
+                convert_if_retypeable(&first_operand, &second_operand);
+            }
+            else if(op.type != TOKEN_NIL_CHECK)
+            {
+                error_code_handler(ERR_INCOMPATIBILE_TYPE);
+                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                return expr_symbol;
+            }
+        }
+    }
+
+    // if there is comparison and both sides are literals
+    // if(!compare_types_strict(&first_operand,&second_operand))
+    // {
+    //     if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+    //     {
+    //         convert_if_retypeable(&first_operand, &second_operand);
+    //     }
+    // }
+    
 
     // retype nill check
     if (op.type == TOKEN_NIL_CHECK)
     {
         // check if not same types
-        if (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type)
+        if (first_operand.expr_res.expr_type != nil && (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type))
         {
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types in nil check.\n");
@@ -1094,7 +1158,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         }
 
         // check if not (type? ?? type)
-        if (!first_operand.expr_res.nilable || second_operand.expr_res.nilable)
+        if (first_operand.expr_res.expr_type != nil && (!first_operand.expr_res.nilable || second_operand.expr_res.nilable))
         {
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types in nil check.\n");
@@ -1102,15 +1166,15 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         }
 
         // set final type
-        expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
+        if(compare_operand_with_type(&first_operand,nil))
+        {
+            expr_symbol.expr_res.expr_type = second_operand.expr_res.expr_type;
+        }
+        else
+        {
+            expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
+        }
         expr_symbol.expr_res.nilable = false;
-        return expr_symbol;
-    }
-
-    if (!compare_types_strict(&first_operand, &second_operand))
-    {
-        error_code_handler(ERR_INCOMPATIBILE_TYPE);
-        print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
         return expr_symbol;
     }
 
@@ -1140,32 +1204,24 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
 symstack_data_t process_parenthesis(symbol_arr_t *sym_arr)
 {
     DEFINE_EXPR_SYMBOL;
-
-    if (sym_arr->arr[1].expr_res.expr_type == undefined)
-    {
-        expr_symbol.expr_res.expr_type = convert_to_expr_type(sym_arr->arr[1].token.type);
-    }
-    else
-    {
-        expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
-    }
-
+    expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
+    expr_symbol.is_literal = sym_arr->arr[1].is_literal;
     return expr_symbol;
 }
 
 /* TYPE RELATED FUNCTIONS */
 bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2)
 {
-    bool core_type = operand1->expr_res.expr_type == operand2->expr_res.expr_type;
-    bool nilable_type = operand1->expr_res.nilable == operand2->expr_res.nilable;
+    bool core_type = (operand1->expr_res.expr_type == operand2->expr_res.expr_type);
+    bool nilable_type = (operand1->expr_res.nilable == operand2->expr_res.nilable);
     DEBUG_PRINT("Core types     : %d == %d\n", operand1->expr_res.expr_type, operand2->expr_res.expr_type);
     DEBUG_PRINT("Nilable types  : %d == %d\n", operand1->expr_res.nilable, operand2->expr_res.nilable);
-    return core_type && nilable_type;
+    return (core_type && nilable_type);
 }
 
 bool compare_operand_with_type(symstack_data_t *operand, Type type)
 {
-    bool core_type = operand->expr_res.expr_type == type;
+    bool core_type = (operand->expr_res.expr_type == type);
     return core_type;
 }
 
@@ -1206,11 +1262,21 @@ void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
             DEBUG_PRINT("retyping FIRST from int to double");
             operand1->expr_res.expr_type = double_;
         }
-        else if (operand1->is_literal && compare_operand_with_type(operand2, integer))
+        else if (operand2->is_literal && compare_operand_with_type(operand2, integer))
         {
             DEBUG_PRINT("retyping SECOND from int to double");
             operand2->expr_res.expr_type = double_;
         }
+        else
+        {
+            print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+        }
+    }
+    else
+    {
+        print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
+        error_code_handler(ERR_INCOMPATIBILE_TYPE);
     }
 }
 
