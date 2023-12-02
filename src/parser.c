@@ -676,14 +676,21 @@ Rule arg(Parser* p) {
         }
         /* Assert validity of the label */
         if (dstring_cmp(&p->current_arg->label, &p->curr_tok.value.string_val)) {
-            fprintf(stderr, "[ERROR %d] Unknown label '%s' in function '%s'\n", ERR_SEMANTIC, p->curr_tok.value.string_val.str, p->last_func_id->name.str);
-            return ERR_SEMANTIC;
+            fprintf(stderr, "[ERROR %d] Invalid label '%s' in function '%s'\n", ERR_FUNCTION_PARAMETER, p->curr_tok.value.string_val.str, p->last_func_id->name.str);
+            return ERR_FUNCTION_PARAMETER;
         }
 
         GET_TOKEN();
         NEXT_RULE(opt_arg);
     }
     else {
+        if (p->current_arg) {
+            /* Throw error if current func arg had a specified label (not _) but none was passed */
+            if (dstring_cmp_const_str(&p->current_arg->label, "_")) {
+                fprintf(stderr, "[ERROR %d] Missing label '%s' in when calling function '%s'\n", ERR_FUNCTION_PARAMETER, p->current_arg->label.str, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
+        }
         NEXT_RULE(literal);
         DEBUG_PRINT("after literal::%d", p->curr_tok.type);
     }
@@ -1189,8 +1196,8 @@ Rule func_header(Parser* p) {
 
     symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     if (err == SYMTAB_ERR_ITEM_ALREADY_STORED) {
-        fprintf(stderr, "[ERROR %d] Redeclaration of function %s\n", ERR_SEMANTIC, p->curr_tok.value.string_val.str);
-        return ERR_SEMANTIC;
+        fprintf(stderr, "[ERROR %d] Redeclaration of function %s\n", ERR_REDEFINING_VARIABLE, p->curr_tok.value.string_val.str);
+        return ERR_REDEFINING_VARIABLE;
     }
     p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     p->last_func_id->type = function;
