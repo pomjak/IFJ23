@@ -388,7 +388,7 @@ Rule expr_type(Parser* p) {
             fprintf(stderr, "[ERROR %d] Assignment to undefined variable\n", ERR_UNDEFINED_VARIABLE);
             return ERR_UNDEFINED_VARIABLE;
         }
-        if (p->lhs_id->is_mutable == false) {
+        if ((!p->lhs_id->is_mutable) && (p->lhs_id->is_var_initialized)) {
             fprintf(stderr, "[ERROR %d] Assigning a new value to immutable variable %s\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
@@ -480,8 +480,7 @@ Rule expr_type(Parser* p) {
         NEXT_RULE(arg_list);
         break;
     default:
-        if (!p->current_id)
-        {
+        if (!p->current_id) {
             fprintf(stderr, "[ERROR %d] undefined variable\n", ERR_UNDEFINED_VARIABLE);
             return ERR_UNDEFINED_VARIABLE;
         }
@@ -528,7 +527,7 @@ Rule cond_clause(Parser* p) {
             fprintf(stderr, "[ERROR %d] Using a non-nilable constant '%s' in condition statement\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
-        
+
         /* And insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
         set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
@@ -541,6 +540,8 @@ Rule cond_clause(Parser* p) {
     }
     /* if (EXPR) */
     else {
+        tb_prev(&p->buffer);
+        p->curr_tok = tb_get_token(&p->buffer);
         if ((res = expr(p))) {
             return res;
         }
@@ -954,10 +955,11 @@ Rule opt_ret(Parser* p) {
 
     if (p->last_func_id->return_type == nil) {
         GET_TOKEN();
-
-        if (p->curr_tok.type != TOKEN_R_BKT) {
-            fprintf(stderr, "[ERROR %d] Unexpected expression in return from void function\n", ERR_FUNCTION_RETURN);
-            return ERR_FUNCTION_RETURN;
+        if (!p->curr_tok.preceding_eol) {
+            if (p->curr_tok.type != TOKEN_R_BKT) {
+                fprintf(stderr, "[ERROR %d] Unexpected expression in return from void function\n", ERR_FUNCTION_RETURN);
+                return ERR_FUNCTION_RETURN;
+            }
         }
     }
     else {
