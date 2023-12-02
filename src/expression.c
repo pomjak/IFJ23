@@ -39,7 +39,7 @@
     expr_symbol.is_terminal = false;            \
     expr_symbol.is_handleBegin = false;         \
     expr_symbol.expr_res.expr_type = undefined; \
-    expr_symbol.expr_res.nilable = false;
+    expr_symbol.expr_res.nilable = false;       
 
 bool is_multiline_expr = false;
 bool is_all_literals = true;
@@ -62,8 +62,8 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* i   */ {R, R, R, X, R, X, R, R, R},
         /* RO  */ {S, S, R, S, E, S, R, S, R},
         /* (   */ {S, S, S, S, S, S, E, S, X},
-        /* )   */ {R, R, R, X, R, X, R, S, R},
-        /* !   */ {R, R, R, R, R, R, R, S, R}, // not sure
+        /* )   */ {R, R, R, X, R, X, R, X, R},
+        /* !   */ {R, R, R, R, R, R, R, S, R}, 
         /* $   */ {S, S, S, S, S, S, X, S, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
@@ -206,7 +206,7 @@ void push_initial_sym(symstack_t *stack)
 
 bool is_operand(symstack_data_t symbol)
 {
-    if (symbol.is_literal || is_identifier(symbol))
+    if(is_literal(symbol) || symbol.token.type == TOKEN_IDENTIFIER)
     {
         return true;
     }
@@ -517,6 +517,8 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
 {
     // see expression types
     DEFINE_EXPR_SYMBOL;
+    token_T empty = EMPTY_TOKEN(false);
+    expr_symbol.token = empty; 
 
     switch (rule)
     {
@@ -537,6 +539,13 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         // change type nilable to false
         expr_symbol.token = sym_arr->arr[0].token;
 
+        // if token E is not operand
+        if(!sym_arr->arr[0].is_identifier)
+        {
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            print_error(ERR_INCOMPATIBILE_TYPE,"Cannot by applied to more than 1 operand.\n");
+        }
+
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
         if(sym_arr->arr[0].expr_res.nilable)
         {
@@ -544,6 +553,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         }
         else
         {
+            expr_symbol.expr_res.expr_type = undefined;
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             print_error(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
         }
@@ -832,7 +842,7 @@ int expr(Parser *p)
                 PRINT_STACK(&stack);
 
                 // set the end of the expression
-                token_T empty = EMPTY_TOKEN(p->curr_tok.preceding_eol);
+                token_T empty = EMPTY_TOKEN(false);
                 p->curr_tok = empty;
             }
             else
@@ -840,7 +850,7 @@ int expr(Parser *p)
                 expr_error(&stack);
                 GET_TOKEN();
             }
-
+            // printf("curr tok type: %d\n ",p->curr_tok.type);
             break;
         default:
             print_error(ERR_INTERNAL, "Unknown precedence table operation.\n");
@@ -887,6 +897,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token = operand->token;
     expr_symbol.is_literal = is_literal(*operand);
+    expr_symbol.is_identifier = (operand->token.type == TOKEN_IDENTIFIER);
 
     // get type of the expression
     if (operand->token.type == TOKEN_IDENTIFIER)
@@ -918,6 +929,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     DEFINE_EXPR_SYMBOL;
     expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
+    expr_symbol.is_identifier = false;
 
     // check types of operands
     if (!compare_types_strict(&first_operand, &second_operand) && (first_operand.is_literal || second_operand.is_literal))
@@ -997,6 +1009,7 @@ symstack_data_t process_division(symbol_arr_t *sym_arr)
 {
     DEBUG_PRINT("Process division");
     DEFINE_EXPR_SYMBOL;
+    expr_symbol.is_identifier = false;
 
     // do this with expr_types
     symstack_data_t first_operand = sym_arr->arr[0];
@@ -1037,6 +1050,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 {
     DEBUG_PRINT("Process concat");
     DEFINE_EXPR_SYMBOL;
+    expr_symbol.is_identifier = false;
 
     expr_symbol.expr_res.expr_type = string;
 
@@ -1067,6 +1081,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     DEBUG_PRINT("Process relational op");
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_res.expr_type = bool_;
+    expr_symbol.is_identifier = false;
 
     // define operands
     symstack_data_t first_operand = sym_arr->arr[0];
@@ -1176,6 +1191,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
 symstack_data_t process_parenthesis(symbol_arr_t *sym_arr)
 {
     DEFINE_EXPR_SYMBOL;
+    expr_symbol.is_identifier = false;
     expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
     expr_symbol.is_literal = sym_arr->arr[1].is_literal;
     return expr_symbol;
