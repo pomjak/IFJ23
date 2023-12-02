@@ -370,8 +370,6 @@ void code_generator_function_call_token(token_T token){
 
 void code_generator_function_call(char* name){
 
-    func_param_id = 0;
-
     if(strcmp(name,"readString") == 0){
         BUFFER_PRINT("READ GF@?READED_1 string\n");
         BUFFER_PRINT("PUSHS GF@?READED_1\n");
@@ -382,8 +380,15 @@ void code_generator_function_call(char* name){
         BUFFER_PRINT("READ GF@?READED_3 float\n");
         BUFFER_PRINT("PUSHS GF@?READED_3\n");
     } else if (code_generator_need_function_frame(name)) {
+        
+        if (func_param_id == 0) {
+            code_generator_createframe();
+        }
+
         BUFFER_PRINT("CALL $$FUNCTION_%s\n", name);
     }
+
+    func_param_id = 0;
 }
 
 void code_generator_function_call_param_add_token(token_T token_name, token_T token_value){
