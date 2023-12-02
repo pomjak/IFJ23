@@ -549,7 +549,15 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         expr_symbol.token = sym_arr->arr[0].token;
 
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
-        expr_symbol.expr_res.nilable = false;
+        if(expr_symbol.expr_res.nilable)
+        {
+            expr_symbol.expr_res.nilable = false;
+        }
+        else
+        {
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            print_error(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
+        }
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
