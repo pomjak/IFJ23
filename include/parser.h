@@ -14,6 +14,7 @@
 #include "scope.h"
 #include "symtable.h"
 #include "token_buffer.h"
+#include "code_generator.h"
 
 typedef struct expr_res {
     Type expr_type;
@@ -32,6 +33,7 @@ typedef struct parser_t {
     bool first_stmt;            
     uint32_t in_cond;                // Parser is inside a condition statement
     uint32_t in_loop;                // Parser is inside a while loop
+    uint32_t param_cnt;
     param_t* current_arg;        // Current function argument list
     token_T curr_tok;            // Currently processed token
     symtab_item_t* lhs_id;       // Identifier on the left hand side of assignment
