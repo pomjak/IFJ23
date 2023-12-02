@@ -57,6 +57,7 @@ Rule prog(Parser* p) {
         pop_scope(&p->stack, &err);
         p->in_func_body = false;
         p->first_stmt = false;
+        code_generator_function_end(p->last_func_id->name.str);
         GET_TOKEN();
         NEXT_RULE(prog);
         break;
@@ -383,6 +384,8 @@ Rule opt_assign(Parser* p) {
         code_generator_var_declare(p->lhs_id->name.str);
 
     }
+    /* Generate an empty variable declaration */
+    code_generator_var_declare(p->lhs_id->name.str);
     return EXIT_SUCCESS;
 }
 
@@ -392,7 +395,7 @@ Rule opt_assign(Parser* p) {
 Rule expr_type(Parser* p) {
     RULE_PRINT("expr_type");
     uint32_t res, err;
-
+    symtab_item_t* temp;
     switch (p->curr_tok.type) {
     /* If assignment is the next step after loading the identifier, the ID was a variable */
     case TOKEN_ASS:
@@ -486,12 +489,15 @@ Rule expr_type(Parser* p) {
             return ERR_UNDEFINED_FUNCTION;
         }
         /* If the ID we're processing is a function, set it to last_func_id and reset current_id */
+        temp = p->last_func_id; /* Temporarily save last func id */
         p->last_func_id = p->current_id;
         p->current_id = NULL;
         p->in_function = true;
 
         GET_TOKEN();
         NEXT_RULE(arg_list);
+        code_generator_function_call(p->last_func_id->name.str);
+        p->last_func_id = temp; /* reset last func id */
         break;
     default:
         if (!p->current_id) {
@@ -1484,11 +1490,9 @@ bool add_builtins(Parser* p) {
     ADD_BUILTIN_PARAM("of", "s", string, false);
     ADD_BUILTIN_PARAM("startingAt", "i", integer, false);
     ADD_BUILTIN_PARAM("endingBefore", "j", integer, false);
-    code_generator_substring();
     // ord(_ c: String) -> Int
     SET_BUILTIN("ord", integer, false);
     ADD_BUILTIN_PARAM("_", "c", string, false);
-    code_generator_function_ord();
     // chr(_ i: Int) -> String
     SET_BUILTIN("chr", string, false);
     ADD_BUILTIN_PARAM("_", "i", integer, false);
