@@ -130,14 +130,18 @@ Rule stmt(Parser* p) {
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
         CHECK_NEWLINE();
         p->in_cond++;
-        /* scope for if body */
-        add_scope(&p->stack, &err);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
+        /* Local scope for if body */
+        add_scope(&p->stack, &err);
         GET_TOKEN();
         p->first_stmt = true;
+        /* pop local (if) scope inside block body */
         NEXT_RULE(block_body);
+
+        /* Pops local scope created inside condition clause */
+        pop_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* adding scope for else */
@@ -146,8 +150,8 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
+        /* pop local (else) scope inside block body */
         NEXT_RULE(block_body);
-        pop_scope(&p->stack, &err);
         GET_TOKEN();
         p->in_cond--; // condition should be fully parsed by the time we're exiting the switch statement
         break;
@@ -496,6 +500,7 @@ Rule cond_clause(Parser* p) {
 
     /* if let id */
     if (p->curr_tok.type == TOKEN_LET) {
+        add_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
         DEBUG_PRINT("if let %s ", p->curr_tok.value.string_val.str);
@@ -523,6 +528,7 @@ Rule cond_clause(Parser* p) {
             fprintf(stderr, "[ERROR %d] Using a non-nilable constant '%s' in condition statement\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
+        
         /* And insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
         set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
