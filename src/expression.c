@@ -1074,19 +1074,63 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_res.expr_type = bool_;
 
+    // define operands
     symstack_data_t first_operand = sym_arr->arr[0];
     token_T op = sym_arr->arr[1].token;
     symstack_data_t second_operand = sym_arr->arr[2];
     expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
 
-    // if there is comparison and both sides are literals
-    if(!compare_types_strict(&first_operand,&second_operand))
+    // process rel expression with nil
+    bool first_is_nil = compare_operand_with_type(&first_operand, nil);
+    bool second_is_nil = compare_operand_with_type(&second_operand, nil);
+
+    // if there is nil operand
+    if(first_is_nil || second_is_nil)
     {
-        if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+        if(first_is_nil)
         {
-            convert_if_retypeable(&first_operand, &second_operand);
+            if(!operand_is_nilable(&second_operand))
+            {
+                error_code_handler(ERR_INCOMPATIBILE_TYPE);
+                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                return expr_symbol;
+            }
+        }
+        else
+        {
+            if(!operand_is_nilable(&first_operand))
+            {
+                error_code_handler(ERR_INCOMPATIBILE_TYPE);
+                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                return expr_symbol;
+            }
         }
     }
+    else // if there is not nil operand
+    {
+        if (!compare_types_strict(&first_operand, &second_operand))
+        {
+            if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+            {
+                convert_if_retypeable(&first_operand, &second_operand);
+            }
+            else
+            {
+                error_code_handler(ERR_INCOMPATIBILE_TYPE);
+                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                return expr_symbol;
+            }
+        }
+    }
+
+    // if there is comparison and both sides are literals
+    // if(!compare_types_strict(&first_operand,&second_operand))
+    // {
+    //     if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
+    //     {
+    //         convert_if_retypeable(&first_operand, &second_operand);
+    //     }
+    // }
     
 
     // retype nill check
@@ -1109,7 +1153,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         }
 
         // set final type
-        if(first_operand.expr_res.expr_type == nil)
+        if(compare_operand_with_type(&first_operand,nil))
         {
             expr_symbol.expr_res.expr_type = second_operand.expr_res.expr_type;
         }
@@ -1118,13 +1162,6 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
             expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
         }
         expr_symbol.expr_res.nilable = false;
-        return expr_symbol;
-    }
-
-    if (!compare_types_strict(&first_operand, &second_operand))
-    {
-        error_code_handler(ERR_INCOMPATIBILE_TYPE);
-        print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
         return expr_symbol;
     }
 
