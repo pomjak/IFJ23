@@ -11,7 +11,12 @@
 <STRING  value='eol
 
 '>
+<STRING  value=''>
 <STRING  value='ahoj
 tady'>
 <STRING  value=' ahoj
- tady'><EOF>
+ tady'>
+<STRING  value='Test
+
+Ahoj'>
+<STRING  value=''><EOF>
