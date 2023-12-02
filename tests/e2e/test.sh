@@ -96,7 +96,7 @@ execTest "Non-matching types in nil coalescence" "input/coal_wrong_types.swift" 
 execTest "Force unwrapping of non-nullable variable" "input/unwrap_non_nullable.swift" "output/empty.txt" 7
 execTest "Comparison of different types" "input/rel_wrong_type.swift" "output/empty.txt" 7
 execTest "Comparison of convertible types" "input/rel_implicit_convert.swift" "output/empty.txt" 0
-execTest "Comparison of non-nil and nil types" "input/rel_wrong_type_nil.swift" "output/empty.txt" 0
+execTest "Comparison of non-nil and nil types" "input/rel_wrong_type_nil.swift" "output/empty.txt" 7
 execTest "Comparison of strings" "input/rel_string.swift" "output/rel_string.txt" 0
 execTest "Relational operators" "input/rel.swift" "output/rel.txt" 0
 execTest "Relational operator with illegal implicit conversion" "input/rel_wrong_convert.swift" "output/empty.txt" 7
