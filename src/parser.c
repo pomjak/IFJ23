@@ -519,8 +519,10 @@ Rule cond_clause(Parser* p) {
             fprintf(stderr, "[ERROR %d] Using mutable variable %s in conditional\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
-        /* Add a local scope for the body of the if statement */
-        DEBUG_PRINT("Local scope for if created");
+        if (!p->current_id->is_nillable) {
+            fprintf(stderr, "[ERROR %d] Using a non-nilable constant '%s' in condition statement\n", ERR_SEMANTIC, p->current_id->name.str);
+            return ERR_SEMANTIC;
+        }
         /* And insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
         set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
@@ -533,10 +535,6 @@ Rule cond_clause(Parser* p) {
     }
     /* if (EXPR) */
     else {
-        ASSERT_TOK_TYPE(TOKEN_L_PAR);
-        /* Move to previous token since expression func expects loading parentheses */
-        tb_prev(&p->buffer);
-        p->curr_tok = tb_get_token(&p->buffer);
         if ((res = expr(p))) {
             return res;
         }
