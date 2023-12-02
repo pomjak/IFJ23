@@ -1114,7 +1114,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
             {
                 convert_if_retypeable(&first_operand, &second_operand);
             }
-            else
+            else if(op.type != TOKEN_NIL_CHECK)
             {
                 error_code_handler(ERR_INCOMPATIBILE_TYPE);
                 print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
