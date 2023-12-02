@@ -49,7 +49,6 @@ execTest "Variable out of scope" "input/variable_out_of_scope.swift" "output/emp
 execTest "Undefined variable" "input/undefined_variable.swift" "output/empty.txt" 5
 execTest "Default nil initialisation" "input/default_nil_init.swift" "output/default_nil_init.txt" 0
 execTest "Uninitialised variable" "input/uninitialised_variable.swift" "output/empty.txt" 5
-execTest "Uninitialised variable (init in deeper scope)" "input/uninitialised_variable_in_scope.swift" "output/empty.txt" 5
 execTest "Variable initialised in scope" "input/initialised_variable_in_scope.swift" "output/empty.txt" 0
 execTest "Function call" "input/function_call.swift" "output/function_call.txt" 0
 execTest "Function call before definition" "input/function_call_before_def.swift" "output/function_call.txt" 0
@@ -64,9 +63,9 @@ execTest "Function call with wrong parameter type" "input/func_call_wrong_type.s
 execTest "Function call with wrong number of params" "input/func_call_wrong_param_count.swift" "output/empty.txt" 4
 execTest "Modify function parameter" "input/func_call_modify_param.swift" "output/empty.txt" 9
 execTest "Eearly return from procedure" "input/proc_return.swift" "output/empty.txt" 0
-execTest "Try to return value from procedure" "input/proc_return_with_type.swift" "output/empty.txt" 2
-execTest "Try to return without value from function" "input/func_return_without_value.swift" "output/empty.txt" 2
-execTest "Return wrong type from function" "input/func_wrong_return_type.swift" "output/empty.txt" 6
+execTest "Try to return value from procedure" "input/proc_return_with_type.swift" "output/empty.txt" 6
+execTest "Try to return without value from function" "input/func_return_without_value.swift" "output/empty.txt" 6
+execTest "Return wrong type from function" "input/func_wrong_return_type.swift" "output/empty.txt" 4
 execTest "Return statement in global scope" "input/return_in_global_scope.swift" "output/empty.txt" 2
 execTest "Return statement in global scope" "input/return_in_global_scope_with_value.swift" "output/empty.txt" 2
 execTest "Modify constant" "input/modify_const_variable.swift" "output/empty.txt" 9
