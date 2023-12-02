@@ -169,7 +169,10 @@ unsigned indentation_perform(dstring_t *read_string) {
     for (size_t i = 0; i < for_iter; i++) {
         
         if (read_string->str[i] == '\n') {
+            if (indent_position < indent.length && indent_position != 0) return indentation_fail;
+
             indent_position = 0;
+            
             if (!dstring_append(&result, read_string->str[i])) return indentation_memory_fail;
             continue;
         }
