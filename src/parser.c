@@ -29,11 +29,15 @@ Rule prog(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
         p->last_func_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
+        /* Generate label for function */
+        code_generator_function_label_token(p->curr_tok);
+        
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_PAR);
         /* new scope for parameters */
         add_scope(&p->stack, &err);
-
+        /* Reset param counter before parsing function parameters */
+        p->param_cnt = 0;
         GET_TOKEN();
         NEXT_RULE(param_list_skip);
 
@@ -975,6 +979,7 @@ Rule opt_ret(Parser* p) {
             return ERR_RETURN_TYPE;
         }
     }
+    code_generator_return();
     return EXIT_SUCCESS;
 }
 
@@ -1266,7 +1271,9 @@ Rule param_skip(Parser* p) {
     symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
     p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
     p->current_id->is_var_initialized = true;
-
+    /* Generate func parameter and increase counter before the next one */
+    code_generator_param_map(p->current_id->name.str, p->param_cnt);
+    p->param_cnt++;
     GET_TOKEN();
     ASSERT_TOK_TYPE(TOKEN_COL);
 
@@ -1410,6 +1417,7 @@ bool parser_init(Parser* p) {
     p->in_param = false;
     p->expr_res.expr_type = undefined;
     p->expr_res.nilable = false;
+    p->param_cnt = 0;
     return true;
 }
 
@@ -1465,9 +1473,11 @@ bool add_builtins(Parser* p) {
     ADD_BUILTIN_PARAM("of", "s", string, false);
     ADD_BUILTIN_PARAM("startingAt", "i", integer, false);
     ADD_BUILTIN_PARAM("endingBefore", "j", integer, false);
+    code_generator_substring();
     // ord(_ c: String) -> Int
     SET_BUILTIN("ord", integer, false);
     ADD_BUILTIN_PARAM("_", "c", string, false);
+    code_generator_function_ord();
     // chr(_ i: Int) -> String
     SET_BUILTIN("chr", string, false);
     ADD_BUILTIN_PARAM("_", "i", integer, false);
@@ -1533,6 +1543,10 @@ uint32_t parse() {
         return ERR_INTERNAL;
     }
     DEBUG_PRINT("parser initialized");
+    
+    /* Generate header before generating any other code*/
+    code_generator_prolog();
+
     /* Add builtin functions to the global symtable */
     if (!add_builtins(&p)) {
         parser_dispose(&p);
@@ -1540,6 +1554,7 @@ uint32_t parse() {
         return ERR_INTERNAL;
     }
     DEBUG_PRINT("builtins added");
+
     /* Load tokens from input and fill the token buffer */
     if ((res = parser_fill_buffer(&p))) {
         parser_dispose(&p);
