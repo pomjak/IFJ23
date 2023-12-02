@@ -476,19 +476,6 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
 
         if (is_operand(sym_arr->arr[0]))
         {
-            // if (sym_arr->arr[0].token.type == TOKEN_IDENTIFIER)
-            // {
-            //     if (id_is_defined(sym_arr->arr[0].token, p))
-            //     {
-            //         DEBUG_PRINT("NOT FOUND");
-            //     }
-            //     if (!id_is_defined(sym_arr->arr[0].token, p))
-            //     {
-
-            //         print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
-            //         error_code_handler(ERR_UNDEFINED_VARIABLE);
-            //     }
-            // }
             rule = RULE_OPERAND;
             break;
         }
@@ -971,7 +958,6 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     // if adding same types
     if (compare_types_strict(&first_operand, &second_operand))
     {
-        // printf("\tsame types\n");
         if (compare_operand_with_type(&first_operand, integer) || compare_operand_with_type(&first_operand, double_))
         {
             expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
@@ -988,17 +974,12 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     // if one of the operands is double need to convert it
     if (compare_operand_with_type(&first_operand, double_) || compare_operand_with_type(&second_operand, double_))
     {
-        // printf("\tone of them is double\n");
-        // int2double(&first_operand, &second_operand);
-        // generate_float_arithmetic_by_operator(op, first_operand.token.value.double_val, second_operand.token.value.double_val);
         expr_symbol.expr_res.expr_type = double_;
         return expr_symbol;
     }
     // if both are int and same expr type
     else if (first_operand.expr_res.expr_type == integer && compare_types_strict(&first_operand, &second_operand))
     {
-        // printf("\tBoth are int\n");
-        // generate_int_arithmetic_by_operator(op, first_operand.token.value.int_val, second_operand.token.value.int_val);
         expr_symbol.expr_res.expr_type = integer;
         return expr_symbol;
     }
@@ -1048,7 +1029,6 @@ symstack_data_t process_division(symbol_arr_t *sym_arr)
             return expr_symbol;
         }
     }
-    // generate_division(first_operand.token, second_operand.token);
     return expr_symbol;
 }
 
@@ -1136,16 +1116,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         }
     }
 
-    // if there is comparison and both sides are literals
-    // if(!compare_types_strict(&first_operand,&second_operand))
-    // {
-    //     if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
-    //     {
-    //         convert_if_retypeable(&first_operand, &second_operand);
-    //     }
-    // }
     
-
     // retype nill check
     if (op.type == TOKEN_NIL_CHECK)
     {
