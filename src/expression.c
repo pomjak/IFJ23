@@ -17,6 +17,7 @@
 #include "parser.h"
 #include "symtable.h"
 #include "scope.h"
+#include "code_generator.h"
 
 #define GENERATE_CODE(...)                                \
     if (error_code_handler(EXIT_SUCCESS) == EXIT_SUCCESS) \
@@ -903,7 +904,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     {
         expr_symbol.expr_res.expr_type = convert_to_expr_type(operand->token.type);
     }
-
+    code_generator_push(operand->token);
     return expr_symbol;
 }
 
