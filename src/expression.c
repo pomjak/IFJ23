@@ -1077,7 +1077,6 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
     {
         convert_if_retypeable(&first_operand, &second_operand);
-        return expr_symbol;
     }
 
     // retype nill check
@@ -1145,27 +1144,18 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
 symstack_data_t process_parenthesis(symbol_arr_t *sym_arr)
 {
     DEFINE_EXPR_SYMBOL;
-
-    if (sym_arr->arr[1].expr_res.expr_type == undefined)
-    {
-        expr_symbol.expr_res.expr_type = convert_to_expr_type(sym_arr->arr[1].token.type);
-    }
-    else
-    {
-        expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
-    }
-
+    expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
     return expr_symbol;
 }
 
 /* TYPE RELATED FUNCTIONS */
 bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2)
 {
-    bool core_type = operand1->expr_res.expr_type == operand2->expr_res.expr_type;
-    bool nilable_type = operand1->expr_res.nilable == operand2->expr_res.nilable;
+    bool core_type = (operand1->expr_res.expr_type == operand2->expr_res.expr_type);
+    bool nilable_type = (operand1->expr_res.nilable == operand2->expr_res.nilable);
     DEBUG_PRINT("Core types     : %d == %d\n", operand1->expr_res.expr_type, operand2->expr_res.expr_type);
     DEBUG_PRINT("Nilable types  : %d == %d\n", operand1->expr_res.nilable, operand2->expr_res.nilable);
-    return core_type && nilable_type;
+    return (core_type && nilable_type);
 }
 
 bool compare_operand_with_type(symstack_data_t *operand, Type type)
