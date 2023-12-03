@@ -117,20 +117,24 @@ Rule stmt(Parser* p) {
         CHECK_NEWLINE();
         p->in_loop++;
 
+        code_generator_for_label(++p->loop_uid);
         if ((res = expr(p))) {
             return res;
         }
+        code_generator_for_loop_if(p->loop_uid); /* Generate loop condition */
+        
         if (p->expr_res.expr_type != bool_) {
             fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
             return ERR_INCOMPATIBILE_TYPE;
         }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-
         GET_TOKEN();
         add_scope(&p->stack, &err);
         p->first_stmt = true;
+        code_generator_for_body(p->loop_uid);
         NEXT_RULE(block_body);
         GET_TOKEN();
+        code_generator_for_loop_end(p->loop_uid);
         p->in_loop--;
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
@@ -138,6 +142,7 @@ Rule stmt(Parser* p) {
         p->in_cond++;
         GET_TOKEN();
         NEXT_RULE(cond_clause);
+        code_generator_if_header(++p->cond_uid);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         /* Local scope for if body */
         add_scope(&p->stack, &err);
@@ -152,6 +157,7 @@ Rule stmt(Parser* p) {
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* adding scope for else */
         add_scope(&p->stack, &err);
+        code_generator_if_else(p->cond_uid);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
@@ -159,6 +165,7 @@ Rule stmt(Parser* p) {
         /* pop local (else) scope inside block body */
         NEXT_RULE(block_body);
         GET_TOKEN();
+        code_generator_if_end(p->cond_uid);
         p->in_cond--; // condition should be fully parsed by the time we're exiting the switch statement
         break;
     default:
@@ -899,15 +906,19 @@ Rule func_stmt(Parser* p) {
     case TOKEN_WHILE:
         CHECK_NEWLINE();
         p->in_loop++;
+        code_generator_for_label(++p->loop_uid);
         if ((res = expr(p))) {
             return res;
         }
+        code_generator_for_loop_if(p->loop_uid);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
         add_scope(&p->stack, &err);
+        code_generator_for_body(p->loop_uid);
         NEXT_RULE(func_body);
         GET_TOKEN();
+        code_generator_for_loop_end(p->loop_uid);
         p->in_loop--;
         break;
     case TOKEN_IF:
@@ -917,7 +928,7 @@ Rule func_stmt(Parser* p) {
         add_scope(&p->stack, &err);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
-
+        code_generator_if_header(++p->cond_uid);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
         GET_TOKEN();
@@ -929,6 +940,7 @@ Rule func_stmt(Parser* p) {
         /* else body scope */
         add_scope(&p->stack, &err);
 
+        code_generator_if_else(p->cond_uid);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
 
@@ -936,6 +948,7 @@ Rule func_stmt(Parser* p) {
         p->first_stmt = true;
         NEXT_RULE(func_body);
         GET_TOKEN();
+        code_generator_if_end(p->cond_uid);
         p->in_cond--;
         break;
     case TOKEN_RETURN:
@@ -1436,6 +1449,8 @@ bool parser_init(Parser* p) {
     p->expr_res.expr_type = undefined;
     p->expr_res.nilable = false;
     p->param_cnt = 0;
+    p->cond_uid = 0;
+    p->loop_uid = 0;
     return true;
 }
 

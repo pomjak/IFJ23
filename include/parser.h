@@ -34,6 +34,8 @@ typedef struct parser_t {
     uint32_t in_cond;                // Parser is inside a condition statement
     uint32_t in_loop;                // Parser is inside a while loop
     uint32_t param_cnt;
+    uint32_t cond_uid;
+    uint32_t loop_uid;
     param_t* current_arg;        // Current function argument list
     token_T curr_tok;            // Currently processed token
     symtab_item_t* lhs_id;       // Identifier on the left hand side of assignment
