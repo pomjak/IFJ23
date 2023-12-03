@@ -17,6 +17,7 @@
 #include "parser.h"
 #include "symtable.h"
 #include "scope.h"
+#include "code_generator.h"
 
 #define GENERATE_CODE(...)                                \
     if (error_code_handler(EXIT_SUCCESS) == EXIT_SUCCESS) \
@@ -38,7 +39,7 @@
     expr_symbol.is_terminal = false;            \
     expr_symbol.is_handleBegin = false;         \
     expr_symbol.expr_res.expr_type = undefined; \
-    expr_symbol.expr_res.nilable = false;
+    expr_symbol.expr_res.nilable = false;       
 
 bool is_multiline_expr = false;
 bool is_all_literals = true;
@@ -61,8 +62,8 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* i   */ {R, R, R, X, R, X, R, R, R},
         /* RO  */ {S, S, R, S, E, S, R, S, R},
         /* (   */ {S, S, S, S, S, S, E, S, X},
-        /* )   */ {R, R, R, X, R, X, R, S, R},
-        /* !   */ {R, R, R, R, R, R, R, S, R}, // not sure
+        /* )   */ {R, R, R, X, R, X, R, X, R},
+        /* !   */ {R, R, R, R, R, R, R, S, R}, 
         /* $   */ {S, S, S, S, S, S, X, S, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
@@ -205,7 +206,7 @@ void push_initial_sym(symstack_t *stack)
 
 bool is_operand(symstack_data_t symbol)
 {
-    if (symbol.is_literal || is_identifier(symbol))
+    if(is_literal(symbol) || symbol.token.type == TOKEN_IDENTIFIER)
     {
         return true;
     }
@@ -476,19 +477,6 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
 
         if (is_operand(sym_arr->arr[0]))
         {
-            // if (sym_arr->arr[0].token.type == TOKEN_IDENTIFIER)
-            // {
-            //     if (id_is_defined(sym_arr->arr[0].token, p))
-            //     {
-            //         DEBUG_PRINT("NOT FOUND");
-            //     }
-            //     if (!id_is_defined(sym_arr->arr[0].token, p))
-            //     {
-
-            //         print_error(ERR_UNDEFINED_VARIABLE, "Undefined identifier\n");
-            //         error_code_handler(ERR_UNDEFINED_VARIABLE);
-            //     }
-            // }
             rule = RULE_OPERAND;
             break;
         }
@@ -529,6 +517,8 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
 {
     // see expression types
     DEFINE_EXPR_SYMBOL;
+    token_T empty = EMPTY_TOKEN(false);
+    expr_symbol.token = empty; 
 
     switch (rule)
     {
@@ -549,6 +539,13 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         // change type nilable to false
         expr_symbol.token = sym_arr->arr[0].token;
 
+        // if token E is not operand
+        if(!sym_arr->arr[0].is_identifier)
+        {
+            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            print_error(ERR_INCOMPATIBILE_TYPE,"Cannot by applied to more than 1 operand.\n");
+        }
+
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
         if(sym_arr->arr[0].expr_res.nilable)
         {
@@ -556,6 +553,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         }
         else
         {
+            expr_symbol.expr_res.expr_type = undefined;
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             print_error(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
         }
@@ -844,7 +842,7 @@ int expr(Parser *p)
                 PRINT_STACK(&stack);
 
                 // set the end of the expression
-                token_T empty = EMPTY_TOKEN(p->curr_tok.preceding_eol);
+                token_T empty = EMPTY_TOKEN(false);
                 p->curr_tok = empty;
             }
             else
@@ -852,7 +850,7 @@ int expr(Parser *p)
                 expr_error(&stack);
                 GET_TOKEN();
             }
-
+            // printf("curr tok type: %d\n ",p->curr_tok.type);
             break;
         default:
             print_error(ERR_INTERNAL, "Unknown precedence table operation.\n");
@@ -899,6 +897,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token = operand->token;
     expr_symbol.is_literal = is_literal(*operand);
+    expr_symbol.is_identifier = (operand->token.type == TOKEN_IDENTIFIER);
 
     // get type of the expression
     if (operand->token.type == TOKEN_IDENTIFIER)
@@ -916,7 +915,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
     {
         expr_symbol.expr_res.expr_type = convert_to_expr_type(operand->token.type);
     }
-
+    code_generator_push(operand->token);
     return expr_symbol;
 }
 
@@ -930,6 +929,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     DEFINE_EXPR_SYMBOL;
     expr_symbol.is_literal = first_operand.is_literal && second_operand.is_literal;
+    expr_symbol.is_identifier = false;
 
     // check types of operands
     if (!compare_types_strict(&first_operand, &second_operand) && (first_operand.is_literal || second_operand.is_literal))
@@ -948,13 +948,15 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
             return expr_symbol;
         }
     }
-    // if both operands are same nilable, one operand is literal, so it should be both operands are not nillable
-    else if (operand_is_nilable(&first_operand) != operand_is_nilable(&second_operand))
+
+    // if operands are nillable
+    if (operand_is_nilable(&first_operand) || operand_is_nilable(&second_operand))
     {
         print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types of operands.\n");
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         return expr_symbol;
     }
+    
 
     if (compare_operand_with_type(&first_operand, string) || compare_operand_with_type(&second_operand, string))
     {
@@ -964,46 +966,38 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     if (op.type == TOKEN_DIV)
     {
-        expr_symbol = process_division(sym_arr);
+        expr_symbol = process_division(&first_operand, &second_operand);
         return expr_symbol;
     }
 
     // if adding same types
     if (compare_types_strict(&first_operand, &second_operand))
     {
-        // printf("\tsame types\n");
         if (compare_operand_with_type(&first_operand, integer) || compare_operand_with_type(&first_operand, double_))
         {
             expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
         }
         else
         {
-            printf("First op: %d | second op: %d\n", first_operand.expr_res.expr_type, second_operand.expr_res.expr_type);
             print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
             error_code_handler(ERR_INCOMPATIBILE_TYPE);
             return expr_symbol;
         }
     }
 
-    // if one of the operands is double need to convert it
+    // set expr symbol type based on operands type
     if (compare_operand_with_type(&first_operand, double_) || compare_operand_with_type(&second_operand, double_))
     {
-        // printf("\tone of them is double\n");
-        // int2double(&first_operand, &second_operand);
-        // generate_float_arithmetic_by_operator(op, first_operand.token.value.double_val, second_operand.token.value.double_val);
         expr_symbol.expr_res.expr_type = double_;
-        return expr_symbol;
     }
-    // if both are int and same expr type
     else if (first_operand.expr_res.expr_type == integer && compare_types_strict(&first_operand, &second_operand))
     {
-        // printf("\tBoth are int\n");
-        // generate_int_arithmetic_by_operator(op, first_operand.token.value.int_val, second_operand.token.value.int_val);
         expr_symbol.expr_res.expr_type = integer;
-        return expr_symbol;
     }
+    code_generator_operations(op.type, compare_operand_with_type(&expr_symbol,integer));
 
-    printf("First op: %d | second op: %d\n", first_operand.expr_res.expr_type, second_operand.expr_res.expr_type);
+    return expr_symbol;
+
     print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     error_code_handler(ERR_INCOMPATIBILE_TYPE);
 
@@ -1011,44 +1005,42 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_division(symbol_arr_t *sym_arr)
+symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_t * second_operand)
 {
     DEBUG_PRINT("Process division");
     DEFINE_EXPR_SYMBOL;
+    expr_symbol.is_identifier = false;
+    expr_symbol.expr_res.expr_type = (first_operand->expr_res.expr_type == integer ? integer : double_);
 
-    // do this with expr_types
-    symstack_data_t first_operand = sym_arr->arr[0];
-    symstack_data_t second_operand = sym_arr->arr[2];
-
-    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+    expr_symbol.is_literal = first_operand->is_literal && second_operand->is_literal;
 
     // define expr_type in here
-    if (!compare_types_strict(&first_operand, &second_operand))
+    if (!compare_types_strict(first_operand, second_operand))
     {
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
         return expr_symbol;
     }
 
-    if (compare_operand_with_type(&second_operand, integer))
+    if (compare_operand_with_type(second_operand, integer))
     {
-        if (second_operand.token.value.int_val == 0)
+        if (second_operand->token.value.int_val == 0)
         {
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
-    else if (compare_operand_with_type(&second_operand, double_))
+    else if (compare_operand_with_type(second_operand, double_))
     {
-        if (second_operand.token.value.double_val == 0.0)
+        if (second_operand->token.value.double_val == 0.0)
         {
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
-    // generate_division(first_operand.token, second_operand.token);
+    code_generator_operations(TOKEN_DIV, compare_operand_with_type(&expr_symbol,integer));
     return expr_symbol;
 }
 
@@ -1056,6 +1048,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 {
     DEBUG_PRINT("Process concat");
     DEFINE_EXPR_SYMBOL;
+    expr_symbol.is_identifier = false;
 
     expr_symbol.expr_res.expr_type = string;
 
@@ -1074,6 +1067,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
     if (compare_types_strict(&first_operand, &second_operand))
     {
         DEBUG_PRINT("Generate concatenation\n");
+        code_generator_operations(operator.type, false);
         return expr_symbol;
     }
     print_error(ERR_INCOMPATIBILE_TYPE, "Concatenation with uncompatibile types.\n");
@@ -1086,6 +1080,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     DEBUG_PRINT("Process relational op");
     DEFINE_EXPR_SYMBOL;
     expr_symbol.expr_res.expr_type = bool_;
+    expr_symbol.is_identifier = false;
 
     // define operands
     symstack_data_t first_operand = sym_arr->arr[0];
@@ -1136,16 +1131,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         }
     }
 
-    // if there is comparison and both sides are literals
-    // if(!compare_types_strict(&first_operand,&second_operand))
-    // {
-    //     if (op.type != TOKEN_NIL_CHECK && (first_operand.is_literal || second_operand.is_literal))
-    //     {
-    //         convert_if_retypeable(&first_operand, &second_operand);
-    //     }
-    // }
     
-
     // retype nill check
     if (op.type == TOKEN_NIL_CHECK)
     {
@@ -1179,31 +1165,33 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     }
 
     // generate code
-    switch (op.type)
-    {
-    case TOKEN_GEQ:
-        DEBUG_PRINT("Generate >= comparation\n");
-        break;
-    case TOKEN_LEQ:
-        DEBUG_PRINT("Generate <= comparation\n");
-        break;
-    case TOKEN_LT:
-        DEBUG_PRINT("Generate < comparation\n");
-        break;
-    case TOKEN_GT:
-        DEBUG_PRINT("Generate > comparation\n");
-        break;
+    // switch (op.type)
+    // {
+    // case TOKEN_GEQ:
+    //     DEBUG_PRINT("Generate >= comparation\n");
+    //     break;
+    // case TOKEN_LEQ:
+    //     DEBUG_PRINT("Generate <= comparation\n");
+    //     break;
+    // case TOKEN_LT:
+    //     DEBUG_PRINT("Generate < comparation\n");
+    //     break;
+    // case TOKEN_GT:
+    //     DEBUG_PRINT("Generate > comparation\n");
+    //     break;
 
-    default:
-        break;
-    }
+    // default:
+    //     break;
+    // }
 
+    code_generator_operations(op.type,false);
     return expr_symbol;
 }
 
 symstack_data_t process_parenthesis(symbol_arr_t *sym_arr)
 {
     DEFINE_EXPR_SYMBOL;
+    expr_symbol.is_identifier = false;
     expr_symbol.expr_res.expr_type = sym_arr->arr[1].expr_res.expr_type;
     expr_symbol.is_literal = sym_arr->arr[1].is_literal;
     return expr_symbol;
@@ -1279,89 +1267,3 @@ void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
     }
 }
-
-/* CODE GENERATION FUNCTIONS */
-// void int2double(symstack_data_t *first_operand, symstack_data_t *second_operand)
-// {
-//     if (compare_operand_with_type(first_operand, integer))
-//     {
-//         // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
-//         DEBUG_PRINT("int2double FIRST\n");
-//         // first_operand->value.double_val = (double)first_operand->value.int_val;
-//     }
-//     else
-//     {
-//         // DEBUG_PRINT("int2double %d\n", first_operand->value.int_val)
-//         DEBUG_PRINT("int2double SECOND\n");
-//         // second_operand->value.double_val = (double)second_operand->value.int_val;
-//     }
-// }
-
-// void generate_float_arithmetic_by_operator(token_T op, double first_operand, double second_operand)
-// {
-//     switch (op.type)
-//     {
-//     case TOKEN_ADD:
-//         DEBUG_PRINT("Generate ADDITION\n");
-//         break;
-//     case TOKEN_SUB:
-//         // DEBUG_PRINT("Generate SUBSTRACTION %f - %f\n", first_operand, second_operand);
-//         DEBUG_PRINT("Generate SUBSTRACTION\n");
-//         break;
-//     case TOKEN_MUL:
-//         // DEBUG_PRINT("Generate MULTIPLICATION %f * %f\n", first_operand, second_operand);
-//         DEBUG_PRINT("Generate MULTIPLICATION\n");
-//         break;
-//     default:
-//         break;
-//     }
-// }
-
-// void generate_int_arithmetic_by_operator(token_T op, int first_operand, int second_operand)
-// {
-//     switch (op.type)
-//     {
-//     case TOKEN_ADD:
-//         // DEBUG_PRINT("Generate ADDITION %d + %d\n", first_operand, second_operand);
-//         DEBUG_PRINT("Generate ADDITION\n");
-//         break;
-//     case TOKEN_SUB:
-//         // DEBUG_PRINT("Generate SUBSTRACTION %d - %d\n", first_operand, second_operand);
-//         DEBUG_PRINT("Generate SUBSTRACTION\n");
-//         break;
-//     case TOKEN_MUL:
-//         // DEBUG_PRINT("Generate MULTIPLICATION %d * %d\n", first_operand, second_operand);
-//         DEBUG_PRINT("Generate MULTIPLICATION\n");
-//         break;
-//     default:
-//         break;
-//     }
-// }
-
-// void generate_division(symstack_data_t *first_operand, symstack_data_t *second_operand)
-// {
-//     if (compare_types_strict(&first_operand, &second_operand))
-//     {
-//         if (first_operand.type == TOKEN_INT)
-//         {
-//             DEBUG_PRINT("Generate DIVISION %d / %d\n", first_operand.value.int_val, second_operand.value.int_val);
-//         }
-//         else
-//         {
-//             DEBUG_PRINT("Generate DIVISION %f / %f\n", first_operand.value.double_val, second_operand.value.double_val);
-//         }
-//     }
-//     else
-//     {
-//         if (first_operand.type == TOKEN_DBL)
-//         {
-//             DEBUG_PRINT("Generate DIVISION %f / %d\n", first_operand.value.double_val, second_operand.value.int_val);
-//         }
-//         else
-//         {
-//             DEBUG_PRINT("Generate DIVISION %d / %f\n", first_operand.value.int_val, second_operand.value.double_val);
-//         }
-//     }
-// }
-
-// void generate_comparison();
