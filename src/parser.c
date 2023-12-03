@@ -104,19 +104,18 @@ Rule stmt(Parser* p) {
     case TOKEN_WHILE: /* while EXP { <block_body> */
         CHECK_NEWLINE();
         p->in_loop++;
-
         code_generator_for_label(++p->loop_uid);
         if ((res = expr(p))) {
             return res;
         }
         code_generator_for_loop_if(p->loop_uid); /* Generate loop condition */
-
         if (p->expr_res.expr_type != bool_) {
             fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
             return ERR_INCOMPATIBILE_TYPE;
         }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
+        /* Add a local scope for while body */
         add_scope(&p->stack, &err);
         p->first_stmt = true;
         code_generator_for_body(p->loop_uid);
@@ -132,25 +131,23 @@ Rule stmt(Parser* p) {
         NEXT_RULE(cond_clause);
         code_generator_if_header(++p->cond_uid);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-        /* Local scope for if body */
-        add_scope(&p->stack, &err);
         GET_TOKEN();
         p->first_stmt = true;
-        /* pop local (if) scope inside block body */
+        /* Add a local scope for if body (popped at the end of block_body rule) */
+        add_scope(&p->stack, &err);
         NEXT_RULE(block_body);
-
         /* Pops local scope created inside condition clause */
         pop_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
-        /* adding scope for else */
+        /* Add a local scope for else body */
         add_scope(&p->stack, &err);
+        /* Generate else body */
         code_generator_if_else(p->cond_uid);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
-        /* pop local (else) scope inside block body */
         NEXT_RULE(block_body);
         GET_TOKEN();
         code_generator_if_end(p->cond_uid);
@@ -166,32 +163,29 @@ Rule stmt(Parser* p) {
 Rule define(Parser* p) {
     RULE_PRINT("define");
     uint32_t res, err;
-    DEBUG_PRINT("%s %d", p->curr_tok.value.string_val.str, p->curr_tok.type);
 
     ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
     if ((p->in_cond > 0) || (p->in_loop > 0) || p->in_func_body) {
-        DEBUG_PRINT("in cond, loop or decl");
         if (!peek_scope(p->stack)) {
             fprintf(stderr, "[ERROR %d] Missing local scope in body\n", ERR_INTERNAL);
             return ERR_INTERNAL;
         }
+        /* Look if the identifier hasn't been previously defined (local scopes) */
         else {
             p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
         }
-
         if (p->current_id) {
             fprintf(stderr, "[ERROR %d] Variable %s already defined\n", ERR_REDEFINING_VARIABLE, p->current_id->name.str);
             return ERR_REDEFINING_VARIABLE;
         }
         /* Add symbol to local symtable */
         symtable_insert(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
-
-        /* save the added ID to parser data */
+        /* save the added ID to current id */
         p->current_id = symtable_search(p->stack->local_sym, &p->curr_tok.value.string_val, &err);
         DEBUG_PRINT("%s inserted to local symtab", p->current_id->name.str);
     }
     else {
-        DEBUG_PRINT("global scope");
+        /* Look if the identifier hasn't been previously defined (global scope) */
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         if (p->current_id) {
             fprintf(stderr, "[ERROR %d] Variable %s already defined\n", ERR_REDEFINING_VARIABLE, p->current_id->name.str);
@@ -200,8 +194,6 @@ Rule define(Parser* p) {
         symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
-
-    /* save variable id to p.lhs_id for later */
     p->lhs_id = p->current_id;
     GET_TOKEN();
     NEXT_RULE(var_def_cont);
@@ -301,7 +293,7 @@ Rule opt_assign(Parser* p) {
         /* Check if the right side of the assignment is a function call */
         GET_TOKEN();
         if (p->curr_tok.type == TOKEN_IDENTIFIER) {
-            /* Look for the ID in global table, where all functions are stored */
+            /* Search global symtable for the function identifier */
             if ((p->rhs_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err))) {
                 if (p->rhs_id->type == function) {
                     if (p->rhs_id->return_type == nil) {
@@ -348,10 +340,10 @@ Rule opt_assign(Parser* p) {
             tb_prev(&p->buffer);
             p->curr_tok = tb_get_token(&p->buffer);
         }
-        DEBUG_PRINT("token before expr() : %d", p->curr_tok.type);
         if ((res = expr(p))) {
             return res;
         }
+        /* Check if current variable can be nil and initialize it if so */
         if (p->lhs_id->type != p->expr_res.expr_type) {
             if ((p->lhs_id->is_nillable) && (p->expr_res.expr_type == nil)) {
                 p->lhs_id->is_var_initialized = true;
@@ -368,7 +360,6 @@ Rule opt_assign(Parser* p) {
         }
         p->lhs_id->is_var_initialized = true;
         code_generator_var_declare(p->lhs_id->name.str);
-
     }
     else {
         /* Generate an empty variable declaration */
@@ -505,8 +496,8 @@ Rule cond_clause(Parser* p) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
         DEBUG_PRINT("if let %s ", p->curr_tok.value.string_val.str);
+        
         if (peek_scope(p->stack)) {
-            DEBUG_PRINT("searching local scopes");
             p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
         else {
@@ -530,7 +521,7 @@ Rule cond_clause(Parser* p) {
             return ERR_SEMANTIC;
         }
 
-        /* And insert the symbol into the newly created local scope */
+        /* Insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
         set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
         set_type(p->stack->local_sym, &p->current_id->name, p->current_id->type, &err);
@@ -854,9 +845,14 @@ Rule func_stmt(Parser* p) {
             return res;
         }
         code_generator_for_loop_if(p->loop_uid);
+        if (p->expr_res.expr_type != bool_) {
+            fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
+            return ERR_INCOMPATIBILE_TYPE;
+        }
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
+        /* Add a local scope for while body */
         add_scope(&p->stack, &err);
         code_generator_for_body(p->loop_uid);
         NEXT_RULE(func_body);
@@ -867,26 +863,24 @@ Rule func_stmt(Parser* p) {
     case TOKEN_IF:
         CHECK_NEWLINE();
         p->in_cond++;
-        /* scope for if body */
-        add_scope(&p->stack, &err);
         GET_TOKEN();
         NEXT_RULE(cond_clause);
         code_generator_if_header(++p->cond_uid);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-
         GET_TOKEN();
         p->first_stmt = true;
+        /* Add a local scope for if body (popped at the end of func_body rule) */
+        add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
-
+        pop_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
-        /* else body scope */
+        /* Add a local scope for else body */
         add_scope(&p->stack, &err);
-
+        /* Generate else body */
         code_generator_if_else(p->cond_uid);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
-
         GET_TOKEN();
         p->first_stmt = true;
         NEXT_RULE(func_body);
@@ -1435,6 +1429,7 @@ uint32_t parse() {
 
     /* Generate header before generating any other code*/
     code_generator_prolog();
+    code_generator_set_current_symtable(&p.global_symtab, &p.stack);
 
     /* Add builtin functions to the global symtable */
     if (!add_builtins(&p)) {
