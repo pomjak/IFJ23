@@ -193,13 +193,6 @@ void symtable_delete(symtab_t *symtab, dstring_t *target, unsigned int *error);
  */
 void param_dispose(param_t *first);
 
-/**
- * @brief               clearing all data of local_table
- *
- * @param local_symtab  ptr to local_table
- * @param error         err flag
- */
-void symtable_clear(symtab_t *local_symtab, unsigned int *error);
 
 /**
  * @brief dispose all allocated items in symtable
