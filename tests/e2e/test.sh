@@ -16,9 +16,17 @@ execTest () {
 		printf "\e[1m\e[31mFailed\e[0m Test %02d: $1:\n" $testNum
 		printf "\tWrong return code, expected $4, got $returnCode \n"
 	elif [ -z "$(diff --ignore-trailing-space --ignore-blank-lines ic23int_output.txt $3)" ]; then
-		printf "\e[1m\e[32mPassed\e[0m Test %02d: $1\n" $testNum
+		if [ "0" = "$4" ]; then
+			if [ "output/empty.txt" = "$3" ]; then
+				printf "[SEM_CHECK] \e[1m\e[32mPassed\e[0m Test %02d: $1 \n" $testNum
+			else
+				printf "[CODE_GEN] \e[1m\e[32mPassed\e[0m Test %02d: $1 \n" $testNum
+			fi
+		else
+			printf "[RET_CODE] \e[1m\e[32mPassed\e[0m Test %02d: $1 \n" $testNum
+		fi
 	else
-		printf "\e[1m\e[31mFailed\e[0m Test %02d: $1\n" $testNum
+		printf "[CODE_GEN] \e[1m\e[31mFailed\e[0m Test %02d: $1 \n" $testNum
 		diff ic23int_output.txt $3 
 	fi
 	# creating artifacts
