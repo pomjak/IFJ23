@@ -12,7 +12,7 @@
 
 void report_error(unsigned int *error, const unsigned int err_type)
 {
-    if (*error == SYMTAB_OK)
+    if (*error == SYMTAB_OK) //report only first found error
         *error = err_type;
 }
 
@@ -42,16 +42,10 @@ void symtable_init(symtab_t *symtab, unsigned int *error)
     if (!symtab->items)
         report_error(error, ERR_INTERNAL);
 
-    for (size_t i = 0; i < symtab->size; i++)
+    for (size_t i = 0; i < symtab->size; i++) //initialize symtab
         symtab->items[i] = NULL;
 }
 
-/**
- * @brief implementation of djb2 hash
- *
- * @param id
- * @return unsigned long
- */
 unsigned long hash(char *id, size_t size)
 {
     unsigned long hash = 0;
@@ -163,10 +157,11 @@ symtab_item_t *item_init(dstring_t *id, unsigned int *error)
 
 void resize(symtab_t *symtab, unsigned int *error)
 {
+    // prime numbers for resizing 
     const size_t primes[] = {11, 23, 53, 107, 211, 421, 853, 1699, 3209, 6553, 12409, 25229};
 
     size_t new_size = 0;
-    for (int i = 0; primes[i]; i++)
+    for (int i = 0; primes[i]; i++) //get next size of symtab
     {
         if (symtab->size < primes[i])
         {
@@ -175,7 +170,7 @@ void resize(symtab_t *symtab, unsigned int *error)
         }
     }
 
-    symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);
+    symtab_item_t **resized_items = malloc(sizeof(symtab_item_t) * new_size);  //alloc new symtab with changed size
 
     if (!resized_items)
     {
@@ -183,29 +178,29 @@ void resize(symtab_t *symtab, unsigned int *error)
         return;
     }
 
-    for (size_t i = 0; i < new_size; i++)
+    for (size_t i = 0; i < new_size; i++) //initialize new resized symtab
         resized_items[i] = NULL;
 
-    for (size_t i = 0; i < symtab->size; i++)
+    for (size_t i = 0; i < symtab->size; i++)  // iterate over whole old symtab
     {
-        if (symtab->items[i] && symtab->items[i]->active)
+        if (symtab->items[i] && symtab->items[i]->active) // if item is active and not null
         {
-            uint64_t new_hash = get_hash(&symtab->items[i]->name, resized_items, new_size);
+            uint64_t new_hash = get_hash(&symtab->items[i]->name, resized_items, new_size); //remap old items to newly sized symtab
             resized_items[new_hash] = symtab->items[i];
         }
     }
 
-    free(symtab->items);
+    free(symtab->items);//free old symtab
 
     symtab->items = resized_items;
     symtab->size = new_size;
-    symtab->count -= symtab->deactivated;
+    symtab->count -= symtab->deactivated; // get rid of deleted items
     symtab->deactivated = 0;
 }
 
 void check_load(symtab_t *symtab, unsigned int *error)
 {
-    if (0.65 < (float)((float)symtab->count / (float)symtab->size))
+    if (0.65 < (float)((float)symtab->count / (float)symtab->size)) // if load is over 65% of capacity, it's time to resize
         resize(symtab, error);
 }
 
@@ -218,7 +213,7 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error)
 
         symtab->items[get_hash(id, symtab->items, symtab->size)] = item_init(id, error); // handover pointer to new allocated item
         symtab->count++;
-        check_load(symtab, error);
+        check_load(symtab, error); //check if symtab does need to be resized (cap > 0.65)
     }
     else
     {
@@ -229,14 +224,14 @@ void symtable_insert(symtab_t *symtab, dstring_t *id, unsigned int *error)
 
 void symtable_delete(symtab_t *symtab, dstring_t *target, unsigned int *error)
 {
-    symtab_item_t *item = symtable_search(symtab, target, error);
+    symtab_item_t *item = symtable_search(symtab, target, error); //locate item in symtab
     if (!item)
     {
         report_error(error, SYMTAB_ERR_ITEM_NOT_FOUND);
         return;
     }
 
-    item->active = false;
+    item->active = false; // item will be deleted during resizing
     symtab->deactivated++;
 }
 void param_dispose(param_t *first)
@@ -269,11 +264,9 @@ void symtable_dispose(symtab_t *symtab)
     free(symtab->items);
 }
 
-void symtable_clear(symtab_t *local_symtab, unsigned int *error)
-{
-    symtable_dispose(local_symtab);
-    symtable_init(local_symtab, error);
-}
+/* -------------------------  */
+/* set/get functions          */
+/* -------------------------  */
 
 void set_type(symtab_t *symtab, dstring_t *id, Type type, unsigned int *error)
 {
@@ -432,7 +425,9 @@ Type get_return_type(symtab_t *symtab, dstring_t *id, unsigned int *error)
 
     return item->return_type;
 }
-
+/* -------------------------  */
+/* add/init/search params     */
+/* -------------------------  */
 param_t *param_init(dstring_t *name_of_param, unsigned int *error)
 {
     param_t *node = malloc(sizeof(param_t));
@@ -502,11 +497,11 @@ void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, u
         return;
     }
 
-    if (!item->parameters)
+    if (!item->parameters) //if 1st param insert it to head of list
     {
         item->parameters = param_init(name_of_param, error);
     }
-    else
+    else    //else insert after last one
     {
         param_t *runner = item->parameters;
 
@@ -517,6 +512,10 @@ void add_param(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, u
         (runner->next)->next = NULL;
     }
 }
+
+/* ----------------------------  */
+/* set/get functions for params  */
+/* ----------------------------  */
 
 void set_param_type(symtab_t *symtab, dstring_t *func_id, dstring_t *name_of_param, Type type, unsigned int *error)
 {
