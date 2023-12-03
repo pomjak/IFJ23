@@ -985,18 +985,18 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         }
     }
 
-    // if one of the operands is double need to convert it
-    if (compare_operand_with_type(&first_operand, double_) || compare_operand_with_type(&second_operand, double_))
-    {
-        expr_symbol.expr_res.expr_type = double_;
-        return expr_symbol;
-    }
-    // if both are int and same expr type
-    else if (first_operand.expr_res.expr_type == integer && compare_types_strict(&first_operand, &second_operand))
-    {
-        expr_symbol.expr_res.expr_type = integer;
-        return expr_symbol;
-    }
+    // // if one of the operands is double need to convert it
+    // if (compare_operand_with_type(&first_operand, double_) || compare_operand_with_type(&second_operand, double_))
+    // {
+    //     expr_symbol.expr_res.expr_type = double_;
+    //     return expr_symbol;
+    // }
+    // // if both are int and same expr type
+    // else if (first_operand.expr_res.expr_type == integer && compare_types_strict(&first_operand, &second_operand))
+    // {
+    //     expr_symbol.expr_res.expr_type = integer;
+    //     return expr_symbol;
+    // }
 
     print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
     error_code_handler(ERR_INCOMPATIBILE_TYPE);
