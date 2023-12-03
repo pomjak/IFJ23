@@ -391,8 +391,10 @@ Rule opt_assign(Parser* p) {
         code_generator_var_declare(p->lhs_id->name.str);
 
     }
-    /* Generate an empty variable declaration */
-    code_generator_var_declare(p->lhs_id->name.str);
+    else {
+        /* Generate an empty variable declaration */
+        code_generator_var_declare(p->lhs_id->name.str);
+    }
     return EXIT_SUCCESS;
 }
 
