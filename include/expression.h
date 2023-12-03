@@ -323,7 +323,7 @@ symstack_data_t process_operand(symstack_data_t *operand, Parser *p);
 
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr);
 
-symstack_data_t process_division(symbol_arr_t *sym_arr);
+symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_t * second_operand);
 
 symstack_data_t process_concatenation(symbol_arr_t *sym_arr);
 

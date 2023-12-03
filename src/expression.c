@@ -966,7 +966,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     if (op.type == TOKEN_DIV)
     {
-        expr_symbol = process_division(sym_arr);
+        expr_symbol = process_division(&first_operand, &second_operand);
         return expr_symbol;
     }
 
@@ -994,7 +994,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     {
         expr_symbol.expr_res.expr_type = integer;
     }
-    //genereate arithmeticc code 
+    code_generator_operations(op.type, compare_operand_with_type(&expr_symbol,integer));
 
     return expr_symbol;
 
@@ -1005,44 +1005,42 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_division(symbol_arr_t *sym_arr)
+symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_t * second_operand)
 {
     DEBUG_PRINT("Process division");
     DEFINE_EXPR_SYMBOL;
     expr_symbol.is_identifier = false;
+    expr_symbol.expr_res.expr_type = (first_operand->expr_res.expr_type == integer ? integer : double_);
 
-    // do this with expr_types
-    symstack_data_t first_operand = sym_arr->arr[0];
-    symstack_data_t second_operand = sym_arr->arr[2];
-
-    expr_symbol.is_literal = first_operand.is_literal && first_operand.is_literal;
+    expr_symbol.is_literal = first_operand->is_literal && second_operand->is_literal;
 
     // define expr_type in here
-    if (!compare_types_strict(&first_operand, &second_operand))
+    if (!compare_types_strict(first_operand, second_operand))
     {
         error_code_handler(ERR_INCOMPATIBILE_TYPE);
         print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
         return expr_symbol;
     }
 
-    if (compare_operand_with_type(&second_operand, integer))
+    if (compare_operand_with_type(second_operand, integer))
     {
-        if (second_operand.token.value.int_val == 0)
+        if (second_operand->token.value.int_val == 0)
         {
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
-    else if (compare_operand_with_type(&second_operand, double_))
+    else if (compare_operand_with_type(second_operand, double_))
     {
-        if (second_operand.token.value.double_val == 0.0)
+        if (second_operand->token.value.double_val == 0.0)
         {
             error_code_handler(ERR_SEMANTIC);
             print_error(ERR_SEMANTIC, "Division by zero.\n");
             return expr_symbol;
         }
     }
+    code_generator_operations(TOKEN_DIV, compare_operand_with_type(&expr_symbol,integer));
     return expr_symbol;
 }
 
@@ -1069,6 +1067,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
     if (compare_types_strict(&first_operand, &second_operand))
     {
         DEBUG_PRINT("Generate concatenation\n");
+        code_generator_operations(operator.type, false);
         return expr_symbol;
     }
     print_error(ERR_INCOMPATIBILE_TYPE, "Concatenation with uncompatibile types.\n");
