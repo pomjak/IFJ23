@@ -8,13 +8,8 @@
 #include "parser.h"
 #include "expression.h"
 
-/* ===================| RULE DEFINITIONS |================= */
+/**************** RULE DEFINITIONS ****************/
 
-/**
- * @brief <prog> -> <stmt> <prog> |
- *                  func ID ( <param_list> <func_ret_type> { <func_body> <prog> |
- *                  EOF
- */
 Rule prog(Parser* p) {
     RULE_PRINT("prog");
     uint32_t res, err;
@@ -70,13 +65,6 @@ Rule prog(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <stmt> -> var <define> |
- *                  let <define> |
- *                  ID <expression_type> |
- *                  if <cond_clause> { <block_body> else { <block_body> |
- *                  while EXP { <block_body> |
- */
 Rule stmt(Parser* p) {
     RULE_PRINT("stmt");
     uint32_t res, err;
@@ -122,7 +110,7 @@ Rule stmt(Parser* p) {
             return res;
         }
         code_generator_for_loop_if(p->loop_uid); /* Generate loop condition */
-        
+
         if (p->expr_res.expr_type != bool_) {
             fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
             return ERR_INCOMPATIBILE_TYPE;
@@ -175,9 +163,6 @@ Rule stmt(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <define> -> ID <var_def_cont>
- */
 Rule define(Parser* p) {
     RULE_PRINT("define");
     uint32_t res, err;
@@ -224,9 +209,6 @@ Rule define(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <var_def_cont> -> : <type> <opt_assign> | = EXP
- */
 Rule var_def_cont(Parser* p) {
     RULE_PRINT("var_def_cont");
     uint32_t res, err;
@@ -310,9 +292,6 @@ Rule var_def_cont(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <opt_assign> -> = EXP | eps
- */
 Rule opt_assign(Parser* p) {
     RULE_PRINT("opt_assign");
     uint32_t res, err;
@@ -398,9 +377,6 @@ Rule opt_assign(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <expr_type> -> = EXP | ( <arg_list>
- */
 Rule expr_type(Parser* p) {
     RULE_PRINT("expr_type");
     uint32_t res, err;
@@ -519,9 +495,6 @@ Rule expr_type(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <cond_clause> -> EXP | let ID
- */
 Rule cond_clause(Parser* p) {
     RULE_PRINT("cond_clause");
     uint32_t res, err;
@@ -583,9 +556,6 @@ Rule cond_clause(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <arg_list> -> <arg> <arg_next> | )
- */
 Rule arg_list(Parser* p) {
     RULE_PRINT("arg_list");
     uint32_t res;
@@ -615,9 +585,6 @@ Rule arg_list(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <arg_next> -> , <arg> <arg_next> | )
- */
 Rule arg_next(Parser* p) {
     RULE_PRINT("arg_next");
     uint32_t res;
@@ -652,9 +619,6 @@ Rule arg_next(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <arg> -> "ID" <optarg> | <literal>
- */
 Rule arg(Parser* p) {
     RULE_PRINT("arg");
     uint32_t res, err;
@@ -732,9 +696,6 @@ Rule arg(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <param_list> -> <param> <param_next> | )
- */
 Rule param_list(Parser* p) {
     RULE_PRINT("param_list");
     uint32_t res;
@@ -748,9 +709,6 @@ Rule param_list(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <param_next> -> , <param> <param_next> | )
- */
 Rule param_next(Parser* p) {
     RULE_PRINT("param_next");
     uint32_t res;
@@ -771,9 +729,6 @@ Rule param_next(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <param> ->  "_" "ID" ":" <type> | "ID" "ID" ":" <type>
- */
 Rule param(Parser* p) {
     RULE_PRINT("param");
     uint32_t res, err;
@@ -811,9 +766,6 @@ Rule param(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <blk_body> -> <stmt> <blk_body> | }
- */
 Rule block_body(Parser* p) {
     RULE_PRINT("block_body");
     uint32_t res, err;
@@ -831,9 +783,6 @@ Rule block_body(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <func_body> -> <func_stmt> <func_body> | }
- */
 Rule func_body(Parser* p) {
     RULE_PRINT("func_body");
     uint32_t res, err;
@@ -861,14 +810,6 @@ Rule func_body(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <func_stmt> -> var <def> |
- *                       let <def> |
- *                       ID <expression-type> |
- *                       while EXP { <func_body> |
- *                       if <cond_clause> { <func_body> else { <func_body> |
- *                       return <opt_ret>
- */
 Rule func_stmt(Parser* p) {
     RULE_PRINT("func_stmt");
     uint32_t res, err;
@@ -965,9 +906,6 @@ Rule func_stmt(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <func_ret_type> =>  eps | -> <type>
- */
 Rule func_ret_type(Parser* p) {
     RULE_PRINT("func_ret_type");
     uint32_t res, err;
@@ -982,9 +920,6 @@ Rule func_ret_type(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <opt_ret> -> EXP | eps
- */
 Rule opt_ret(Parser* p) {
     RULE_PRINT("opt_ret");
     uint32_t res;
@@ -1015,9 +950,6 @@ Rule opt_ret(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <opt_type> ->  : <type> | eps
- */
 Rule opt_type(Parser* p) {
     RULE_PRINT("opt_type");
     uint32_t res;
@@ -1030,9 +962,6 @@ Rule opt_type(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <type> -> Int | String | Double
- */
 Rule type(Parser* p) {
     RULE_PRINT("type");
     uint32_t err;
@@ -1119,9 +1048,6 @@ Rule type(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <opt_arg> -> : <term> | eps
- */
 Rule opt_arg(Parser* p) {
     RULE_PRINT("opt_arg");
     uint32_t res;
@@ -1133,9 +1059,6 @@ Rule opt_arg(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <term> -> ID | literal
- */
 Rule term(Parser* p) {
     RULE_PRINT("term");
     uint32_t res, err;
@@ -1187,9 +1110,6 @@ Rule term(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief <literal> -> INT_LIT | STR_LIT | DBL_LIT
- */
 Rule literal(Parser* p) {
     RULE_PRINT("literal");
     switch (p->curr_tok.type) {
@@ -1225,10 +1145,6 @@ Rule literal(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Rule to fill out global symtab with function declarations
- *        during the first run through the token buffer
- */
 Rule func_header(Parser* p) {
     RULE_PRINT("func_header");
     uint32_t res, err;
@@ -1257,9 +1173,6 @@ Rule func_header(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Substitute for type Rule during second run through token buffer
- */
 Rule type_skip(Parser* p) {
     RULE_PRINT("type_skip");
     uint32_t  err;
@@ -1287,9 +1200,6 @@ Rule type_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Substitute for param Rule for second run through token buffer
- */
 Rule param_skip(Parser* p) {
     RULE_PRINT("param_skip");
     uint32_t res, err;
@@ -1314,9 +1224,6 @@ Rule param_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Substitute for param_next Rule for second run through token buffer
- */
 Rule param_next_skip(Parser* p) {
     RULE_PRINT("param_next_skip");
     uint32_t res;
@@ -1337,9 +1244,6 @@ Rule param_next_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Substitute for param_list Rule for second run through token buffer
- */
 Rule param_list_skip(Parser* p) {
     RULE_PRINT("param_list_skip");
     uint32_t res;
@@ -1353,9 +1257,6 @@ Rule param_list_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Substitute for func_ret_type Rule for second run through token buffer
- */
 Rule func_ret_type_skip(Parser* p) {
     RULE_PRINT("func_ret_type_skip");
     uint32_t res;
@@ -1367,9 +1268,6 @@ Rule func_ret_type_skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Skips all tokens except for func and EOF in first run through the token buffer
- */
 Rule skip(Parser* p) {
     uint32_t res;
     if (p->curr_tok.type == TOKEN_EOF) {
@@ -1389,14 +1287,6 @@ Rule skip(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/*
-    The purpose of the above skip rules is to be able to parse only function headers during the first run through tok buf
-    without the risk of 'redefine' error during the second run
-*/
-
-/**
- * @brief Rule to parse function calls on the rhs of assignments
- */
 Rule funccall(Parser* p) {
     RULE_PRINT("funccall");
     uint32_t res;
@@ -1417,12 +1307,6 @@ Rule funccall(Parser* p) {
 
 /* ======================================================== */
 
-/**
- * @brief Initializes data needed by the parser
- *
- * @param p - Parser object
- * @return true on success
- */
 bool parser_init(Parser* p) {
     uint32_t symtab_err;
 
@@ -1456,10 +1340,6 @@ bool parser_init(Parser* p) {
     return true;
 }
 
-/**
- * @brief Frees all data allocated by the parser
- * @param p
- */
 void parser_dispose(Parser* p) {
     uint32_t err;
     dstring_free(&p->tmp);
@@ -1468,12 +1348,6 @@ void parser_dispose(Parser* p) {
     tb_dispose(&p->buffer);
 }
 
-/**
- * @brief Fill global symtable with builtin functions
- *
- * @param p Parser object
- * @return true on success, otherwise false
- */
 bool add_builtins(Parser* p) {
     uint32_t st_err;
     dstring_t builtin_id;
@@ -1524,12 +1398,6 @@ bool add_builtins(Parser* p) {
     return true;
 }
 
-/**
- * @brief Loads all tokens from input and fills out the token buffer with them
- *
- * @param p Parser structure
- * @return int relevant return code
- */
 uint32_t parser_fill_buffer(Parser* p) {
     int res;
     do {
@@ -1543,13 +1411,6 @@ uint32_t parser_fill_buffer(Parser* p) {
     return ERR_NO_ERR;
 }
 
-/**
- * @brief Iterates through the token buffer skips all tokens except
- *        for function declarations
- *
- * @param p Parser object
- * @return relevant error code or 0 on success
- */
 uint32_t parser_get_func_decls(Parser* p) {
     uint32_t res;
     /* Get the first token */
@@ -1561,11 +1422,6 @@ uint32_t parser_get_func_decls(Parser* p) {
     return EXIT_SUCCESS;
 }
 
-/**
- * @brief Parser entry point
- *
- * @return uint32 0 on success, otherwise relevant return code
- */
 uint32_t parse() {
     uint32_t res = 0;
     Parser p;
