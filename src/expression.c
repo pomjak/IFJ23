@@ -1165,25 +1165,26 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     }
 
     // generate code
-    switch (op.type)
-    {
-    case TOKEN_GEQ:
-        DEBUG_PRINT("Generate >= comparation\n");
-        break;
-    case TOKEN_LEQ:
-        DEBUG_PRINT("Generate <= comparation\n");
-        break;
-    case TOKEN_LT:
-        DEBUG_PRINT("Generate < comparation\n");
-        break;
-    case TOKEN_GT:
-        DEBUG_PRINT("Generate > comparation\n");
-        break;
+    // switch (op.type)
+    // {
+    // case TOKEN_GEQ:
+    //     DEBUG_PRINT("Generate >= comparation\n");
+    //     break;
+    // case TOKEN_LEQ:
+    //     DEBUG_PRINT("Generate <= comparation\n");
+    //     break;
+    // case TOKEN_LT:
+    //     DEBUG_PRINT("Generate < comparation\n");
+    //     break;
+    // case TOKEN_GT:
+    //     DEBUG_PRINT("Generate > comparation\n");
+    //     break;
 
-    default:
-        break;
-    }
+    // default:
+    //     break;
+    // }
 
+    code_generator_operations(op.type,false);
     return expr_symbol;
 }
 
