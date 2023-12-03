@@ -26,16 +26,16 @@ typedef struct expr_res {
  */
 typedef struct parser_t {
     bool in_function;            // Parser is inside a function call
-    bool in_func_head;         // Parser is inside a function declaration
-    bool in_func_body;
+    bool in_func_head;           // Parser is inside a function declaration
+    bool in_func_body;           // Parser is inside function body
     bool in_param;               // Parser should set param type
-    bool return_found;
-    bool first_stmt;            
-    uint32_t in_cond;                // Parser is inside a condition statement
-    uint32_t in_loop;                // Parser is inside a while loop
-    uint32_t param_cnt;
-    uint32_t cond_uid;
-    uint32_t loop_uid;
+    bool return_found;           // Flag marking the presence of a return statement in a function
+    bool first_stmt;             // Flag marking whether the current statement is the first one of the program or first inside if/while/function body
+    uint32_t in_cond;            // Parser is inside a condition statement
+    uint32_t in_loop;            // Parser is inside a while loop
+    uint32_t param_cnt;          // Current function parameter counter
+    uint32_t cond_uid;           // Unique ID of conditional statements
+    uint32_t loop_uid;           // Unique ID of while loops
     param_t* current_arg;        // Current function argument list
     token_T curr_tok;            // Currently processed token
     symtab_item_t* lhs_id;       // Identifier on the left hand side of assignment
@@ -45,7 +45,7 @@ typedef struct parser_t {
     symtab_t global_symtab;      // Global symbol table
     scope_t stack;               // Stack of local symbol tables, HEAD = current scope
     dstring_t tmp;               // Temporary helper string
-    token_buffer_t buffer;       // List of tokens
+    token_buffer_t buffer;       // Double Link List of loaded tokens
     expr_res_t expr_res;         // Type of reduced expression 
 } Parser;
 
@@ -123,41 +123,230 @@ typedef struct parser_t {
 
 typedef unsigned int Rule;
 
+/**
+ * <prog> =>
+ * <stmt> <prog>
+ * func ID ( <param_list> <func_ret_type> { <func_body> <prog>
+ * EOF
+ */
 Rule prog(Parser* p);
+/**
+ * <stmt> =>
+ * var <define>
+ * let <define>
+ * ID <expression_type>
+ * if <cond_clause> { <block_body> else { <block_body>
+ * while EXP { <block_body>
+ */
 Rule stmt(Parser* p);
+/**
+ * <define> =>
+ * ID <var_def_cont>
+ */
 Rule define(Parser* p);
+/**
+ * <var_def_cont> =>
+ *  : <type> <opt_assign>
+ *  = EXP
+ *  = <funccall>
+ */
 Rule var_def_cont(Parser* p);
+/**
+ * <opt_assign> =>
+ * = EXP
+ * = <funccall>
+ * ε
+ */
 Rule opt_assign(Parser* p);
+/**
+ * <expr_type> =>
+ * = EXP
+ * = <funccall>
+ * ( <arg_list>
+ */
 Rule expr_type(Parser* p);
+/**
+ * <cond_clause> =>
+ * EXP
+ * let ID
+ */
 Rule cond_clause(Parser* p);
+/**
+ * arg_list> =>
+ * <arg> <arg_next>
+ * )
+ */
 Rule arg_list(Parser* p);
+/**
+ *<arg_next> =>
+ * , <arg> <arg_next>
+ * )
+ */
 Rule arg_next(Parser* p);
+/**
+ * <arg> =>
+ * "ID" <optarg>
+ * <literal>
+ */
 Rule arg(Parser* p);
+/**
+ * <param_list> =>
+ * <param> <param_next>
+ * )
+ */
 Rule param_list(Parser* p);
+/**
+ * <param_next> =>
+ * , <param> <param_next>
+ * )
+ */
 Rule param_next(Parser* p);
+/**
+ * <param> =>
+ * "_" "ID" ":" <type>
+ * "ID" "ID" ":" <type>
+ */
 Rule param(Parser* p);
+/**
+ * <blk_body> =>
+ * <stmt> <blk_body>
+ * }
+ */
 Rule block_body(Parser* p);
+/**
+ * <func_body> =>
+ * <func_stmt> <func_body>
+ * }
+ */
 Rule func_body(Parser* p);
+/**
+ * <func_stmt> =>
+ *  var <def>
+ *  let <def>
+ *  ID <expression-type>
+ *  while EXP { <func_body>
+ *  if <cond_clause> { <func_body> else { <func_body>
+ *  return <opt_ret>
+ */
 Rule func_stmt(Parser* p);
+/**
+ * <func_ret_type> =>
+ *  ε
+ *  -> <type>
+ */
 Rule func_ret_type(Parser* p);
+/**
+ * <opt_ret> ->
+ *  EXP
+ *  ε
+ */
 Rule opt_ret(Parser* p);
+/**
+ * <opt_type> ->
+ *  : <type>
+ *  ε
+ */
 Rule opt_type(Parser* p);
+/**
+ * <type> ->
+ *  Int
+ *  String
+ *  Double
+ */
 Rule type(Parser* p);
+/**
+ * <opt_arg> ->
+ *  : <term>
+ *  ε
+ */
 Rule opt_arg(Parser* p);
+/**
+ * <term> ->
+ *  ID
+ *  <literal>
+ */
 Rule term(Parser* p);
+/**
+ * <literal> ->
+ *  INT_LITERAL
+ *  STR_LITERAL
+ *  DOUBLE_LITERAL
+ */
 Rule literal(Parser* p);
-Rule func_decl(Parser* p);
-Rule skip(Parser* p);
+/**
+ * Parse only function headers
+ * Used only in the first pass through token buffer in order to load
+ * function definition into global symtable before calling any of them
+ */
+Rule func_header(Parser* p);
+/**
+ * Substitute for 'type' Rule
+ * Used in the second run through token buffer in order to avoid
+ * redefining function parameter type or return type
+ */
 Rule type_skip(Parser* p);
-Rule func_ret_type_skip(Parser* p);
-Rule param_list_skip(Parser* p);
-Rule param_next_skip(Parser* p);
+/**
+ * Substitute for 'param' Rule
+ * Used in the second run through token buffer in order to avoid
+ * redefining function parameters
+ */
 Rule param_skip(Parser* p);
+/**
+ * Substitute for 'param_next' Rule
+ * Used in the second run through token buffer
+ */
+Rule param_next_skip(Parser* p);
+
+/**
+ * Substitute for 'param_list' Rule
+ * Used in the second run through token buffer
+ */
+Rule param_list_skip(Parser* p);
+/**
+ * Substitute for 'func_ret_type' Rule
+ * Used in the second run through token buffer
+ */
+Rule func_ret_type_skip(Parser* p);
+/**
+ * Skip rule used in the first run through token buffer
+ * Enables only parsing of function headers or EOF token
+ * Ignores all other tokens, which are parsed in the second run
+ */
+Rule skip(Parser* p);
+/**
+ * Parses function calls on the right side of assignments
+ */
 Rule funccall(Parser* p);
+/**
+ * Initializes the contents of Parser object
+ * @return true on sucess \n
+ * @return false on error
+ */
 bool parser_init(Parser* p);
-bool add_builtins(Parser* p);
+/**
+ * Frees all data allocated by the parser object
+ */
 void parser_dispose(Parser* p);
+/**
+ * Fills global symtable with builtin functions before parsing
+ * @return true
+ * @return false
+ */
+bool add_builtins(Parser* p);
+/**
+ * Fills token buffer with tokens loaded by lexical analyzer
+ * @return Relevant error code (uint32)
+ */
 uint32_t parser_fill_buffer(Parser* p);
+/**
+ * Begins the first run through token buffer which parses function headers
+ */
+uint32_t parser_get_func_decls(Parser* p);
+
+/**
+ * Main parser function
+ * @return Relevant error code (uint32)
+ */
 uint32_t parse();
 
 #endif
