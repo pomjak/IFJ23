@@ -86,6 +86,9 @@ int main(int argc, char ** argv) {
     symtable_insert(&global_symtable, &a_name, &error);
     symtable_insert(&global_symtable, &i_name, &error);
 
+    symtable_search(&global_symtable, &a_name, &error)->is_var_initialized = true;
+    symtable_search(&global_symtable, &i_name, &error)->is_var_initialized = true;
+
     code_generator_set_current_symtable(&global_symtable, &stack);
 
     // file begin
@@ -110,6 +113,9 @@ int main(int argc, char ** argv) {
     
     symtable_insert(stack->local_sym, &j_name, &error);
     symtable_insert(stack->local_sym, &b_name, &error);
+
+    symtable_search(stack->local_sym, &j_name, &error)->is_var_initialized = true;
+    symtable_search(stack->local_sym, &b_name, &error)->is_var_initialized = true;
 
     // i to stack
     code_generator_push(i);
@@ -145,6 +151,7 @@ int main(int argc, char ** argv) {
     add_scope(&stack, &error);
     
     symtable_insert(stack->local_sym, &a_name, &error);
+    symtable_search(stack->local_sym, &a_name, &error)->is_var_initialized = true;
 
     // j to stack
     code_generator_push(j);
