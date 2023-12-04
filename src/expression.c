@@ -1189,14 +1189,14 @@ void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
             DEBUG_PRINT("retyping FIRST from int to double");
 
             // convert first operand on stack to double - second from top on stack
-            code_generator_int2doubles(2);
+            code_generator_int2doubles(1);
             operand1->expr_res.expr_type = double_;
         }
         else if (operand2->is_literal && compare_operand_with_type(operand2, integer))
         {
             DEBUG_PRINT("retyping SECOND from int to double");
             // convert second operand on stack to double - on the stack top
-            code_generator_int2doubles(1);
+            code_generator_int2doubles(0);
             operand2->expr_res.expr_type = double_;
         }
         else
