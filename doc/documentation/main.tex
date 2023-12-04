@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[a4paper, top=3cm, left=2.5cm]{geometry}
+\usepackage{sans}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage{blindtext}
+
+
+\begin{document}
+
+% titulna strana
+\begin{titlepage}
+ \begin{center}
+  % FIT logo
+  \includegraphics[scale=0.1]{images/fit_logo.jpg} \\
+  
+
+  \vspace{\stretch{0.382}}
+  
+  \huge{
+   \textbf{
+    Project documentation} \\
+   Copmiler for language IFJ23} \\
+                    
+ \vspace{4cm}
+  \Large{
+   Team xpomsa00 \\
+   TRP variant with open addressing\\
+  }
+  \vspace{0.5cm}
+            
+  \normalsize{}
+  \today{}
+    
+  \vfill
+  \begin{center}
+      
+  \begin{tabular}{l l l}
+   \textbf{Jakub Pomsár}  & \texttt{xpomsa00} & \quad 25\% \\
+   Šimon Cagala             & \texttt{xcagal00} & \quad 25\% \\
+   Marie Kolaríková           & \texttt{xkolar77} & \quad 25\% \\
+   Adrián Ponechal             & \texttt{xponec01} & \quad 25\% \\
+  \end{tabular}
+  \end{center}
+ \end{center}
+\end{titlepage}
+
+\newpage
+
+% obsah
+\tableofcontents
+\newpage
+
+\section{Finite state machine}
+\label{Finite state machine}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.35]{images/fsm_draft.drawio.png}
+    \caption{Finite state machine}
+    \label{fig:FSM}
+\end{figure}
+
+\newpage
+
+\section{LL-Grammar}
+\label{LL-Grammar}
+
+
+\subsection{LL-grammar}
+\label{LL-grammar}
+
+\section*{IFJ23 LL-grammar}
+
+\subsection{LL-table}
+\label{LL-table}
+TODO: create and insert table
+
+\newpage
+
+\section{Precedence table}
+\label{Precedence table}
+
+\newpage
+
+\end{document}
