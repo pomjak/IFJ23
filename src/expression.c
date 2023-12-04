@@ -832,7 +832,7 @@ int expr(Parser *p)
             }
             break;
         default:
-            print_error(ERR_INTERNAL, "Unknown precedence table operation.\n");
+            REPORT_ERROR(ERR_INTERNAL,"Unknown precedence table operation.\n");
             return ERR_INTERNAL;
         }
     } while (!((convert_term_to_index(get_closest_terminal(&stack)->data) == INDEX_DOLLAR) && (convert_token_to_index(p->curr_tok) == INDEX_DOLLAR)));
@@ -1035,7 +1035,6 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
     {
         DEBUG_PRINT("Generate concatenation\n");
         code_generator_concats();
-        // code_generator_operations(operator.type, false);
         return expr_symbol;
     }
     REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Concatenation with uncompatibile types.\n");
