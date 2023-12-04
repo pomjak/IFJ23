@@ -19,9 +19,9 @@
 #include "scope.h"
 #include "code_generator.h"
 
-#define GENERATE_CODE(...)                                \
-    if (error_code_handler(EXIT_SUCCESS) == EXIT_SUCCESS) \
-        printf(__VA_ARGS__);
+#define REPORT_ERROR(err_code ,...)     \
+    error_code_handler(err_code);       \
+    print_error(err_code,__VA_ARGS__);
 
 #ifdef SHOW_STACK
 #define PRINT_STACK(stack) print_stack(stack, 1);
@@ -111,7 +111,7 @@ void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
 {
     if (sym_arr == NULL)
     {
-        error_code_handler(ERR_INTERNAL);
+        REPORT_ERROR(ERR_INTERNAL,"Cannot copy expression to symbol array.\n");
     }
 
     node_t *current_node = symstack_peek(stack);
@@ -119,8 +119,7 @@ void symbol_arr_copy_exp_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
     {
         if (!symbol_arr_append(sym_arr, current_node->data))
         {
-            error_code_handler(ERR_INTERNAL);
-            print_error(ERR_INTERNAL, "Could not append symbol to symbol array.\n");
+            REPORT_ERROR(ERR_INTERNAL,"Could not append symbol to symbol array.\n");
         }
         DEBUG_PRINT("sym_arr_append\n");
         current_node = current_node->previous;
@@ -134,8 +133,7 @@ void symbol_arr_move_expr_to_arr(symstack_t *stack, symbol_arr_t *sym_arr)
     {
         if (!symbol_arr_append(sym_arr, current_symbol))
         {
-            print_error(ERR_INTERNAL, "Could not push symbol to symbol array.\n");
-            error_code_handler(ERR_INTERNAL);
+            REPORT_ERROR(ERR_INTERNAL, "Could not push symbol to symbol array.\n");
             symstack_dispose(stack);
             return;
         }
@@ -159,8 +157,8 @@ void symbol_arr_reverse(symbol_arr_t *sym_arr)
         sym_arr->arr[end] = temp;
 
         // move the indices toward the center
-        start++;
-        end--;
+        start += 1;
+        end -= 1;
     }
 }
 
@@ -303,8 +301,7 @@ bool id_is_defined(token_T token, Parser *p)
             // found and unitialized
             if (!p->current_id->is_var_initialized)
             {
-                print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined variable\n");
-                error_code_handler(ERR_UNDEFINED_VARIABLE);
+                REPORT_ERROR(ERR_UNDEFINED_VARIABLE,"Expressions undefined variable.\n")
             }
             return true;
         }
@@ -318,13 +315,11 @@ bool id_is_defined(token_T token, Parser *p)
             {
                 if (!p->current_id->is_var_initialized)
                 {
-                    print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined varibale\n");
-                    error_code_handler(ERR_UNDEFINED_VARIABLE);
+                    REPORT_ERROR(ERR_UNDEFINED_VARIABLE,"Expressions undefined varibale.\n");
                 }
                 return true;
             }
-            print_error(ERR_UNDEFINED_VARIABLE, "Expressions undefined variable");
-            error_code_handler(ERR_UNDEFINED_VARIABLE);
+            REPORT_ERROR(ERR_UNDEFINED_VARIABLE,"Expressions undefined varibale.\n");
             return false;
         }
     }
@@ -544,8 +539,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         // if token E is not operand
         if(!sym_arr->arr[0].is_identifier)
         {
-            error_code_handler(ERR_INCOMPATIBILE_TYPE);
-            print_error(ERR_INCOMPATIBILE_TYPE,"Cannot by applied to more than 1 operand.\n");
+            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Cannot by applied to more than 1 operand.\n");
         }
 
         expr_symbol.expr_res.expr_type = sym_arr->arr[0].expr_res.expr_type;
@@ -556,8 +550,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         else
         {
             expr_symbol.expr_res.expr_type = undefined;
-            error_code_handler(ERR_INCOMPATIBILE_TYPE);
-            print_error(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
+            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
         }
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
@@ -669,8 +662,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
             // E )
             if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
             {
-                error_code_handler(ERR_SYNTAX);
-                print_error(ERR_SYNTAX, "Missing left parenthesis.\n");
+                REPORT_ERROR(ERR_SYNTAX,"Missing left parenthesis.\n");
             }
             // E E
             else if (is_operand(sym_arr->arr[1]))
@@ -693,19 +685,16 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
                     }
                 }
                 data.token.type = sym_arr->arr[1].token.type;
-                error_code_handler(ERR_SYNTAX);
-                print_error(ERR_SYNTAX, "Missing operator.\n");
+                REPORT_ERROR(ERR_SYNTAX,"Missing operator.\n");
             }
             // E (
             else if (sym_arr->arr[1].token.type == TOKEN_L_PAR)
             {
-                error_code_handler(ERR_SYNTAX);
-                print_error(ERR_SYNTAX, "Missing operator.\n");
+                REPORT_ERROR(ERR_SYNTAX,"Missing operator.\n");
             }
             else if (is_binary_operator(sym_arr->arr[1]))
             {
-                error_code_handler(ERR_SYNTAX);
-                print_error(ERR_SYNTAX, "Missing second operand.\n");
+                REPORT_ERROR(ERR_SYNTAX,"Missing second operand.\n");
             }
         }
         // first (
@@ -715,27 +704,23 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
             if (is_operand(sym_arr->arr[1]))
             {
                 data.token.type = sym_arr->arr[1].token.type;
-                error_code_handler(ERR_SYNTAX);
-                print_error(ERR_SYNTAX, "Missing right parenthesis.\n");
+                REPORT_ERROR(ERR_SYNTAX,"Missing right parenthesis.\n");
             }
             // ( )
             else if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
             {
-                error_code_handler(ERR_SYNTAX);
-                print_error(ERR_SYNTAX, "Missing operand2.\n");
+                REPORT_ERROR(ERR_SYNTAX,"Missing operand2.\n");
             }
             // ( TERM
             else
             {
-                error_code_handler(ERR_SYNTAX);
-                print_error(ERR_SYNTAX, "Unexpected terminal.\n");
+                REPORT_ERROR(ERR_SYNTAX, "Unexpected terminal.\n")
             }
         }
         // else first TERM
         else
         {
-            error_code_handler(ERR_SYNTAX);
-            print_error(ERR_SYNTAX, "Missing operand3.\n");
+            REPORT_ERROR(ERR_SYNTAX,"Missing operand3.\n");
         }
     }
 
@@ -859,8 +844,7 @@ int expr(Parser *p)
     }
     else
     {
-        error_code_handler(ERR_SYNTAX);
-        print_error(ERR_SYNTAX, "Missing expression.\n");
+        REPORT_ERROR(ERR_SYNTAX,"Missing expression.\n");
     }
 
     DEBUG_PRINT("before token type: %d", p->curr_tok.type);
@@ -934,8 +918,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     {
         if (!compare_types_strict(&first_operand, &second_operand))
         {
-            print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types of operands.\n");
-            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types of operands.\n");
             return expr_symbol;
         }
     }
@@ -943,8 +926,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     // if operands are nillable
     if (operand_is_nilable(&first_operand) || operand_is_nilable(&second_operand))
     {
-        print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types of operands.\n");
-        error_code_handler(ERR_INCOMPATIBILE_TYPE);
+        REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types of operands.\n");
         return expr_symbol;
     }
     
@@ -970,8 +952,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
         }
         else
         {
-            print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
-            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Addition of incompatibile types.\n");
             return expr_symbol;
         }
     }
@@ -989,8 +970,7 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
 
     return expr_symbol;
 
-    print_error(ERR_INCOMPATIBILE_TYPE, "Addition of incompatibile types.\n");
-    error_code_handler(ERR_INCOMPATIBILE_TYPE);
+    REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Addition of incompatibile types.\n");
 
     expr_symbol.expr_res.expr_type = undefined;
     return expr_symbol;
@@ -1007,8 +987,7 @@ symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_
 
     if (!compare_types_strict(first_operand, second_operand))
     {
-        error_code_handler(ERR_INCOMPATIBILE_TYPE);
-        print_error(ERR_INCOMPATIBILE_TYPE, "Division of incompatibile types.\n");
+        REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Division of incompatibile types.\n");
         return expr_symbol;
     }
 
@@ -1016,8 +995,7 @@ symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_
     {
         if (second_operand->token.value.int_val == 0)
         {
-            error_code_handler(ERR_SEMANTIC);
-            print_error(ERR_SEMANTIC, "Division by zero.\n");
+            REPORT_ERROR(ERR_SEMANTIC,"Division by zero.\n");
             return expr_symbol;
         }
     }
@@ -1025,8 +1003,7 @@ symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_
     {
         if (second_operand->token.value.double_val == 0.0)
         {
-            error_code_handler(ERR_SEMANTIC);
-            print_error(ERR_SEMANTIC, "Division by zero.\n");
+            REPORT_ERROR(ERR_SEMANTIC,"Division by zero.\n");
             return expr_symbol;
         }
     }
@@ -1050,7 +1027,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
 
     if (operator.type != TOKEN_ADD)
     {
-        print_error(ERR_INCOMPATIBILE_TYPE, "Unknown string operation.\n");
+        REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Unknown string operation.\n");
         return expr_symbol;
     }
 
@@ -1060,8 +1037,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
         code_generator_operations(operator.type, false);
         return expr_symbol;
     }
-    print_error(ERR_INCOMPATIBILE_TYPE, "Concatenation with uncompatibile types.\n");
-    error_code_handler(ERR_INCOMPATIBILE_TYPE);
+    REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Concatenation with uncompatibile types.\n");
     return expr_symbol;
 }
 
@@ -1089,8 +1065,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         {
             if(!operand_is_nilable(&second_operand))
             {
-                error_code_handler(ERR_INCOMPATIBILE_TYPE);
-                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types to compare.\n");
                 return expr_symbol;
             }
         }
@@ -1098,8 +1073,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         {
             if(!operand_is_nilable(&first_operand))
             {
-                error_code_handler(ERR_INCOMPATIBILE_TYPE);
-                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types to compare.\n");
                 return expr_symbol;
             }
         }
@@ -1114,8 +1088,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
             }
             else if(op.type != TOKEN_NIL_CHECK)
             {
-                error_code_handler(ERR_INCOMPATIBILE_TYPE);
-                print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types to compare.\n");
+                REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types to compare.\n");
                 return expr_symbol;
             }
         }
@@ -1127,16 +1100,14 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         // check if not same types
         if (first_operand.expr_res.expr_type != nil && (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type))
         {
-            error_code_handler(ERR_INCOMPATIBILE_TYPE);
-            print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types in nil check.\n");
+            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types in nil check.\n");
             return expr_symbol;
         }
 
         // check if not (type? ?? type)
         if (first_operand.expr_res.expr_type != nil && (!first_operand.expr_res.nilable || second_operand.expr_res.nilable))
         {
-            error_code_handler(ERR_INCOMPATIBILE_TYPE);
-            print_error(ERR_INCOMPATIBILE_TYPE, "Incompatibile types in nil check.\n");
+            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types in nil check.\n");
             return expr_symbol;
         }
 
@@ -1225,13 +1196,11 @@ void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
         }
         else
         {
-            print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
-            error_code_handler(ERR_INCOMPATIBILE_TYPE);
+            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
         }
     }
     else
     {
-        print_error(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
-        error_code_handler(ERR_INCOMPATIBILE_TYPE);
+        REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Implicit conversion is not supported in this case.\n");
     }
 }
