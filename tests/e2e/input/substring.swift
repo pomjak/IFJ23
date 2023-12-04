@@ -22,10 +22,10 @@ if let b4
 else { }
 
 if let b5
-{
+{}
+else { 
     write("WRONG5!\n")
 }
-else { }
 
 if let b6
 {
