@@ -1188,25 +1188,15 @@ void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2)
         {
             DEBUG_PRINT("retyping FIRST from int to double");
 
-            // DEFVAR       LF@first
-            // POPS         LF@first
-            code_generator_var_assign("_");
-            // DEFVAR       LF@second
-            // POPS         LF@second
-            code_generator_var_assign("_");
-
-            // int2float    LF@first
-            // PUSHS        LF@first
-            // PUSHS        LF@second
+            // convert first operand on stack to double - second from top on stack
+            code_generator_int2doubles(2);
             operand1->expr_res.expr_type = double_;
         }
         else if (operand2->is_literal && compare_operand_with_type(operand2, integer))
         {
             DEBUG_PRINT("retyping SECOND from int to double");
-            // DEFVAR       TF@second
-            // POPS         TF@second
-            // int2float    TF@second
-            // PUSHS        TF@second
+            // convert second operand on stack to double - on the stack top
+            code_generator_int2doubles(1);
             operand2->expr_res.expr_type = double_;
         }
         else
