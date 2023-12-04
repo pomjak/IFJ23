@@ -128,16 +128,17 @@ Rule stmt(Parser* p) {
         CHECK_NEWLINE();
         p->in_cond++;
         GET_TOKEN();
+        add_scope(&p->stack, &err);
         NEXT_RULE(cond_clause);
         code_generator_if_header(++p->cond_uid);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
         /* Add a local scope for if body (popped at the end of block_body rule) */
-        add_scope(&p->stack, &err);
+        // add_scope(&p->stack, &err);
         NEXT_RULE(block_body);
         /* Pops local scope created inside condition clause */
-        pop_scope(&p->stack, &err);
+        // pop_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* Add a local scope for else body */
@@ -375,7 +376,7 @@ Rule expr_type(Parser* p) {
     switch (p->curr_tok.type) {
     /* If assignment is the next step after loading the identifier, the ID was a variable */
     case TOKEN_ASS:
-        if (!p->current_id) {
+        if (!p->lhs_id) {
             fprintf(stderr, "[ERROR %d] Assignment to undefined variable\n", ERR_UNDEFINED_VARIABLE);
             return ERR_UNDEFINED_VARIABLE;
         }
@@ -492,10 +493,9 @@ Rule cond_clause(Parser* p) {
 
     /* if let id */
     if (p->curr_tok.type == TOKEN_LET) {
-        add_scope(&p->stack, &err);
+        // add_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-        DEBUG_PRINT("if let %s ", p->curr_tok.value.string_val.str);
         
         if (peek_scope(p->stack)) {
             p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
@@ -529,6 +529,15 @@ Rule cond_clause(Parser* p) {
         symtable_search(p->stack->local_sym, &p->current_id->name, &err)->is_var_initialized = true;
         DEBUG_PRINT("%s inserted into local if scope", p->current_id->name.str);
 
+        /* Create a temporary nil token to be used in condition generation */
+        token_T nil;
+        nil.type = TOKEN_NIL;
+        nil.preceding_eol = false;
+        nil.value.is_nilable = true;
+        /* Generate 'if let id' condition */
+        code_generator_push(p->curr_tok);
+        code_generator_push(nil);
+        code_generator_operations(TOKEN_NEQ, false);
         GET_TOKEN();
     }
     /* if (EXPR) */
@@ -864,15 +873,17 @@ Rule func_stmt(Parser* p) {
         CHECK_NEWLINE();
         p->in_cond++;
         GET_TOKEN();
+        add_scope(&p->stack, &err);
         NEXT_RULE(cond_clause);
         code_generator_if_header(++p->cond_uid);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
         /* Add a local scope for if body (popped at the end of func_body rule) */
-        add_scope(&p->stack, &err);
+        // add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
-        pop_scope(&p->stack, &err);
+        /* Pop the local scope created in cond_clause */
+        // pop_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* Add a local scope for else body */
