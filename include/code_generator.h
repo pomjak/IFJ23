@@ -193,6 +193,12 @@ void code_generator_function_call_param_add_token(token_T token_name, token_T to
 void code_generator_function_call_param_add(char* name, token_T value);
 
 /**
+ * Converts int on stack in depth (0 is top) to float
+ * @param depth depth in stack of converted int
+ */
+void code_generator_int2doubles(int depth);
+
+/**
  * Token version of code_generator_function_label
  * @post do code_generator_param_map for all functions parameters
  * @param token
