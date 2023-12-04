@@ -240,4 +240,18 @@ void code_generator_function_ord();
 */
 void code_generator_substring();
 
+/**
+ * Gets unique id of variable
+ * @param varname name of variable
+ * @param initialized if variable has to be initialized
+ */
+unsigned code_generator_get_var_uid(char *varname, bool initialized);
+
+/**
+ * Gets frame where is variable stored
+ * @param varname name of variable
+ * @param initialized if variable has to be initialized
+ */
+const char* code_generator_get_var_frame(char *varname, bool initialized);
+
 #endif
