@@ -374,7 +374,7 @@ Rule opt_assign(Parser* p) {
             code_generator_var_declare(p->lhs_id->name.str);
             return EXIT_SUCCESS;
         }
-        code_generator_defvar(code_generator_get_var_frame(p->lhs_id->name.str), p->lhs_id->name.str, code_generator_get_var_uid(p->lhs_id->name.str));
+        code_generator_defvar(code_generator_get_var_frame(p->lhs_id->name.str, p->lhs_id->is_var_initialized), p->lhs_id->name.str, code_generator_get_var_uid(p->lhs_id->name.str, p->lhs_id->is_var_initialized));
     }
     return EXIT_SUCCESS;
 }
