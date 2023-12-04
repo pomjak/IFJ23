@@ -433,6 +433,24 @@ void code_generator_function_call_param_add(char* name, token_T token){
     }
 }
 
+void code_generator_int2doubles(int depth) {
+    code_generator_createframe();
+    code_generator_pushframe();
+
+    for (int i = 0; i < depth; i++) {
+        BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "stack", i);
+        BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "stack", i);
+    } 
+
+    BUFFER_PRINT("INT2FLOATS\n");
+
+    for (int i = depth - 1; i >= 0; i--) {
+        BUFFER_PRINT("PUSHS %s@%s_%d\n", "LF", "stack", i);
+    }
+
+    code_generator_popframe();     
+}
+
 void code_generator_function_ord(){
     code_generator_function_label("ord");
 
