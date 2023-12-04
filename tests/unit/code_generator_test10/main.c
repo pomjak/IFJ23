@@ -3,7 +3,7 @@
  * @file main.c
  * @brief main to run code generator
  * @author Marie Kolarikova <xkolar77@stud.fit.vutbr.cz>
- * @date 1.12.2023
+ * @date 4.12.2023
  **/
 
 #include <stdio.h>
@@ -14,15 +14,14 @@
 #include "scope.h"
 
 /**
+ * int b = 5;
  * int a = 0;
+ * 
  * for (int i = 1; i<=5; i++) {
- *      int b = 0;
- *      for (int j = 1; j <= 5; j++) {
- *          int a = j*j;
- *          b += a;
- *      }
- *      a += b;
+ *      b  = i * b;
+ *      a += b; 
  * }
+ * 
  * write(a);
  */
 
@@ -45,17 +44,14 @@ int main(int argc, char ** argv) {
     dstring_t a_name;
     dstring_t b_name;
     dstring_t i_name;
-    dstring_t j_name;
 
     dstring_init(&a_name);
     dstring_init(&b_name);
     dstring_init(&i_name);
-    dstring_init(&j_name);
 
     dstring_append(&a_name, 'a');
     dstring_append(&b_name, 'b');
     dstring_append(&i_name, 'i');
-    dstring_append(&j_name, 'j');
     
 
     token_T a;
@@ -70,10 +66,6 @@ int main(int argc, char ** argv) {
     i.type = TOKEN_IDENTIFIER;
     i.value.string_val = i_name;
 
-    token_T j;
-    j.type = TOKEN_IDENTIFIER;
-    j.value.string_val = j_name;
-
     symtab_t global_symtable;
     scope_t stack;
     
@@ -84,15 +76,23 @@ int main(int argc, char ** argv) {
     init_scope(&stack);
 
     symtable_insert(&global_symtable, &a_name, &error);
+    symtable_insert(&global_symtable, &b_name, &error);
     symtable_insert(&global_symtable, &i_name, &error);
 
     symtable_search(&global_symtable, &a_name, &error)->is_var_initialized = true;
+    symtable_search(&global_symtable, &b_name, &error)->is_var_initialized = true;
     symtable_search(&global_symtable, &i_name, &error)->is_var_initialized = true;
 
     code_generator_set_current_symtable(&global_symtable, &stack);
 
     // file begin
     code_generator_prolog();
+
+    // 5
+    code_generator_push(five);
+
+    // b = 5
+    code_generator_var_declare_token(b);
 
     // 0
     code_generator_push(zero);
@@ -111,11 +111,7 @@ int main(int argc, char ** argv) {
 
     add_scope(&stack, &error);
     
-    symtable_insert(stack->local_sym, &j_name, &error);
     symtable_insert(stack->local_sym, &b_name, &error);
-
-    symtable_search(stack->local_sym, &j_name, &error)->is_var_initialized = true;
-    symtable_search(stack->local_sym, &b_name, &error)->is_var_initialized = true;
 
     // i to stack
     code_generator_push(i);
@@ -132,82 +128,19 @@ int main(int argc, char ** argv) {
     // for body
     code_generator_for_body(forId);
 
-    // 0
-    code_generator_push(zero);
+    // i
+    code_generator_push(i);
 
-    // b = 0
-    code_generator_var_declare_token(b);
-
-    // 1
-    code_generator_push(one);
-
-    // j = 1
-    code_generator_var_declare_token(j);
-
-    
-    // start of for loop IF
-    code_generator_for_label(++forId);
-
-    add_scope(&stack, &error);
-    
-    symtable_insert(stack->local_sym, &a_name, &error);
-    symtable_search(stack->local_sym, &a_name, &error)->is_var_initialized = true;
-
-    // j to stack
-    code_generator_push(j);
-
-    // 5 to stack
-    code_generator_push(five);
-
-    // j <= 5
-    code_generator_operations(TOKEN_LEQ, true);
-
-    // end of for loop IF
-    code_generator_for_loop_if(forId);
-
-    // for body
-    code_generator_for_body(forId);
-
-    // j to stack
-    code_generator_push(j);
-
-    // j to stack
-    code_generator_push(j);
-
-    // j*j
-    code_generator_operations(TOKEN_MUL, true);
-
-    // a = j*j
-    code_generator_var_declare_token(a);
-
-    // b to stack
+    // b
     code_generator_push(b);
 
-    // a to stack
-    code_generator_push(a);
+    // i * b
+    code_generator_operations(TOKEN_MUL, true);
 
-    // b+a
-    code_generator_operations(TOKEN_ADD, true);
+    // b = i * b
+    code_generator_var_declare_token(b);
 
-    // b = b+a
-    code_generator_var_assign_token(b);
-
-    // 1 to stack
-    code_generator_push(one);
-
-    // j to stack
-    code_generator_push(j);
-
-    // j++
-    code_generator_operations(TOKEN_ADD, true);
-
-    // j = j++
-    code_generator_var_assign_token(j);
-
-    // for end
-    code_generator_for_loop_end(forId);
-
-    pop_scope(&stack, &error);
+    symtable_search(stack->local_sym, &b_name, &error)->is_var_initialized = true;
 
     // b to stack
     code_generator_push(b);
@@ -234,7 +167,7 @@ int main(int argc, char ** argv) {
     code_generator_var_assign_token(i);
 
     // for end
-    code_generator_for_loop_end(forId-1);
+    code_generator_for_loop_end(forId);
 
     pop_scope(&stack, &error);
 

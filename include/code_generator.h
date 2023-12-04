@@ -33,7 +33,7 @@ void code_generator_defvar_token(token_T token);
  * @param varname name of declared variable
  * @param id id of declared variable (default 0)
 */
-void code_generator_defvar(char *frame, char *varname, unsigned id);
+void code_generator_defvar(const char *frame, char *varname, unsigned id);
 
 /**
  * Checks if function needs new data frame
