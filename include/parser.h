@@ -47,6 +47,7 @@ typedef struct parser_t {
     dstring_t tmp;               // Temporary helper string
     token_buffer_t buffer;       // Double Link List of loaded tokens
     expr_res_t expr_res;         // Type of reduced expression 
+    token_T nil;                 // Nil token for generating if let conds or empty nilable variables
 } Parser;
 
 /* ============================================| MACROS |============================================================ */

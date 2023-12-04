@@ -104,11 +104,12 @@ Rule stmt(Parser* p) {
     case TOKEN_WHILE: /* while EXP { <block_body> */
         CHECK_NEWLINE();
         p->in_loop++;
-        code_generator_for_label(++p->loop_uid);
+        uint32_t closing_loop_uid = p->loop_uid;
+        code_generator_for_label(p->loop_uid++);
         if ((res = expr(p))) {
             return res;
         }
-        code_generator_for_loop_if(p->loop_uid); /* Generate loop condition */
+        code_generator_for_loop_if(closing_loop_uid); /* Generate loop condition */
         if (p->expr_res.expr_type != bool_) {
             fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
             return ERR_INCOMPATIBILE_TYPE;
@@ -118,10 +119,10 @@ Rule stmt(Parser* p) {
         /* Add a local scope for while body */
         add_scope(&p->stack, &err);
         p->first_stmt = true;
-        code_generator_for_body(p->loop_uid);
+        code_generator_for_body(closing_loop_uid);
         NEXT_RULE(block_body);
         GET_TOKEN();
-        code_generator_for_loop_end(p->loop_uid);
+        code_generator_for_loop_end(closing_loop_uid);
         p->in_loop--;
         break;
     case TOKEN_IF: /* if <cond_clause> { <block_body> else { <block_body> */
@@ -130,28 +131,29 @@ Rule stmt(Parser* p) {
         GET_TOKEN();
         add_scope(&p->stack, &err);
         NEXT_RULE(cond_clause);
-        code_generator_if_header(++p->cond_uid);
+        uint32_t closing_uid = p->cond_uid;
+        code_generator_if_header(p->cond_uid++);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
         /* Add a local scope for if body (popped at the end of block_body rule) */
-        // add_scope(&p->stack, &err);
+        add_scope(&p->stack, &err);
         NEXT_RULE(block_body);
         /* Pops local scope created inside condition clause */
-        // pop_scope(&p->stack, &err);
+        pop_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* Add a local scope for else body */
         add_scope(&p->stack, &err);
         /* Generate else body */
-        code_generator_if_else(p->cond_uid);
+        code_generator_if_else(closing_uid);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
         NEXT_RULE(block_body);
         GET_TOKEN();
-        code_generator_if_end(p->cond_uid);
+        code_generator_if_end(closing_uid);
         p->in_cond--; // condition should be fully parsed by the time we're exiting the switch statement
         break;
     default:
@@ -195,6 +197,7 @@ Rule define(Parser* p) {
         symtable_insert(&p->global_symtab, &p->curr_tok.value.string_val, &err);
         p->current_id = symtable_search(&p->global_symtab, &p->curr_tok.value.string_val, &err);
     }
+    p->current_id->is_var_initialized = false;
     p->lhs_id = p->current_id;
     GET_TOKEN();
     NEXT_RULE(var_def_cont);
@@ -348,6 +351,7 @@ Rule opt_assign(Parser* p) {
         if (p->lhs_id->type != p->expr_res.expr_type) {
             if ((p->lhs_id->is_nillable) && (p->expr_res.expr_type == nil)) {
                 p->lhs_id->is_var_initialized = true;
+                code_generator_var_declare(p->lhs_id->name.str);
                 return EXIT_SUCCESS;
             }
             fprintf(stderr, "[ERROR %d] Incompatible types when assigninng to variable '%s'\n", ERR_INCOMPATIBILE_TYPE, p->current_id->name.str);
@@ -364,6 +368,10 @@ Rule opt_assign(Parser* p) {
     }
     else {
         /* Generate an empty variable declaration */
+        if (p->lhs_id->is_nillable) {
+
+            code_generator_push(p->nil);
+        }
         code_generator_var_declare(p->lhs_id->name.str);
     }
     return EXIT_SUCCESS;
@@ -493,7 +501,6 @@ Rule cond_clause(Parser* p) {
 
     /* if let id */
     if (p->curr_tok.type == TOKEN_LET) {
-        // add_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
         
@@ -520,7 +527,13 @@ Rule cond_clause(Parser* p) {
             fprintf(stderr, "[ERROR %d] Using a non-nilable constant '%s' in condition statement\n", ERR_SEMANTIC, p->current_id->name.str);
             return ERR_SEMANTIC;
         }
+        /* Generate 'if let id' condition */
+        code_generator_push(p->curr_tok);
+        code_generator_push(p->nil);
+        code_generator_operations(TOKEN_NEQ, false);
 
+        
+        code_generator_push(p->curr_tok);
         /* Insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
         set_nillable(p->stack->local_sym, &p->current_id->name, false, &err);
@@ -529,15 +542,9 @@ Rule cond_clause(Parser* p) {
         symtable_search(p->stack->local_sym, &p->current_id->name, &err)->is_var_initialized = true;
         DEBUG_PRINT("%s inserted into local if scope", p->current_id->name.str);
 
-        /* Create a temporary nil token to be used in condition generation */
-        token_T nil;
-        nil.type = TOKEN_NIL;
-        nil.preceding_eol = false;
-        nil.value.is_nilable = true;
-        /* Generate 'if let id' condition */
-        code_generator_push(p->curr_tok);
-        code_generator_push(nil);
-        code_generator_operations(TOKEN_NEQ, false);
+        code_generator_var_declare(p->current_id->name.str);
+
+
         GET_TOKEN();
     }
     /* if (EXPR) */
@@ -849,11 +856,12 @@ Rule func_stmt(Parser* p) {
     case TOKEN_WHILE:
         CHECK_NEWLINE();
         p->in_loop++;
-        code_generator_for_label(++p->loop_uid);
+        uint32_t closing_loop_uid = p->loop_uid;
+        code_generator_for_label(p->loop_uid++);
         if ((res = expr(p))) {
             return res;
         }
-        code_generator_for_loop_if(p->loop_uid);
+        code_generator_for_loop_if(closing_loop_uid);
         if (p->expr_res.expr_type != bool_) {
             fprintf(stderr, "[ERROR %d] Invalid expression in while condition\n", ERR_INCOMPATIBILE_TYPE);
             return ERR_INCOMPATIBILE_TYPE;
@@ -863,10 +871,10 @@ Rule func_stmt(Parser* p) {
         p->first_stmt = true;
         /* Add a local scope for while body */
         add_scope(&p->stack, &err);
-        code_generator_for_body(p->loop_uid);
+        code_generator_for_body(closing_loop_uid);
         NEXT_RULE(func_body);
         GET_TOKEN();
-        code_generator_for_loop_end(p->loop_uid);
+        code_generator_for_loop_end(closing_loop_uid);
         p->in_loop--;
         break;
     case TOKEN_IF:
@@ -875,28 +883,29 @@ Rule func_stmt(Parser* p) {
         GET_TOKEN();
         add_scope(&p->stack, &err);
         NEXT_RULE(cond_clause);
-        code_generator_if_header(++p->cond_uid);
+        uint32_t closing_uid = p->cond_uid;
+        code_generator_if_header(p->cond_uid++);
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
         /* Add a local scope for if body (popped at the end of func_body rule) */
-        // add_scope(&p->stack, &err);
+        add_scope(&p->stack, &err);
         NEXT_RULE(func_body);
         /* Pop the local scope created in cond_clause */
-        // pop_scope(&p->stack, &err);
+        pop_scope(&p->stack, &err);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_ELSE);
         /* Add a local scope for else body */
         add_scope(&p->stack, &err);
         /* Generate else body */
-        code_generator_if_else(p->cond_uid);
+        code_generator_if_else(closing_uid);
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_L_BKT);
         GET_TOKEN();
         p->first_stmt = true;
         NEXT_RULE(func_body);
         GET_TOKEN();
-        code_generator_if_end(p->cond_uid);
+        code_generator_if_end(closing_uid);
         p->in_cond--;
         break;
     case TOKEN_RETURN:
@@ -1342,6 +1351,9 @@ bool parser_init(Parser* p) {
     p->param_cnt = 0;
     p->cond_uid = 0;
     p->loop_uid = 0;
+    p->nil.type = TOKEN_NIL;
+    p->nil.preceding_eol = false;
+    p->nil.value.is_nilable = true;
     return true;
 }
 
