@@ -1034,7 +1034,8 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
     if (compare_types_strict(&first_operand, &second_operand))
     {
         DEBUG_PRINT("Generate concatenation\n");
-        code_generator_operations(operator.type, false);
+        code_generator_concats();
+        // code_generator_operations(operator.type, false);
         return expr_symbol;
     }
     REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Concatenation with uncompatibile types.\n");
