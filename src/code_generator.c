@@ -25,15 +25,15 @@ dstring_t print_buffer;
 symtab_t* global_symtable = NULL;
 scope_t*  scope_stack = NULL;
 
-char gf_name[] = "GF";
-char lf_name[] = "LF";
+const char gf_name[] = "GF";
+const char lf_name[] = "LF";
 
 void code_generator_set_current_symtable(symtab_t* g_symtable, scope_t* stack) {
     global_symtable = g_symtable;
     scope_stack = stack;
 }
 
-unsigned code_generator_get_var_uid(char *varname){
+unsigned code_generator_get_var_uid(char *varname, bool initialized){
     dstring_t dynamic_varname;
     dstring_init(&dynamic_varname);
     dstring_add_const_str(&dynamic_varname, varname);
@@ -46,7 +46,12 @@ unsigned code_generator_get_var_uid(char *varname){
         return 0;
     }
 
-    symtab_item_t* item = search_scopes(*scope_stack, &dynamic_varname, &error);
+    symtab_item_t* item;
+    if (initialized) {
+        item = search_scopes_initialized_var(*scope_stack, &dynamic_varname, &error);
+    } else {
+        item = search_scopes(*scope_stack, &dynamic_varname, &error);
+    }
 
     if(error == SYMTAB_OK){
         dstring_free(&dynamic_varname);
@@ -72,7 +77,7 @@ unsigned code_generator_get_var_uid(char *varname){
     return 0;
 }
 
-char* code_generator_get_var_frame(char *varname){
+const char* code_generator_get_var_frame(char *varname, bool initialized){
     dstring_t dynamic_varname;
     dstring_init(&dynamic_varname);
     dstring_add_const_str(&dynamic_varname, varname);
@@ -85,7 +90,12 @@ char* code_generator_get_var_frame(char *varname){
         return lf_name;
     }
 
-    search_scopes(*scope_stack, &dynamic_varname, &error);
+
+    if (initialized) {
+        search_scopes_initialized_var(*scope_stack, &dynamic_varname, &error);
+    } else {
+        search_scopes(*scope_stack, &dynamic_varname, &error);
+    }
 
     if(error == SYMTAB_OK){
         dstring_free(&dynamic_varname);
@@ -112,13 +122,13 @@ char* code_generator_get_var_frame(char *varname){
 
 void code_generator_defvar_token(token_T token){
     code_generator_defvar(
-        code_generator_get_var_frame(token.value.string_val.str),
+        code_generator_get_var_frame(token.value.string_val.str, false),
         token.value.string_val.str,
-        code_generator_get_var_uid(token.value.string_val.str)
+        code_generator_get_var_uid(token.value.string_val.str, false)
     );
 }
 
-void code_generator_defvar(char *frame, char *varname, unsigned id){
+void code_generator_defvar(const char *frame, char *varname, unsigned id){
     printf("\nDEFVAR %s@%s_%d\n",frame,varname, id);
 }
 
@@ -194,7 +204,7 @@ void code_generator_var_assign_token(token_T token){
 void code_generator_var_assign(char* var){
     
 	if(strcmp(var, "_") != 0){
-		BUFFER_PRINT("\nPOPS %s@%s_%d\n",code_generator_get_var_frame(var), var, code_generator_get_var_uid(var));
+		BUFFER_PRINT("\nPOPS %s@%s_%d\n",code_generator_get_var_frame(var, true), var, code_generator_get_var_uid(var, true));
 	} else{
         code_generator_defvar("LF","TMP", tmp_var_id);
 		BUFFER_PRINT("POPS LF@TMP_%u\n", tmp_var_id);
@@ -207,8 +217,8 @@ void code_generator_var_declare_token(token_T token){
 }
 
 void code_generator_var_declare(char* variable){
-	code_generator_defvar(code_generator_get_var_frame(variable), variable, code_generator_get_var_uid(variable));
-    BUFFER_PRINT("POPS %s@%s_%d\n", code_generator_get_var_frame(variable), variable, code_generator_get_var_uid(variable));
+	code_generator_defvar(code_generator_get_var_frame(variable, false), variable, code_generator_get_var_uid(variable, false));
+    BUFFER_PRINT("POPS %s@%s_%d\n", code_generator_get_var_frame(variable, false), variable, code_generator_get_var_uid(variable, false));
 }
 
 void code_generator_eof(){
@@ -267,9 +277,9 @@ void code_generator_print_value(token_T token){
 
     if(token.type == TOKEN_IDENTIFIER){
         BUFFER_PRINT("%s@%s_%d",
-            code_generator_get_var_frame(token.value.string_val.str),
+            code_generator_get_var_frame(token.value.string_val.str, true),
             token.value.string_val.str,
-            code_generator_get_var_uid(token.value.string_val.str)
+            code_generator_get_var_uid(token.value.string_val.str, true)
         );
     } else if (token.type == TOKEN_NIL) {
 	    BUFFER_PRINT("nil@nil");
@@ -529,8 +539,8 @@ void code_generator_function_label(char* name){
 }
 
 void code_generator_param_map(char *param_name, unsigned param_id){
-    code_generator_defvar(code_generator_get_var_frame(param_name), param_name, code_generator_get_var_uid(param_name));
-    BUFFER_PRINT("MOVE %s@%s_%d LF@??_%d\n", code_generator_get_var_frame(param_name), param_name, code_generator_get_var_uid(param_name), param_id);
+    code_generator_defvar(code_generator_get_var_frame(param_name, false), param_name, code_generator_get_var_uid(param_name, false));
+    BUFFER_PRINT("MOVE %s@%s_%d LF@??_%d\n", code_generator_get_var_frame(param_name, false), param_name, code_generator_get_var_uid(param_name, false), param_id);
 }
 
 void code_generator_function_end(char* name){
