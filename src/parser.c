@@ -487,11 +487,11 @@ Rule expr_type(Parser* p) {
         p->last_func_id = temp; /* reset last func id */
         break;
     default:
-        if (!p->current_id) {
-            fprintf(stderr, "[ERROR %d] undefined variable\n", ERR_UNDEFINED_VARIABLE);
-            return ERR_UNDEFINED_VARIABLE;
-        }
-        fprintf(stderr, "[ERROR %d] Unexpected token after identifier '%s'", ERR_SYNTAX, p->current_id->name.str);
+        // if (!p->current_id) {
+        //     fprintf(stderr, "[ERROR %d] undefined variable\n", ERR_UNDEFINED_VARIABLE);
+        //     return ERR_UNDEFINED_VARIABLE;
+        // }
+        fprintf(stderr, "[ERROR %d] Unexpected token after identifier \n", ERR_SYNTAX);
         return ERR_SYNTAX;
     }
     return EXIT_SUCCESS;
@@ -505,7 +505,7 @@ Rule cond_clause(Parser* p) {
     if (p->curr_tok.type == TOKEN_LET) {
         GET_TOKEN();
         ASSERT_TOK_TYPE(TOKEN_IDENTIFIER);
-        
+
         if (peek_scope(p->stack)) {
             p->current_id = search_scopes(p->stack, &p->curr_tok.value.string_val, &err);
         }
@@ -534,7 +534,7 @@ Rule cond_clause(Parser* p) {
         code_generator_push(p->nil);
         code_generator_operations(TOKEN_NEQ, false);
 
-        
+
         code_generator_push(p->curr_tok);
         /* Insert the symbol into the newly created local scope */
         symtable_insert(p->stack->local_sym, &p->current_id->name, &err);
@@ -676,6 +676,10 @@ Rule arg(Parser* p) {
             /* Check if the variable is the same type as function parameter */
                 if (p->current_id->type != p->current_arg->type) {
                     fprintf(stderr, "[ERROR %d] Function '%s': argument '%s' - invalid type\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
+                    return ERR_FUNCTION_PARAMETER;
+                }
+                if (p->current_id->is_nillable != p->current_arg->is_nillable) {
+                    fprintf(stderr, "[ERROR %d] Function '%s': argument '%s' - Invalid nilability\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str, p->current_id->name.str);
                     return ERR_FUNCTION_PARAMETER;
                 }
             }
@@ -1113,7 +1117,6 @@ Rule term(Parser* p) {
             fprintf(stderr, "[ERROR %d] Unknown identifier %s\n", ERR_UNDEFINED_VARIABLE, p->curr_tok.value.string_val.str);
             return ERR_UNDEFINED_VARIABLE;
         }
-        DEBUG_PRINT("Id found : %s", p->current_id->name.str);
         if (p->current_id->type != p->current_arg->type) {
             fprintf(stderr, "[ERROR %d] Invalid type of identifier %s in function %s\n", ERR_FUNCTION_PARAMETER, p->current_id->name.str, p->last_func_id->name.str);
             return ERR_FUNCTION_PARAMETER;
@@ -1132,7 +1135,7 @@ Rule literal(Parser* p) {
     case TOKEN_INT:
         if (!p->last_func_id->variadic_param) {
             if (p->current_arg->type != integer) {
-                fprintf(stderr, "[ERROR %d] Invalid argument type(int) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                fprintf(stderr, "[ERROR %d] Invalid argument type(int) in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
                 return ERR_FUNCTION_PARAMETER;
             }
         }
@@ -1140,7 +1143,7 @@ Rule literal(Parser* p) {
     case TOKEN_DBL:
         if (!p->last_func_id->variadic_param) {
             if (p->current_arg->type != double_) {
-                fprintf(stderr, "[ERROR %d] Invalid argument type(double) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                fprintf(stderr, "[ERROR %d] Invalid argument type(double) in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
                 return ERR_FUNCTION_PARAMETER;
             }
         }
@@ -1148,7 +1151,15 @@ Rule literal(Parser* p) {
     case TOKEN_STRING:
         if (!p->last_func_id->variadic_param) {
             if (p->current_arg->type != string) {
-                fprintf(stderr, "[ERROR %d] Invalid argument type(string) in fuction %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                fprintf(stderr, "[ERROR %d] Invalid argument type(string) in function %s\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
+                return ERR_FUNCTION_PARAMETER;
+            }
+        }
+        break;
+    case TOKEN_NIL:
+        if (!p->last_func_id->variadic_param) {
+            if (!p->current_arg->is_nillable) {
+                fprintf(stderr, "[ERROR %d] Invalid nil argument in function '%s'\n", ERR_FUNCTION_PARAMETER, p->last_func_id->name.str);
                 return ERR_FUNCTION_PARAMETER;
             }
         }
