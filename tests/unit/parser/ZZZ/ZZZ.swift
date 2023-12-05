@@ -82,7 +82,7 @@ func function_with_lots_of_scopes()
 			}
 		}
 		else{
-			var overlay = function_String_Int(cond)
+			// var overlay = function_String_Int(cond)
 		}
 	}
 	else{
@@ -90,7 +90,7 @@ func function_with_lots_of_scopes()
 			var overlay = function_String_Double(cond)
 		}
 		else{
-			var overlay = function_String_Int(cond)
+			// var overlay = function_String_Int(cond)
 		}
 	}
 }
@@ -102,7 +102,7 @@ if(1 == 1)
 		var overlay = function_String_String(cond)
 	}
 	else{
-		var overlay = function_String_Int(cond)
+		// var overlay = function_String_Int(cond)
 	}
 }
 else{
@@ -110,7 +110,7 @@ else{
 		var overlay = function_String_Double(cond)
 	}
 	else{
-		var overlay = function_String_Int(cond)
+		// var overlay = function_String_Int(cond)
 	}
 }
 
