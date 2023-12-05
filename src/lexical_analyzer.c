@@ -156,38 +156,74 @@ unsigned indentation_perform(dstring_t *read_string) {
     dstring_t result;
 
     if(!dstring_init(&indent)) return indentation_memory_fail;
-    if(!dstring_init(&result)) return indentation_memory_fail;
+    if(!dstring_init(&result)) {
+        dstring_free(&indent);
+        return indentation_memory_fail;
+    }
 
     for (size_t i = read_string->length - 3; i-- > 0;) {
         if (read_string->str[i] == '\n') break;
-        if (!dstring_append(&indent, read_string->str[i])) return indentation_memory_fail;
+        if (!dstring_append(&indent, read_string->str[i])) {
+            dstring_free(&indent);
+            dstring_free(&result);
+            return indentation_memory_fail;
+        }
     }
 
     unsigned indent_position = 0;
-    size_t  for_iter = (read_string->length < indent.length + 4) ? 0 : read_string->length - indent.length - 4;
+    size_t  for_iter = 0;
+    if (read_string->length >= indent.length + 4) {
+        for_iter = read_string->length - indent.length - 4;
+
+        if (for_iter == 0 && read_string->str[0] == '\n') {
+            for_iter += 1;
+        } else if (for_iter > 0 && read_string->str[for_iter-1] == '\n') {
+            for_iter += 1;
+        }
+    }
 
     for (size_t i = 0; i < for_iter; i++) {
         
         if (read_string->str[i] == '\n') {
-            if (indent_position < indent.length && indent_position != 0) return indentation_fail;
+            if (indent_position < indent.length && indent_position != 0)  {
+                dstring_free(&indent);
+                dstring_free(&result);
+                return indentation_fail;
+            }
 
             indent_position = 0;
             
-            if (!dstring_append(&result, read_string->str[i])) return indentation_memory_fail;
+            if (!dstring_append(&result, read_string->str[i])) {
+                dstring_free(&indent);
+                dstring_free(&result);
+                return indentation_memory_fail;
+            }
             continue;
         }
 
         if (indent_position < indent.length) {
-            if (read_string->str[i] != indent.str[indent.length - indent_position - 1]) return indentation_fail;
+            if (read_string->str[i] != indent.str[indent.length - indent_position - 1]) {
+                dstring_free(&indent);
+                dstring_free(&result);
+                return indentation_fail;
+            }
         } else {
-            if (!dstring_append(&result, read_string->str[i])) return indentation_memory_fail;
+            if (!dstring_append(&result, read_string->str[i])) {
+                dstring_free(&indent);
+                dstring_free(&result);
+                return indentation_memory_fail;
+            }    
         }
 
         indent_position++;
     }
 
     dstring_clear(read_string);
-    if (!dstring_copy(&result, read_string)) return indentation_memory_fail;
+    if (!dstring_copy(&result, read_string)) {
+        dstring_free(&indent);
+        dstring_free(&result);
+        return indentation_memory_fail;
+    }
 
     dstring_free(&indent);
     dstring_free(&result);
@@ -1174,8 +1210,7 @@ state_T m_string_end2(char read) {
     if (read == '\n') NEXT_STATE(eol_end_q);
     if (read != '"')  NEXT_STATE(m_string_inner);
     if (read == '"')  {
-        //dstring_retract(&read_string, 4);
-        
+
         unsigned status = indentation_perform(&read_string);
 
         if (status == indentation_memory_fail) {
