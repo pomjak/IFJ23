@@ -356,11 +356,11 @@ void code_generator_nil_check(unsigned int id) {
     code_generator_createframe();
     code_generator_pushframe();
     
-    // POPS     second op
+    // POPS second op
     BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "op", 2);
     BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "op", 2);
 
-    // POPS     first op
+    // POPS first op
     BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "op", 1);
     BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "op", 1);
     // PUSHS    nil and first op
@@ -372,15 +372,10 @@ void code_generator_nil_check(unsigned int id) {
 
     // if first operand is nil
     code_generator_if_header(id);
-    // BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "nil_check_cond", 0);
-    // BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "nil_check_cond", 0);
     BUFFER_PRINT("\nPUSHS %s@%s_%d\n", "LF", "op", 1);
 
     // else push second
     code_generator_if_else(id);
-    // POPS     cond_result
-    // BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "nil_check_cond", 1);
-    // BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "nil_check_cond", 1);
     BUFFER_PRINT("\nPUSHS %s@%s_%d\n","LF","op",2);
     code_generator_if_end(id);
 
