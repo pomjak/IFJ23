@@ -10,6 +10,11 @@
 #include "debug.h"
 #include <stdio.h>
 
+/**
+ * Prints formated string to buffer by using code_generator_buffer_print
+ * @param fmt format of string
+ * @param ... other parameters are inserted positionally into the format
+*/
 #define BUFFER_PRINT(fmt, ...) {                               \
     int   sprintf_size = snprintf(NULL, 0, fmt, ##__VA_ARGS__);\
     char* sprintf_data = malloc(sprintf_size + 1);             \
@@ -19,15 +24,15 @@
 }
 
 unsigned tmp_var_id = 0;
-unsigned func_param_id = 0;
-unsigned for_open = 0;
-dstring_t print_buffer;
+unsigned func_param_id = 0; //id of parameter, which will be added to function call
+unsigned for_open = 0;      //count of open for cycles
+dstring_t print_buffer;     //string of print buffer
 
-symtab_t* global_symtable = NULL;
-scope_t*  scope_stack = NULL;
+symtab_t* global_symtable = NULL; //pointer to global symtable
+scope_t*  scope_stack = NULL;     //pointer to scope stack
 
-const char gf_name[] = "GF";
-const char lf_name[] = "LF";
+const char gf_name[] = "GF"; //constant string of global frame
+const char lf_name[] = "LF"; //constant string of local frame
 
 void code_generator_set_current_symtable(symtab_t* g_symtable, scope_t* stack) {
     global_symtable = g_symtable;
