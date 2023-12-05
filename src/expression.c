@@ -39,7 +39,9 @@
     expr_symbol.is_terminal = false;            \
     expr_symbol.is_handleBegin = false;         \
     expr_symbol.expr_res.expr_type = undefined; \
-    expr_symbol.expr_res.nilable = false;       
+    expr_symbol.expr_res.nilable = false;       \
+    token_T empty = EMPTY_TOKEN(false);         \
+    expr_symbol.token = empty;
 
 bool is_multiline_expr = false;
 bool is_all_literals = true;
@@ -80,6 +82,12 @@ void symbol_arr_init(symbol_arr_t *new_arr)
 
 bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data)
 {
+    if(sym_arr == NULL)
+    {
+        REPORT_ERROR(ERR_INTERNAL, "Appending to null symbol array.");
+        return false;
+    }
+
     if (sym_arr->size == 0)
     {
         // allocate new array
@@ -164,7 +172,15 @@ void symbol_arr_reverse(symbol_arr_t *sym_arr)
 
 void symbol_arr_free(symbol_arr_t *sym_arr)
 {
-    free(sym_arr->arr);
+    if(sym_arr == NULL)
+    {
+        return;
+    }
+
+    if(sym_arr->arr != NULL)
+    {
+        free(sym_arr->arr);
+    }
     sym_arr->size = 0;
 }
 
@@ -514,8 +530,6 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
 void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule, Parser *p)
 {
     DEFINE_EXPR_SYMBOL;
-    token_T empty = EMPTY_TOKEN(false);
-    expr_symbol.token = empty; 
 
     switch (rule)
     {
@@ -550,13 +564,14 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         else
         {
             expr_symbol.expr_res.expr_type = undefined;
+            expr_symbol.expr_res.nilable = false;
             REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
         }
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
-        DEBUG_PRINT("\t EXPR_SYM isnilable : %d\n", expr_symbol.is_literal);
+        DEBUG_PRINT("\t EXPR_SYM isnilable : %d\n", expr_symbol.expr_res.nilable);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -632,10 +647,12 @@ void reduce(symstack_t *stack, Parser *p)
             token_T empty = EMPTY_TOKEN(p->curr_tok.preceding_eol);
             p->curr_tok = empty;
         }
+        symbol_arr_free(&sym_arr);
         return;
     }
 
     push_reduced_symbol_on_stack(stack, &sym_arr, rule, p);
+    printf("push reduced symbol on stack\n");
     PRINT_STACK(stack);
     symbol_arr_free(&sym_arr);
 }
@@ -727,6 +744,12 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
 
     data.is_handleBegin = false;
     data.is_terminal = false;
+    data.is_identifier = false;
+    data.is_literal = false;
+    data.expr_res.expr_type = undefined;
+    data.expr_res.nilable = false;
+    token_T empty = EMPTY_TOKEN(false);
+    data.token = empty;
     strcpy(data.symbol, "ERR");
     symstack_push(stack, data);
 }
@@ -871,7 +894,6 @@ int expr(Parser *p)
 symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
 {
     DEBUG_PRINT("Process operand");
-    // define expression symbol
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token = operand->token;
     expr_symbol.is_literal = is_literal(*operand);
