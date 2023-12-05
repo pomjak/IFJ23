@@ -1116,14 +1116,10 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
         // check if not same types
         if (first_operand.expr_res.expr_type != nil && (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type))
         {
-            if(second_operand.is_literal)
+            if(second_operand.is_literal && compare_operand_with_type(&first_operand,double_) && compare_operand_with_type(&second_operand,integer))
             {
-                //retype
-                if(first_operand.expr_res.expr_type == double_ && second_operand.expr_res.expr_type == integer)
-                {
-                    code_generator_int2doubles(0);
-                    second_operand.expr_res.expr_type = double_;
-                }
+                code_generator_int2doubles(0);
+                second_operand.expr_res.expr_type = double_;        
             }
             else 
             {
