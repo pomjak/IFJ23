@@ -1074,6 +1074,11 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     bool first_is_nil = compare_operand_with_type(&first_operand, nil);
     bool second_is_nil = compare_operand_with_type(&second_operand, nil);
 
+    if(!compare_types_strict(&first_operand,&second_operand) && op.type != TOKEN_NIL_CHECK)
+    {
+        convert_if_retypeable(&first_operand,&second_operand);
+    }
+
     // if there is nil operand
     if(op.type != TOKEN_NIL_CHECK && (first_is_nil || second_is_nil))
     {
@@ -1116,8 +1121,20 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
         // check if not same types
         if (first_operand.expr_res.expr_type != nil && (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type))
         {
-            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types in nil check.\n");
-            return expr_symbol;
+            if(second_operand.is_literal)
+            {
+                //retype
+                if(first_operand.expr_res.expr_type == double_ && second_operand.expr_res.expr_type == integer)
+                {
+                    code_generator_int2doubles(0);
+                    second_operand.expr_res.expr_type = double_;
+                }
+            }
+            else 
+            {
+                REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types in nil check.\n");
+                return expr_symbol;
+            }
         }
 
         // check if not (type? ?? type)
