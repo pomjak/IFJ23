@@ -155,6 +155,12 @@ void code_generator_popframe();
 void code_generator_operations(token_type_T operator, bool is_int);
 
 /**
+ * @brief Creates code for ?? operator
+ * @param id if id
+ */
+void code_generator_nil_check(unsigned int id);
+
+/**
  * Creates operation concat on stack
 */
 void code_generator_concats();

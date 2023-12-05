@@ -39,7 +39,9 @@
     expr_symbol.is_terminal = false;            \
     expr_symbol.is_handleBegin = false;         \
     expr_symbol.expr_res.expr_type = undefined; \
-    expr_symbol.expr_res.nilable = false;       
+    expr_symbol.expr_res.nilable = false;       \
+    token_T empty = EMPTY_TOKEN(false);         \
+    expr_symbol.token = empty;
 
 bool is_multiline_expr = false;
 bool is_all_literals = true;
@@ -69,7 +71,7 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* RO  */ {S, S, R, S, E, S, R, S, R},
         /* (   */ {S, S, S, S, S, S, E, S, X},
         /* )   */ {R, R, R, X, R, X, R, X, R},
-        /* !   */ {R, R, R, R, R, R, R, S, R}, 
+        /* !   */ {R, R, R, R, R, R, R, R, R}, 
         /* $   */ {S, S, S, S, S, S, X, S, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
@@ -80,6 +82,12 @@ void symbol_arr_init(symbol_arr_t *new_arr)
 
 bool symbol_arr_append(symbol_arr_t *sym_arr, symstack_data_t data)
 {
+    if(sym_arr == NULL)
+    {
+        REPORT_ERROR(ERR_INTERNAL, "Appending to null symbol array.");
+        return false;
+    }
+
     if (sym_arr->size == 0)
     {
         // allocate new array
@@ -164,7 +172,15 @@ void symbol_arr_reverse(symbol_arr_t *sym_arr)
 
 void symbol_arr_free(symbol_arr_t *sym_arr)
 {
-    free(sym_arr->arr);
+    if(sym_arr == NULL)
+    {
+        return;
+    }
+
+    if(sym_arr->arr != NULL)
+    {
+        free(sym_arr->arr);
+    }
     sym_arr->size = 0;
 }
 
@@ -514,8 +530,6 @@ prec_rule_t get_rule(symbol_arr_t *sym_arr)
 void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec_rule_t rule, Parser *p)
 {
     DEFINE_EXPR_SYMBOL;
-    token_T empty = EMPTY_TOKEN(false);
-    expr_symbol.token = empty; 
 
     switch (rule)
     {
@@ -550,12 +564,14 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         else
         {
             expr_symbol.expr_res.expr_type = undefined;
+            expr_symbol.expr_res.nilable = false;
             REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Cannot force unwrap non-nilable variable.\n");
         }
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
+        DEBUG_PRINT("\t EXPR_SYM isnilable : %d\n", expr_symbol.expr_res.nilable);
         symstack_push(stack, expr_symbol);
         break;
 
@@ -580,7 +596,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_EQ_E:
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
-        expr_symbol = process_relational_operation(sym_arr);
+        expr_symbol = process_relational_operation(sym_arr,p);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
@@ -612,7 +628,6 @@ void reduce(symstack_t *stack, Parser *p)
     DEBUG_PRINT("RULE %d\n", rule);
     if (rule == RULE_NO_RULE)
     {
-
         if (!find_closest_eol(stack))
         {
             reduce_error(stack, &sym_arr);
@@ -631,6 +646,7 @@ void reduce(symstack_t *stack, Parser *p)
             token_T empty = EMPTY_TOKEN(p->curr_tok.preceding_eol);
             p->curr_tok = empty;
         }
+        symbol_arr_free(&sym_arr);
         return;
     }
 
@@ -650,15 +666,14 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
     E )
     E operator E
     */
-    symstack_data_t data;
-    data.token.type = TOKEN_UNDEFINED;
+    DEFINE_EXPR_SYMBOL;
 
     if (sym_arr != NULL && sym_arr->arr != NULL)
     {
         if (is_operand(sym_arr->arr[0]))
         {
 
-            data.token.type = sym_arr->arr[0].token.type;
+            expr_symbol.token.type = sym_arr->arr[0].token.type;
             // E )
             if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
             {
@@ -676,15 +691,15 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
                         // if one of them is double
                         if (sym_arr->arr[0].token.type == TOKEN_DBL || sym_arr->arr[1].token.type == TOKEN_DBL)
                         {
-                            data.token.type = TOKEN_DBL;
+                            expr_symbol.token.type = TOKEN_DBL;
                         }
                         else
                         {
-                            data.token.type = TOKEN_INT;
+                            expr_symbol.token.type = TOKEN_INT;
                         }
                     }
                 }
-                data.token.type = sym_arr->arr[1].token.type;
+                expr_symbol.token.type = sym_arr->arr[1].token.type;
                 REPORT_ERROR(ERR_SYNTAX,"Missing operator.\n");
             }
             // E (
@@ -703,7 +718,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
             // ( E
             if (is_operand(sym_arr->arr[1]))
             {
-                data.token.type = sym_arr->arr[1].token.type;
+                expr_symbol.token.type = sym_arr->arr[1].token.type;
                 REPORT_ERROR(ERR_SYNTAX,"Missing right parenthesis.\n");
             }
             // ( )
@@ -724,10 +739,8 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         }
     }
 
-    data.is_handleBegin = false;
-    data.is_terminal = false;
-    strcpy(data.symbol, "ERR");
-    symstack_push(stack, data);
+    strcpy(expr_symbol.symbol, "ERR");
+    symstack_push(stack, expr_symbol);
 }
 
 void expr_error(symstack_t *stack)
@@ -812,14 +825,13 @@ int expr(Parser *p)
             sym_data = convert_token_to_data(p->curr_tok);
             symstack_push(&stack, sym_data);
 
+            PRINT_STACK(&stack);
             if (find_closest_eol(&stack))
             {
                 reduce_to_eol(&stack, p);
                 symstack_pop(&stack);
                 set_is_multiline_expr(true);
                 tb_prev(&p->buffer);
-
-                PRINT_STACK(&stack);
 
                 // set the end of the expression
                 token_T empty = EMPTY_TOKEN(false);
@@ -870,11 +882,15 @@ int expr(Parser *p)
 symstack_data_t process_operand(symstack_data_t *operand, Parser *p)
 {
     DEBUG_PRINT("Process operand");
-    // define expression symbol
     DEFINE_EXPR_SYMBOL;
     expr_symbol.token = operand->token;
     expr_symbol.is_literal = is_literal(*operand);
     expr_symbol.is_identifier = (operand->token.type == TOKEN_IDENTIFIER);
+
+    if(!operand->is_terminal)
+    {
+        return *operand;
+    }
 
     // get type of the expression
     if (operand->token.type == TOKEN_IDENTIFIER)
@@ -1041,7 +1057,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process relational op");
     DEFINE_EXPR_SYMBOL;
@@ -1059,7 +1075,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
     bool second_is_nil = compare_operand_with_type(&second_operand, nil);
 
     // if there is nil operand
-    if(first_is_nil || second_is_nil)
+    if(op.type != TOKEN_NIL_CHECK && (first_is_nil || second_is_nil))
     {
         if(first_is_nil)
         {
@@ -1100,8 +1116,16 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         // check if not same types
         if (first_operand.expr_res.expr_type != nil && (first_operand.expr_res.expr_type != second_operand.expr_res.expr_type))
         {
-            REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types in nil check.\n");
-            return expr_symbol;
+            if(second_operand.is_literal && compare_operand_with_type(&first_operand,double_) && compare_operand_with_type(&second_operand,integer))
+            {
+                code_generator_int2doubles(0);
+                second_operand.expr_res.expr_type = double_;        
+            }
+            else 
+            {
+                REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types in nil check.\n");
+                return expr_symbol;
+            }
         }
 
         // check if not (type? ?? type)
@@ -1120,6 +1144,11 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         {
             expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
         }
+
+        // ?? generation
+        code_generator_nil_check(p->cond_uid);
+        p->cond_uid += 1;
+
         expr_symbol.expr_res.nilable = false;
         return expr_symbol;
     }
@@ -1169,6 +1198,7 @@ void verify_lhs_type(symstack_data_t *final_expr, Parser *p)
             if (p->lhs_id->type == double_ && final_expr->expr_res.expr_type == integer)
             {
                 // generate code tu push int2char expr on stack
+                code_generator_int2doubles(0);
                 final_expr->expr_res.expr_type = double_;
             }
         }

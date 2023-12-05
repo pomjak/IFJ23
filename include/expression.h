@@ -327,7 +327,7 @@ symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_
 
 symstack_data_t process_concatenation(symbol_arr_t *sym_arr);
 
-symstack_data_t process_relational_operation(symbol_arr_t *sym_arr);
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p);
 
 symstack_data_t process_parenthesis(symbol_arr_t *sym_arr);
 
