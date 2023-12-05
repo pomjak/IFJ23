@@ -1059,7 +1059,7 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     bool second_is_nil = compare_operand_with_type(&second_operand, nil);
 
     // if there is nil operand
-    if(first_is_nil || second_is_nil)
+    if(op.type != TOKEN_NIL_CHECK && (first_is_nil || second_is_nil))
     {
         if(first_is_nil)
         {
