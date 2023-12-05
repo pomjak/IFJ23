@@ -1074,11 +1074,6 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
     bool first_is_nil = compare_operand_with_type(&first_operand, nil);
     bool second_is_nil = compare_operand_with_type(&second_operand, nil);
 
-    if(!compare_types_strict(&first_operand,&second_operand) && op.type != TOKEN_NIL_CHECK)
-    {
-        convert_if_retypeable(&first_operand,&second_operand);
-    }
-
     // if there is nil operand
     if(op.type != TOKEN_NIL_CHECK && (first_is_nil || second_is_nil))
     {
