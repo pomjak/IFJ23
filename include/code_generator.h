@@ -92,6 +92,7 @@ void code_generator_var_declare(char* variable);
 
 /**
  * Creates eof label
+ * @post free all malloc
 */
 void code_generator_eof();
 

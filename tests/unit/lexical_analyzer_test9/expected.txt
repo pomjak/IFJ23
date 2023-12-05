@@ -10,6 +10,7 @@
 '><STRING  value='lomenoT	'>
 <STRING  value='eol
 
+
 '>
 <STRING  value=''>
 <STRING  value='ahoj
@@ -19,4 +20,6 @@ tady'>
 <STRING  value='Test
 
 Ahoj'>
-<STRING  value=''><EOF>
+<STRING  value=''>
+<STRING  value='
+'><EOF>

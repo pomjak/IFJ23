@@ -1,5 +1,6 @@
 <STRING  value='eol
 
+
 '>
 <FUNC><IDENTIFIER  value='foo'><L_PAR><R_PAR><L_BKT><R_BKT>
 <FUNC><IDENTIFIER  value='abc'><L_PAR><R_PAR><RET_VAL><DT_INT  nilable='0'><L_BKT><R_BKT>
