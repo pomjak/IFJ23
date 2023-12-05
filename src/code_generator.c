@@ -15,6 +15,7 @@
     char* sprintf_data = malloc(sprintf_size + 1);             \
     sprintf(sprintf_data, fmt, ##__VA_ARGS__);                 \
     code_generator_buffer_print(sprintf_data);                 \
+    free(sprintf_data);                                        \
 }
 
 unsigned tmp_var_id = 0;
@@ -38,7 +39,7 @@ unsigned code_generator_get_var_uid(char *varname, bool initialized){
     dstring_init(&dynamic_varname);
     dstring_add_const_str(&dynamic_varname, varname);
 
-    unsigned error;
+    unsigned error = SYMTAB_NOT_INITIALIZED;
 
     if(scope_stack == NULL){
         WARNING_PRINT("Current scope stack is null. Function used implicit 0.");
@@ -82,7 +83,7 @@ const char* code_generator_get_var_frame(char *varname, bool initialized){
     dstring_init(&dynamic_varname);
     dstring_add_const_str(&dynamic_varname, varname);
 
-    unsigned error;
+    unsigned error = SYMTAB_NOT_INITIALIZED;
 
     if(scope_stack == NULL){
         WARNING_PRINT("Current scope stack is null. Function used implicit LF.");
