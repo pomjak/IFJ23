@@ -1,0 +1,1 @@
+smh smh picoviny ma to byt syntax proste
