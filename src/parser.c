@@ -487,10 +487,6 @@ Rule expr_type(Parser* p) {
         p->last_func_id = temp; /* reset last func id */
         break;
     default:
-        // if (!p->current_id) {
-        //     fprintf(stderr, "[ERROR %d] undefined variable\n", ERR_UNDEFINED_VARIABLE);
-        //     return ERR_UNDEFINED_VARIABLE;
-        // }
         fprintf(stderr, "[ERROR %d] Unexpected token after identifier \n", ERR_SYNTAX);
         return ERR_SYNTAX;
     }
