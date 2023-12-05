@@ -22,4 +22,4 @@ expr_type
 arg_list
 arg
 literal
-[ERROR 4] Invalid argument type(int) in fuction a
+[ERROR 4] Invalid argument type(int) in function a
