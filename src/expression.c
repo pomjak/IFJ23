@@ -291,6 +291,20 @@ void reduce_to_eol(symstack_t *stack, Parser *p)
     }
 }
 
+void remove_closest_handle(symstack_t *stack)
+{
+    node_t *current_node = symstack_peek(stack);
+    while (current_node != NULL)
+    {
+        if (current_node->data.is_handleBegin)
+        {
+            current_node->data.is_handleBegin = false;
+            break;
+        }
+        current_node = current_node->previous;
+    }
+}
+
 bool id_is_defined(token_T token, Parser *p)
 {
     unsigned int error = EXIT_SUCCESS;
@@ -628,7 +642,6 @@ void reduce(symstack_t *stack, Parser *p)
     DEBUG_PRINT("RULE %d\n", rule);
     if (rule == RULE_NO_RULE)
     {
-
         if (!find_closest_eol(stack))
         {
             reduce_error(stack, &sym_arr);
@@ -668,15 +681,14 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
     E )
     E operator E
     */
-    symstack_data_t data;
-    data.token.type = TOKEN_UNDEFINED;
+    DEFINE_EXPR_SYMBOL;
 
     if (sym_arr != NULL && sym_arr->arr != NULL)
     {
         if (is_operand(sym_arr->arr[0]))
         {
 
-            data.token.type = sym_arr->arr[0].token.type;
+            expr_symbol.token.type = sym_arr->arr[0].token.type;
             // E )
             if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
             {
@@ -694,15 +706,15 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
                         // if one of them is double
                         if (sym_arr->arr[0].token.type == TOKEN_DBL || sym_arr->arr[1].token.type == TOKEN_DBL)
                         {
-                            data.token.type = TOKEN_DBL;
+                            expr_symbol.token.type = TOKEN_DBL;
                         }
                         else
                         {
-                            data.token.type = TOKEN_INT;
+                            expr_symbol.token.type = TOKEN_INT;
                         }
                     }
                 }
-                data.token.type = sym_arr->arr[1].token.type;
+                expr_symbol.token.type = sym_arr->arr[1].token.type;
                 REPORT_ERROR(ERR_SYNTAX,"Missing operator.\n");
             }
             // E (
@@ -721,7 +733,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
             // ( E
             if (is_operand(sym_arr->arr[1]))
             {
-                data.token.type = sym_arr->arr[1].token.type;
+                expr_symbol.token.type = sym_arr->arr[1].token.type;
                 REPORT_ERROR(ERR_SYNTAX,"Missing right parenthesis.\n");
             }
             // ( )
@@ -742,16 +754,8 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         }
     }
 
-    data.is_handleBegin = false;
-    data.is_terminal = false;
-    data.is_identifier = false;
-    data.is_literal = false;
-    data.expr_res.expr_type = undefined;
-    data.expr_res.nilable = false;
-    token_T empty = EMPTY_TOKEN(false);
-    data.token = empty;
-    strcpy(data.symbol, "ERR");
-    symstack_push(stack, data);
+    strcpy(expr_symbol.symbol, "ERR");
+    symstack_push(stack, expr_symbol);
 }
 
 void expr_error(symstack_t *stack)
@@ -836,14 +840,16 @@ int expr(Parser *p)
             sym_data = convert_token_to_data(p->curr_tok);
             symstack_push(&stack, sym_data);
 
+            PRINT_STACK(&stack);
             if (find_closest_eol(&stack))
             {
+                // remove closest handle
                 reduce_to_eol(&stack, p);
                 symstack_pop(&stack);
                 set_is_multiline_expr(true);
                 tb_prev(&p->buffer);
 
-                PRINT_STACK(&stack);
+                remove_closest_handle(&stack);
 
                 // set the end of the expression
                 token_T empty = EMPTY_TOKEN(false);
@@ -941,6 +947,8 @@ symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr)
     {
         if (!compare_types_strict(&first_operand, &second_operand))
         {
+            printf("first: %d | %d literal: %d\n",first_operand.expr_res.expr_type, first_operand.expr_res.nilable, first_operand.is_literal);
+            printf("first: %d | %d literal: %d\n",second_operand.expr_res.expr_type, second_operand.expr_res.nilable, first_operand.is_literal);
             REPORT_ERROR(ERR_INCOMPATIBILE_TYPE,"Incompatibile types of operands.\n");
             return expr_symbol;
         }
