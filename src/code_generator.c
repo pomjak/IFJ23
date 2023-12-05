@@ -23,7 +23,6 @@
     free(sprintf_data);                                        \
 }
 
-unsigned tmp_var_id = 0;
 unsigned func_param_id = 0; //id of parameter, which will be added to function call
 unsigned for_open = 0;      //count of open for cycles
 dstring_t print_buffer;     //string of print buffer
@@ -212,9 +211,11 @@ void code_generator_var_assign(char* var){
 	if(strcmp(var, "_") != 0){
 		BUFFER_PRINT("\nPOPS %s@%s_%d\n",code_generator_get_var_frame(var, true), var, code_generator_get_var_uid(var, true));
 	} else{
-        code_generator_defvar("LF","TMP", tmp_var_id);
-		BUFFER_PRINT("POPS LF@TMP_%u\n", tmp_var_id);
-		tmp_var_id++;
+        code_generator_createframe();
+        code_generator_pushframe();
+        code_generator_defvar("LF","TMP", 0);
+		BUFFER_PRINT("POPS LF@TMP_%u\n", 0);
+		code_generator_popframe();
 	}
 }
 
