@@ -69,7 +69,7 @@ const prec_table_operation_t prec_tab[PREC_TABLE_SIZE][PREC_TABLE_SIZE] =
         /* RO  */ {S, S, R, S, E, S, R, S, R},
         /* (   */ {S, S, S, S, S, S, E, S, X},
         /* )   */ {R, R, R, X, R, X, R, X, R},
-        /* !   */ {R, R, R, R, R, R, R, S, R}, 
+        /* !   */ {R, R, R, R, R, R, R, R, R}, 
         /* $   */ {S, S, S, S, S, S, X, S, R}};
 
 void symbol_arr_init(symbol_arr_t *new_arr)
@@ -556,6 +556,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
         DEBUG_PRINT("\t EXPR_SYM isliteral : %d\n", expr_symbol.is_literal);
+        DEBUG_PRINT("\t EXPR_SYM isnilable : %d\n", expr_symbol.is_literal);
         symstack_push(stack, expr_symbol);
         break;
 

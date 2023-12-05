@@ -26,8 +26,8 @@
             write("Faktorial nelze spocitat!")
         } else {
             let vysl = factorial(inp)
-            vysl = Int2Double(vysl)
-            write("Vysledek je: ", vysl)
+            let vysl1 = Int2Double(vysl)
+            write("Vysledek je: ", vysl1)
         }
     } else {
         write("Chyba pri nacitani celeho cisla!")
