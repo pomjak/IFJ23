@@ -1169,6 +1169,7 @@ void verify_lhs_type(symstack_data_t *final_expr, Parser *p)
             if (p->lhs_id->type == double_ && final_expr->expr_res.expr_type == integer)
             {
                 // generate code tu push int2char expr on stack
+                code_generator_int2doubles(0);
                 final_expr->expr_res.expr_type = double_;
             }
         }
