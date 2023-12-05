@@ -9,7 +9,14 @@ execTest () {
 	bash -c "$compilerPath < $2 > tmp.txt 2>&1"
 	returnCode=$?
 	if [ "$returnCode" = "0" ]; then
-		./ic23int tmp.txt > ic23int_output.txt
+	if [ -z "$5" ]
+		then
+			./ic23int tmp.txt > ic23int_output.txt
+		else
+			./ic23int tmp.txt < $5 > ic23int_output.txt
+		fi
+
+		
 	fi
 	printf "\n" >> ic23int_output.txt
 	if [ $returnCode -ne $4 ]; then
@@ -140,3 +147,14 @@ execTest "Implicit conversions in variable declarations" "input/var_init_implici
 execTest "Illegal implicit conversions in variable declarations" "input/var_init_implicit_convert_bad.swift" "output/empty.txt" 7
 execTest "Implicit conversions in variable assignment" "input/assignment_implicit_convert.swift" "output/empty.txt" 0
 execTest "Illegal implicit conversions in variable assignment" "input/assignment_implicit_convert_wrong.swift" "output/empty.txt" 7
+execTest "Only one char" "input/a.swift" "output/empty.txt" 2
+execTest "Print double" "input/double_print.swift" "output/double_print.txt" 0
+execTest "Expr test: nil, ?? and write" "input/expr0.swift" "output/expr0.txt" 0
+execTest "Expr test1: nil, ?? and write" "input/expr1.swift" "output/expr1.txt" 0
+execTest "Factorial iter - readInt" "input/factorial_read.swift" "output/factorial_read.txt" 0 "input/factorial_read-input.swift"
+execTest "Param type check" "input/nevimuzpico.swift" "output/empty.txt" 4
+execTest "Nil as literal" "input/nil_as_literal.swift" "output/empty.txt" 4
+execTest "Read string and ??" "input/readed.swift" "output/readed.txt" 0 "input/readed-input.swift"
+execTest "Syntax-might-delete-later" "input/syntax.swift" "output/empty.txt" 2
+execTest "Nil as literal" "input/nil_as_literal.swift" "output/empty.txt" 4
+execTest "Type casting" "input/type_casting.swift" "output/type_casting.txt" 0
