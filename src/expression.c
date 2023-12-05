@@ -580,7 +580,7 @@ void push_reduced_symbol_on_stack(symstack_t *stack, symbol_arr_t *sym_arr, prec
     case RULE_E_EQ_E:
     case RULE_E_NEQ_E:
     case RULE_E_IS_NIL_E:
-        expr_symbol = process_relational_operation(sym_arr);
+        expr_symbol = process_relational_operation(sym_arr,p);
         DEBUG_PRINT("\t EXPR_SYM expr_t   : %d\n", expr_symbol.expr_res.expr_type);
         DEBUG_PRINT("\t EXPR_SYM isterm   : %d\n", expr_symbol.is_terminal);
         DEBUG_PRINT("\t EXPR_SYM ishandle : %d\n", expr_symbol.is_handleBegin);
@@ -1041,7 +1041,7 @@ symstack_data_t process_concatenation(symbol_arr_t *sym_arr)
     return expr_symbol;
 }
 
-symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
+symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p)
 {
     DEBUG_PRINT("Process relational op");
     DEFINE_EXPR_SYMBOL;
@@ -1120,6 +1120,11 @@ symstack_data_t process_relational_operation(symbol_arr_t *sym_arr)
         {
             expr_symbol.expr_res.expr_type = first_operand.expr_res.expr_type;
         }
+
+        // ?? generation
+        code_generator_nil_check(p->cond_uid);
+        p->cond_uid += 1;
+
         expr_symbol.expr_res.nilable = false;
         return expr_symbol;
     }

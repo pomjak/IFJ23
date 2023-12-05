@@ -352,6 +352,38 @@ void code_generator_operations(token_type_T operator, bool is_int){
     }
 }
 
+void code_generator_nil_check(unsigned int id) {
+    code_generator_createframe();
+    code_generator_pushframe();
+    
+    // POPS     second op
+    BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "op", 2);
+    BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "op", 2);
+    // PUSHS    nil
+    BUFFER_PRINT("\nPUSHS nil@nil\n");
+
+    // result of condition first operand != nil
+    code_generator_operations(TOKEN_NEQ, false);
+
+    // if first operand is nil
+    code_generator_if_header(id);
+    // POPS     cond_result
+    BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "nil_check_cond", 0);
+    BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "nil_check_cond", 0);
+    // PUSHS    first op
+
+    // else push second
+    code_generator_if_else(id);
+    // POPS     cond_result
+    BUFFER_PRINT("DEFVAR %s@%s_%d\n", "LF", "nil_check_cond", 1);
+    BUFFER_PRINT("POPS %s@%s_%d\n", "LF", "nil_check_cond", 1);
+    // PUSHS    second op
+    BUFFER_PRINT("\nPUSHS %s@%s_%d\n","LF","op",2);
+    code_generator_if_end(id);
+
+    code_generator_popframe();
+}
+
 void code_generator_concats(){
     //POPS ?PARAM_2
     BUFFER_PRINT("\nPOPS GF@?PARAM_2\n");
