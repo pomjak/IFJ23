@@ -4,7 +4,7 @@
 
 \subsection{Implementation} 
 \label{parser:implementation}
-The parser\footnote{\texttt{parser.c} and \texttt{parser.h} files} is controlled by the main \texttt{parse()} function. It starts off by initializing the \texttt{Parser} data structure (\ref{parser:datastruct}) and code generator (\ref{Code generator}) as well as generating the specified built-in functions. Next it utilizes the lexical analyzer to load tokens from \texttt{stdin}, which are then stored in the \texttt{Parser.buffer}(\ref{parser:tokenbuf}) structure. After all necessary data is ready, the parser begins two-stage syntax and semantic analysis (\ref{parser:analysis}), with the exception of expressions, which are parsed using precedence analysis in a separate module\footnote{\texttt{expression.c} and \texttt{expression.h}} (\ref{expressions}).
+The parser\footnote{\texttt{parser.c} and \texttt{parser.h} files} is controlled by the main \texttt{parse()} function. It starts off by initializing the \texttt{Parser} data structure (\ref{parser:datastruct}) and code generator (\ref{Code generator}) as well as generating the specified built-in functions. Next it utilizes the lexical analyzer to load tokens from \texttt{stdin}, which are then stored in the \texttt{Parser.buffer}(\ref{parser:tokenbuf}) structure. After all necessary data is initialized, the parser begins two-stage syntax and semantic analysis (\ref{parser:analysis}), the only exception being expressions, which are parsed using precedence analysis in a separate module\footnote{\texttt{expression.c} and \texttt{expression.h}} (\ref{expressions}).
 
 \subsubsection{Parser Data} 
 \label{parser:datastruct}
@@ -22,11 +22,11 @@ For the most part, syntax and semantic analysis happen simultaneously, by recurs
 
 \paragraph{First Stage}
 \label{parser:analysis:stage1}
- analyzes only the declarations of functions, which includes adding their identifiers, parameters and type to the global symbol table. Any tokens that not a part of a function declaration are ignored by the parser using one of the several \texttt{skip()} 'Rules'. After \texttt{EOF} is loaded, the \texttt{buffer.runner} pointer is reset to the beginning of the list. 
+ analyzes only function declarations, which entails adding their identifiers, parameters and return type to the global symbol table. Any tokens that are not a part of a function declaration are ignored by the parser using one of the several \texttt{skip()} 'Rules'. After \texttt{EOF} is loaded, the \texttt{buffer.runner} pointer is reset to the beginning of the list. 
 
 \paragraph{Second Stage} 
 \label{parser:analysis:stage2}
-analyzes syntax and semantics of the rest of the input program. At this point the generation of the output code takes place by utilizing the \texttt{code\_generator} module (\ref{Code generator}). At this point, when the parser loads tokens related to function declarations, it skips over them to avoid trying to redefine items already stored in the symbol table.
+analyzes syntax and semantics of the rest of the input program. At this point the generation of the output code takes place by utilizing the \texttt{code\_generator} module (\ref{Code generator}). At this point, when the parser loads tokens related to function declarations, it skips over them to avoid attempts to redefine items already stored in the symbol table.
 
 \subsubsection{Syntax}
 \label{parser:analysis:syntax}
@@ -34,4 +34,8 @@ At the centre of syntax analysis lies the \texttt{GET\_TOKEN} macro, which moves
 
 \subsubsection{Semantics}
 \label{parser:analysis:semantics}
-Semantic analysis is done utilizing mainly symbol table and variables inside \texttt{struct Parser} to ensure the input program corresponds with the specifications of IFJ23 language. Identifiers are checked for attempts of redefinition or usage of undefined ones (which leads to error 3 and 5, depending on the type of identifier). Function arguments are asserted to be of the same type as the defined parameters and that the correct parameter label is used (or that none is used in the case of a label utilizing the underscore notation). The \texttt{Parser.in\_func\_body} boolean keeps track of whether the parser is currently inside a function, which together with \texttt{Parser.return\_found} is used for checking the validity of a potential \texttt{return} statement. An extra \texttt{return} outside of the function body, or a missing one inside leads to error 6.
+Semantic analysis is done utilizing mainly symbol table and variables inside \texttt{struct Parser} to ensure the input program corresponds with the specifications of IFJ23 language. 
+
+Identifiers are checked for attempts of redefinition or usage of undefined ones (which leads to error 3 and 5, depending on the type of identifier). 
+
+Function arguments are asserted to be of the same type as the defined parameters and that the correct parameter label is used (or that none is used in the case of a label utilizing the underscore notation). The \texttt{Parser.in\_func\_body} boolean keeps track of whether the parser is currently inside a function, which together with \texttt{Parser.return\_found} is used for checking the validity of a potential \texttt{return} statement. An extra \texttt{return} outside of the function body, or a missing one inside leads to error 6.
