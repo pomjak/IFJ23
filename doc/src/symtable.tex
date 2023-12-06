@@ -4,7 +4,7 @@
 The symbol table\footnote{The symbol table is implemented in the files \texttt{symtable.c} and \texttt{symtable.h}}, implemented as a hash table using open addressing, dynamically resizes when the load surpasses 65\%, handling conflicts through double hashing.
 
 \subsubsection{Record Structure}
-Each record holds essential details: variable/function name, unique identifier, data type, status of mutability, definition, declaration, nilability, variadic parameters  and the return type for functions. The record also points to a linked list preserving parameters.
+Each record holds essential details: variable/function name, unique identifier, data type, variable mutability status, definition, declaration, nilability, variadic parameters and the return type of functions. The record also points to a linked list preserving parameters.
 
 \subsection{Hash Functions}
 Two hash functions are employed: the first (utilized consistently) is \textit{sdbm} variant used in the IJC class \cite{ijc}, and the second, \textit{djb2}, is used for double hashing as introduced in the IAL class \cite{djb2}.
@@ -15,7 +15,7 @@ Two hash functions are employed: the first (utilized consistently) is \textit{sd
 Instead of traditional deletion, the symbol table marks an item's 'activity' attribute as false. Although technically present, the item is considered inactive, creating the appearance of deletion.
 
 \subsubsection{Resizing}
-When the load surpasses \textbf{65\%}, the symbol table undergoes resizing, creating new symbol table of a size that is two times larger and is a prime number. During this process, every item (excluding inactive items) from the old symbol table is rehashed and transferred to the new one.
+When the load surpasses \textbf{65\%}, the symbol table undergoes resizing, creating a new symbol table of size that is two times larger and is a prime number. During this process, every item (excluding inactive items) from the old symbol table is rehashed and transferred to the new one.
 
 \subsubsection{Global and Local Instances}
 A \textbf{global symbol table} persists throughout execution, as well as a \textbf{stack of local symbol tables}\footnote{The stack for local symbol tables is implemented in the files \texttt{scope.c} and \texttt{scope.h}.} (representing individual scopes), which are \textit{created, stacked, and popped} as needed.

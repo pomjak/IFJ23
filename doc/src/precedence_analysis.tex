@@ -11,26 +11,26 @@
 %    \item multi-line expressions handling
 %\end{itemize}
 
-Whole expression processing is handled by module \verb|expression.c| with the corresponding header file \verb|expression.h|.
-The \verb|expr()| function is called whenever expression is expected by \verb|parser.c| module. This function accepts pointer to parser data in \verb|Parser| structure and returns the error code of first error found. 
+Whole expression processing is handled by the \verb|expression.c| module with the corresponding header file \verb|expression.h|.
+The \verb|expr()| function is called whenever an expression is expected by the parser (\ref{parser:head}). This function accepts a pointer to the \verb|Parser| structure and returns the error code of first error found. 
 
 Expressions are processed in 4 states: shift (\textless), equal shift(=), reduction(\textgreater) and error reduction(empty space).
-Concrete state is chosen by using precedence table \ref{table:precedence}, where the row means the last terminal on stack and the column means incoming terminal in the current expression.
+The correct state is chosen by using precedence table \ref{table:precedence}, where the rows represent the last terminal on stack and the columns represent an incoming terminal in the current expression.
 
 % shift and equal shift
-During shift and equal shift state is symbol pushed on stack. In shift state, the handle is set for the closest terminal from the stack top. 
-In contrast with shift state, there is no need to set handle in equal shift state.
-Handle is used in reduction state. 
+During shift and equal shift operations a symbol is pushed on stack. In the shift state, the handle is set to the closest terminal from the top of the stack. 
+In contrast with the shift state, there is no need to set the handle in equal shift state.
+The handle is used also in the reduction state. 
 
 % reduction 
-Expressions are reduced by appropriate rule in reduction state. During this state are moved all symbols from stack (from top to handle) to array of symbol. Maximum pushed symbols to this array are 3. Symbols from this array are used to choose the reduction rule for an operation. If there is no rule for these symbols, no rule is selected and error is processed. 
+Expressions are reduced by a suitable rule in reduction state. During this state  all symbols are popped from the stack (from top to handle) to an array of symbols. At most 3 symbols can be pushed to this array. These symbols are used to decide what reduction rule should be used for the operation. If there is no rule for these symbols, an error occurs.
 
 \subsubsection{End of expression detection}
-End of the expression is detected by precedence table, in error state or in error handling function in reduction state. If the end is found in error handling functions, recovery is performed (set the last pointer to first symbol after the expression and remove this symbol from stack if needed).
+End of the expression is detected by the precedence table in error state or in the error handling function in reduction state. If the end is found in error handling functions, recovery is performed (the last pointer is set to the first symbol after the expression and the symbol is removed from from stack if necessary).
 
 
 \subsubsection{Symstack data structure}
-For syntax analysis is used stack implemented in \verb|symstack.c| module. It contains inserted terminals and non-terminals of the current expression. This structure is also linked list of nodes from top to bottom. Every node contain data and pointer to previous node. In data there is stored information about concrete expression symbol, like token and basic flags that contains information about corresponding expression symbol. Expression symbol might be operand, operator or reduced expression.  
+A stack implemented in the \verb|symstack.c| module is used for analyzing syntax. It contains inserted terminals and non-terminals of the current expression. This structure is a list of nodes linked from top to bottom. Every node contain data and a pointer to the previous node. The data stores information about a specific expression symbol, like a token, and basic flags that contain information about the corresponding expression symbol. The expression symbol can be either an operand, an operator or a reduced expression.  
 
 % precedence table
 \begin{table}[ht]
@@ -67,9 +67,9 @@ For syntax analysis is used stack implemented in \verb|symstack.c| module. It co
 
 
 \subsection{Semantic analysis}
-Semantic is controlled in reduction phase during processing current operation. For this purpose are implemented functions which names start with prefix process. If it is allowed, those functions will trigger implicit conversion of the operands. Implicit conversion is handled by \verb|convert_if_retypeable| function.
+Expression semantic analysis takes place in the reduction phase of processing the current operation. This is done across several functions with the\texttt{process\_} prefix. If possible, these functions will trigger implicit conversion of the operands. Implicit conversion is handled by \verb|convert_if_retypeable| function.
 
-Whether used identifiers are defined are handled by \verb|process_operand| function. This functions uses \verb|symtable| module in order to find out wheter the variable is defined.
+The validity of identifiers used in an expression is handled by the \verb|process_operand| function. These functions utilize the \verb|symtable| module to check whether the identifiers were previously defined.
 
 
 
