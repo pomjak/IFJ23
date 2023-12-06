@@ -2,7 +2,8 @@
  * @file expression.c
  * @author Adrián Ponechal (xponec01@stud.fit.vutbr.cz)
  * @author Jakub Pomsar (xpomsa00@stud.fit.vutbr.cz)
- * @brief Expression parsing
+ * @brief Expression processing. Implemented via bottom up parsing. Checks syntax and basic semantics
+ * in expressions. Also generates code for concrete expression.
  * @date 2023-11-18
  */
 
@@ -724,7 +725,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
             // ( )
             else if (sym_arr->arr[1].token.type == TOKEN_R_PAR)
             {
-                REPORT_ERROR(ERR_SYNTAX,"Missing operand2.\n");
+                REPORT_ERROR(ERR_SYNTAX,"Missing operand.\n");
             }
             // ( TERM
             else
@@ -735,7 +736,7 @@ void reduce_error(symstack_t *stack, symbol_arr_t *sym_arr)
         // else first TERM
         else
         {
-            REPORT_ERROR(ERR_SYNTAX,"Missing operand3.\n");
+            REPORT_ERROR(ERR_SYNTAX,"Missing operand.\n");
         }
     }
 
