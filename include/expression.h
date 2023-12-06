@@ -319,30 +319,105 @@ int expr(Parser *parser_data);
  * Reduction rule functions *
  ****************************/
 
+/**
+ * @brief reduces operand; in case of variable checks if it is defined. Generates code for operand push on data stack
+ * 
+ * @param operand symbol from stack
+ * @param p parser state
+ * @return symstack_data_t; reduced symbol to push on stack
+ */
 symstack_data_t process_operand(symstack_data_t *operand, Parser *p);
 
+/**
+ * @brief reduces arithmetic operations or redirect to other operation. Checks arithmetic operation semantics. Generates code 
+ * for appropriate operation
+ * 
+ * @param sym_arr array of symbols to be reduced
+ * @return symstack_data_t; reduced symbol to push on stack
+ */
 symstack_data_t process_arithmetic_operation(symbol_arr_t *sym_arr);
 
+/**
+ * @brief reduces divison and checks division semantics and generate code for division
+ * 
+ * @param first_operand 
+ * @param second_operand 
+ * @return symstack_data_t; reduced symbol to push on stack
+ */
 symstack_data_t process_division(symstack_data_t * first_operand, symstack_data_t * second_operand);
 
+/**
+ * @brief reduces concatenation and checks concatenation semantics. Generate code for concatenation
+ * 
+ * @param sym_arr 
+ * @return symstack_data_t 
+ */
 symstack_data_t process_concatenation(symbol_arr_t *sym_arr);
 
+/**
+ * @brief reduces relational operation and checks relational operations semantics. Generate code for appropriate relational operation
+ * 
+ * @param sym_arr 
+ * @param p 
+ * @return symstack_data_t 
+ */
 symstack_data_t process_relational_operation(symbol_arr_t *sym_arr, Parser *p);
 
+/**
+ * @brief reduces expression in parenthesis.
+ * 
+ * @param sym_arr 
+ * @return symstack_data_t 
+ */
 symstack_data_t process_parenthesis(symbol_arr_t *sym_arr);
 
 /**************************
  * Type related functions *
  **************************/
 
+/**
+ * @brief strictly compares type of given operands. Compares core types and nilability
+ * 
+ * @param operand1 
+ * @param operand2 
+ * @return true operands are equal
+ * @return false operands are not equal
+ */
 bool compare_types_strict(symstack_data_t *operand1, symstack_data_t *operand2);
 
+/**
+ * @brief compares operand core type with given type
+ * 
+ * @param operand 
+ * @param type 
+ * @return true operand has given type
+ * @return false operand does not have given type
+ */
 bool compare_operand_with_type(symstack_data_t *operand, Type type);
 
+/**
+ * @brief returns nilability of given operand
+ * 
+ * @param operand 
+ * @return true operand is nilable
+ * @return false operand is not nilable
+ */
 bool operand_is_nilable(symstack_data_t *operand);
 
+/**
+ * @brief function for type control in assignment. Implicit reptying if possible
+ * 
+ * @param final_expr final expression type 
+ * @param p parser state
+ */
 void verify_lhs_type(symstack_data_t *final_expr, Parser *p);
 
+/**
+ * @brief performs implicit conversion of operands to have same types if allowed.
+ * 
+ * @param operand1 
+ * @param operand2 
+ */
 void convert_if_retypeable(symstack_data_t *operand1, symstack_data_t *operand2);
 
 #endif
