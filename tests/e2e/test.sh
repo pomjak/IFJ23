@@ -9,19 +9,18 @@ execTest () {
 	bash -c "$compilerPath < $2 > tmp.txt 2>&1"
 	returnCode=$?
 	if [ "$returnCode" = "0" ]; then
-	if [ -z "$5" ]
+		if [ -z "$5" ]
 		then
 			./ic23int tmp.txt > ic23int_output.txt
 		else
 			./ic23int tmp.txt < $5 > ic23int_output.txt
 		fi
-
-		
 	fi
 	printf "\n" >> ic23int_output.txt
 	if [ $returnCode -ne $4 ]; then
 		printf "\e[1m\e[31mFailed\e[0m Test %02d: $1:\n" $testNum
 		printf "\tWrong return code, expected $4, got $returnCode \n"
+		exit 1
 	elif [ -z "$(diff --ignore-trailing-space --ignore-blank-lines ic23int_output.txt $3)" ]; then
 		if [ "0" = "$4" ]; then
 			if [ "output/empty.txt" = "$3" ]; then
@@ -35,6 +34,7 @@ execTest () {
 	else
 		printf "[CODE_GEN] \e[1m\e[31mFailed\e[0m Test %02d: $1 \n" $testNum
 		diff ic23int_output.txt $3 
+		exit 1
 	fi
 	# creating artifacts
 	mkdir -p ../test_artifacts/e2e/$((testNum))_"$1"
