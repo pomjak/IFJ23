@@ -1,0 +1,75 @@
+\section{Expression processing} \label{expressions}
+
+\subsection{Syntax analysis}
+
+%Todo:
+%\begin{itemize}
+%    \item describe main function - where and when is it called
+%    \item precedence table
+%    \item describe how syntax controls were realized
+%    \item multiple errors 
+%    \item multi-line expressions handling
+%\end{itemize}
+
+Whole expression processing is handled by module \verb|expression.c| with the corresponding header file \verb|expression.h|.
+The \verb|expr()| function is called whenever expression is expected by \verb|parser.c| module. This function accepts pointer to parser data in \verb|Parser| structure and returns the error code of first error found. 
+
+Expressions are processed in 4 states: shift (\textless), equal shift(=), reduction(\textgreater) and error reduction(empty space).
+Concrete state is chosen by using precedence table \ref{table:precedence}, where the row means the last terminal on stack and the column means incoming terminal in the current expression.
+
+% shift and equal shift
+During shift and equal shift state is symbol pushed on stack. In shift state, the handle is set for the closest terminal from the stack top. 
+In contrast with shift state, there is no need to set handle in equal shift state.
+Handle is used in reduction state. 
+
+% reduction 
+Expressions are reduced by appropriate rule in reduction state. During this state are moved all symbols from stack (from top to handle) to array of symbol. Maximum pushed symbols to this array are 3. Symbols from this array are used to choose the reduction rule for an operation. If there is no rule for these symbols, no rule is selected and error is processed. 
+
+\subsubsection{End of expression detection}
+End of the expression is detected by precedence table, in error state or in error handling function in reduction state. If the end is found in error handling functions, recovery is performed (set the last pointer to first symbol after the expression and remove this symbol from stack if needed).
+
+
+\subsubsection{Symstack data structure}
+For syntax analysis is used stack implemented in \verb|symstack.c| module. It contains inserted terminals and non-terminals of the current expression. This structure is also linked list of nodes from top to bottom. Every node contain data and pointer to previous node. In data there is stored information about concrete expression symbol, like token and basic flags that contains information about corresponding expression symbol. Expression symbol might be operand, operator or reduced expression.  
+
+% precedence table
+\begin{table}[ht]
+\centering
+\label{table:precedence}
+\begin{tabular}{| c | c c c | c c c | c c c |}
+    \hline
+        & */ & +- & ?? & i & RO &  (  &  )  & ! & \$ \\
+    \hline
+    */ & \textgreater & \textgreater & \textgreater & \textless & \textgreater & \textless & \textgreater & \textless & \textgreater \\
+    +- & \textless & \textgreater & \textgreater  & \textless & \textgreater & \textless & \textgreater & \textless & \textgreater \\
+    ?? & \textless & \textless & \textless & \textless & \textless & \textless & \textgreater & \textless & \textgreater \\
+    \hline
+    i  &  \textgreater & \textgreater & \textgreater &  & \textgreater &  & \textgreater & \textgreater & \textgreater \\
+     RO & \textless & \textless & \textgreater & \textless & = & \textless & \textgreater & \textless & \textgreater \\
+    (  & \textless & \textless & \textless & \textless & \textless & \textless & = & \textless &  \\
+    \hline
+    )  & \textgreater & \textgreater & \textgreater &  & \textgreater &  & \textgreater &  & \textgreater \\
+    !  & \textgreater & \textgreater & \textgreater & \textgreater & \textgreater & \textgreater & \textgreater & \textgreater & \textgreater \\
+    \$ & \textless & \textless & \textless & \textless & \textless & \textless & \textless &  & \textgreater \\
+    \hline
+\end{tabular}
+\caption{Precedence table}
+\begin{center}    
+    \begin{minipage}{8cm}
+          \small
+          Note:
+          \textit{i} - \textit{identifier},
+          \textit{RO}- \textit{relational operator}
+    \end{minipage}
+\end{center}
+\end{table}
+
+
+
+\subsection{Semantic analysis}
+Semantic is controlled in reduction phase during processing current operation. For this purpose are implemented functions which names start with prefix process. If it is allowed, those functions will trigger implicit conversion of the operands. Implicit conversion is handled by \verb|convert_if_retypeable| function.
+
+Whether used identifiers are defined are handled by \verb|process_operand| function. This functions uses \verb|symtable| module in order to find out wheter the variable is defined.
+
+
+

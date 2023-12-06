@@ -1,0 +1,33 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[a4paper, top=2.5cm, left=2.5cm]{geometry}
+\usepackage{sans}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage{blindtext}
+\usepackage{subfiles}
+\usepackage[bottom]{footmisc}
+
+\begin{document}
+
+\input{src/intro}
+
+\input{src/teamwork}
+
+\input{src/lexer}
+
+\input{src/symtable}
+
+\input{src/parser}
+
+\input{src/precedence_analysis}
+
+\input{src/code_gen}
+
+\input{src/ll_grammar}
+
+\bibliographystyle{plain}
+\bibliography{src/bibliography}
+
+\end{document}
